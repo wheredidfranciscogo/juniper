@@ -1,15 +1,84 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useEffect } from 'react';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  useFonts as useSourceSerif,
+  SourceSerif4_400Regular,
+  SourceSerif4_400Regular_Italic,
+  SourceSerif4_500Medium,
+  SourceSerif4_500Medium_Italic,
+  SourceSerif4_600SemiBold,
+  SourceSerif4_700Bold,
+} from '@expo-google-fonts/source-serif-4';
+import {
+  useFonts as usePublicSans,
+  PublicSans_300Light,
+  PublicSans_400Regular,
+  PublicSans_500Medium,
+  PublicSans_600SemiBold,
+  PublicSans_700Bold,
+} from '@expo-google-fonts/public-sans';
+import {
+  useFonts as useJetBrains,
+  JetBrainsMono_400Regular,
+  JetBrainsMono_500Medium,
+  JetBrainsMono_600SemiBold,
+} from '@expo-google-fonts/jetbrains-mono';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { colors } from '../theme';
+import { StoreProvider } from '../lib/store';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+// Keep the splash screen visible while we load fonts. Fail-soft if it errors.
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+export default function RootLayout() {
+  const [serifLoaded, serifError] = useSourceSerif({
+    SourceSerif4_400Regular,
+    SourceSerif4_400Regular_Italic,
+    SourceSerif4_500Medium,
+    SourceSerif4_500Medium_Italic,
+    SourceSerif4_600SemiBold,
+    SourceSerif4_700Bold,
+  });
+
+  const [sansLoaded, sansError] = usePublicSans({
+    PublicSans_300Light,
+    PublicSans_400Regular,
+    PublicSans_500Medium,
+    PublicSans_600SemiBold,
+    PublicSans_700Bold,
+  });
+
+  const [monoLoaded, monoError] = useJetBrains({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium,
+    JetBrainsMono_600SemiBold,
+  });
+
+  const ready = (serifLoaded || serifError) && (sansLoaded || sansError) && (monoLoaded || monoError);
+
+  useEffect(() => {
+    if (ready) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [ready]);
+
+  if (!ready) return null;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.paper }}>
+      <StoreProvider>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.paper },
+            animation: 'fade',
+          }}
+        />
+      </StoreProvider>
+    </GestureHandlerRootView>
   );
 }
