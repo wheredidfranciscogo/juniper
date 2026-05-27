@@ -1,0 +1,20 @@
+# E2E: the four bottom tabs route to their screens.
+# See onboarding.yaml for how to run Maestro and what `appId` to set.
+appId: com.jungle.app
+tags:
+  - navigation
+---
+- runFlow: onboarding.yaml
+
+- tapOn: "garden"
+- assertVisible: "The Garden"
+- assertVisible: "Thirsty"
+
+- tapOn: "log"
+- assertVisible: "The Log"
+
+- tapOn: "you"
+- assertVisible: "YOU ARE"
+
+- tapOn: "today"
+- assertVisible: "Water Marcel"

@@ -1,0 +1,17 @@
+# E2E: the signature interaction — watering a thirsty plant from the Today tab.
+# Reuses the onboarding flow to reach a seeded Today screen.
+# See onboarding.yaml for how to run Maestro and what `appId` to set.
+appId: com.jungle.app
+tags:
+  - water
+---
+- runFlow: onboarding.yaml
+
+# Marcel is seeded 8 days since water (waters every 7) -> shown as THIRSTY.
+- assertVisible: "THIRSTY"
+- assertVisible: "Water Marcel"
+- tapOn: "Water Marcel"
+
+# After watering: pill flips, button shows the done state, last-watered resets.
+- assertVisible: "WATERED"
+- assertVisible: "Last watered today."
