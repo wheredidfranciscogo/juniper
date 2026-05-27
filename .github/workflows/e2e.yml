@@ -1,0 +1,66 @@
+# Maestro end-to-end tests on an Android emulator.
+#
+# This is manual-only (workflow_dispatch) so it never blocks PRs — E2E needs a
+# built binary and a booted emulator, which is slow and has prerequisites that
+# this repo doesn't satisfy yet:
+#
+#   * app.json needs `expo.android.package` (e.g. "com.jungle.app") for
+#     `expo prebuild` to generate a native project.
+#   * The `appId` in .maestro/*.yaml must match that package name.
+#
+# Once those are set, this workflow builds a debug APK, installs it on an
+# emulator, and runs every flow in .maestro/.
+name: E2E (Maestro)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  maestro:
+    name: Android emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Build debug APK
+        run: ./android/gradlew -p android assembleDebug
+
+      - name: Install Maestro
+        run: |
+          curl -Ls https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Run flows on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            maestro test .maestro/
+
+      - name: Upload Maestro artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-output
+          path: ~/.maestro/tests/
+          if-no-files-found: ignore
