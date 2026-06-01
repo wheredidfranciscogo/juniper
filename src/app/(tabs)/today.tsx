@@ -20,30 +20,11 @@ import { colors, radii, spacing, text } from '../../theme';
 import { ARCHETYPES } from '../../data/seed';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
+import { greetingFor, lastWateredLabel } from '../../lib/today-utils';
 import { Pressing } from '../../components/Pressing';
 import { Pill } from '../../components/Pill';
 import { WaterButton } from '../../components/WaterButton';
 import { IconCheck } from '../../components/icons';
-
-function greetingFor(date = new Date()) {
-  const h = date.getHours();
-  if (h < 5) return 'Late night';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 21) return 'Good evening';
-  return 'Late night';
-}
-
-function lastWateredLabel(daysSinceWater: number) {
-  if (daysSinceWater <= 0) return 'Last watered today.';
-  if (daysSinceWater === 1) return 'Last watered yesterday.';
-  if (daysSinceWater < 7) {
-    const today = new Date();
-    today.setDate(today.getDate() - daysSinceWater);
-    return `Last watered ${today.toLocaleDateString('en-GB', { weekday: 'long' })}.`;
-  }
-  return `Last watered ${daysSinceWater} days ago.`;
-}
 
 export default function Today() {
   const router = useRouter();

@@ -12,6 +12,7 @@ export interface Archetype {
 export interface PlantPhoto {
   date: string; // ISO or display string
   label?: string;
+  uri?: string; // Set on user-captured photos (camera or library).
 }
 
 export interface JournalEntry {

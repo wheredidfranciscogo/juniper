@@ -11,6 +11,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radii, spacing, text } from '../../theme';
+import { handleTabPress } from '../../lib/tab-press';
 import {
   IconHome,
   IconGarden,
@@ -42,10 +43,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
-  const handlePress = (name: string) => {
-    const event = navigation.emit({ type: 'tabPress', target: name, canPreventDefault: true });
-    if (!event.defaultPrevented) navigation.navigate(name);
-  };
+  const handlePress = (routeName: string) => handleTabPress(routeName, state, navigation);
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + 6 }]}>
@@ -93,6 +91,8 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >
+      {/* index just redirects to /today — hide it from the tab bar. */}
+      <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="today" />
       <Tabs.Screen name="garden" />
       <Tabs.Screen name="log" />

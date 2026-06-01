@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -29,6 +28,7 @@ import {
 
 import { colors } from '../theme';
 import { StoreProvider } from '../lib/store';
+import { RootStack } from '../lib/root-stack';
 
 // Keep the splash screen visible while we load fonts. Fail-soft if it errors.
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -71,13 +71,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.paper }}>
       <StoreProvider>
         <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.paper },
-            animation: 'fade',
-          }}
-        />
+        <RootStack />
       </StoreProvider>
     </GestureHandlerRootView>
   );

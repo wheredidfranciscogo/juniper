@@ -68,6 +68,15 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
+// Image picker is a native module — stub the four calls the app uses so the
+// Add Plant form renders without booting native code.
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  requestMediaLibraryPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  launchCameraAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: null })),
+  launchImageLibraryAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: null })),
+}));
+
 // Haptics talks to a native module that doesn't exist under Jest.
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),

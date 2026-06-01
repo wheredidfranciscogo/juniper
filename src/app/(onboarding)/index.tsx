@@ -61,12 +61,13 @@ export default function OnboardingFlow() {
   };
 
   const handleBegin = () => {
+    // Just flip the store flag — the root layout's Stack.Protected guards
+    // remove (onboarding) and expose (tabs), so the router handles routing.
     store.completeOnboarding({
       userName: name.trim() || 'Friend',
       archetype: archetypeKey,
       seed: true,
     });
-    router.replace('/(tabs)/today');
   };
 
   return (
