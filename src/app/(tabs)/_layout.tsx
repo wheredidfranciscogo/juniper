@@ -11,6 +11,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radii, spacing, text } from '../../theme';
+import { handleTabPress } from '../../lib/tab-press';
 import {
   IconHome,
   IconGarden,
@@ -42,18 +43,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
-  const handlePress = (routeName: string) => {
-    const route = state.routes.find((r) => r.name === routeName);
-    if (!route) return;
-    const event = navigation.emit({
-      type: 'tabPress',
-      target: route.key,
-      canPreventDefault: true,
-    });
-    if (state.routes[state.index]?.key !== route.key && !event.defaultPrevented) {
-      navigation.navigate(route.name, route.params);
-    }
-  };
+  const handlePress = (routeName: string) => handleTabPress(routeName, state, navigation);
 
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + 6 }]}>
