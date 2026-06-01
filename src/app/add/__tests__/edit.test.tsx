@@ -86,7 +86,7 @@ let store: any = null;
     expect(added?.photos).toEqual([]);
     // The store also prepends a 'joined' log entry per addPlant().
     expect(store?.log[0]).toMatchObject({ plantId: added?.id, kind: 'joined' });
-    expect(mockRouter.replace).toHaveBeenCalledWith('/(tabs)/garden');
+    expect(mockRouter.replace).toHaveBeenCalledWith('/garden');
   });
 
   it('steps the water cadence and reflects singular/plural copy', () => {

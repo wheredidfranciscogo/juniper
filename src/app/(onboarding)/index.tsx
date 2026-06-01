@@ -66,7 +66,7 @@ export default function OnboardingFlow() {
       archetype: archetypeKey,
       seed: true,
     });
-    router.replace('/(tabs)/today');
+    router.replace('/today');
   };
 
   return (

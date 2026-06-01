@@ -106,7 +106,7 @@ export default function AddEdit() {
       journal: [],
     };
     addPlant(plant);
-    router.replace('/(tabs)/garden');
+    router.replace('/garden');
   };
 
   const fillFromSearch = (r: SpeciesResult) => {
