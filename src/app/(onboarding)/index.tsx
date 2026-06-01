@@ -17,7 +17,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { useRouter, Redirect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing, text, radii, BEZIER_BASE, duration } from '../../theme';
@@ -36,7 +36,6 @@ export default function OnboardingFlow() {
   const [step, setStep] = React.useState(0);
   const [answers, setAnswers] = React.useState<OnboardingAnswers>({});
   const [name, setName] = React.useState('');
-  const [finished, setFinished] = React.useState(false);
 
   // Progress hairline — animated fill width
   const progressAnim = React.useRef(new Animated.Value(0)).current;
@@ -62,17 +61,14 @@ export default function OnboardingFlow() {
   };
 
   const handleBegin = () => {
+    // Just flip the store flag — the root layout's Stack.Protected guards
+    // remove (onboarding) and expose (tabs), so the router handles routing.
     store.completeOnboarding({
       userName: name.trim() || 'Friend',
       archetype: archetypeKey,
       seed: true,
     });
-    setFinished(true);
   };
-
-  // Declarative redirect — runs after the state update commits, which avoids
-  // a race where router.replace fires before the (tabs) navigator is mounted.
-  if (finished) return <Redirect href="/today" />;
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + 16 }]}>

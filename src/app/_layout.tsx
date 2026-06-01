@@ -28,10 +28,41 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 
 import { colors } from '../theme';
-import { StoreProvider } from '../lib/store';
+import { StoreProvider, useStore } from '../lib/store';
 
 // Keep the splash screen visible while we load fonts. Fail-soft if it errors.
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+/**
+ * Inner stack — split because Stack.Protected guards need to read
+ * `useStore().onboarded`, which means they must be inside <StoreProvider>.
+ * Protected is the canonical expo-router pattern for onboarding gates:
+ * when `onboarded` flips, the router removes (onboarding) from the
+ * available routes and exposes (tabs), so completeOnboarding only has
+ * to set the flag — the navigator does the routing.
+ */
+function RootStack() {
+  const { onboarded } = useStore();
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: colors.paper },
+        animation: 'fade',
+      }}
+    >
+      <Stack.Protected guard={!onboarded}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(onboarding)" />
+      </Stack.Protected>
+      <Stack.Protected guard={onboarded}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="add" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="plant/[id]" />
+      </Stack.Protected>
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [serifLoaded, serifError] = useSourceSerif({
@@ -71,13 +102,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.paper }}>
       <StoreProvider>
         <StatusBar style="dark" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.paper },
-            animation: 'fade',
-          }}
-        />
+        <RootStack />
       </StoreProvider>
     </GestureHandlerRootView>
   );
