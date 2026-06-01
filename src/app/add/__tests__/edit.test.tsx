@@ -1,13 +1,18 @@
 import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 
-// Mutable params + router so each test can drive the path variant.
+// Mutable params + router + redirect tracker so each test can drive the path variant.
 let mockParams: { path?: string } = {};
 const mockRouter = { back: jest.fn(), replace: jest.fn(), push: jest.fn() };
+let lastRedirectHref: string | null = null;
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
   useRouter: () => mockRouter,
+  Redirect: (props: { href: string }) => {
+    lastRedirectHref = props.href;
+    return null;
+  },
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -40,6 +45,7 @@ beforeEach(() => {
   mockParams = {};
   mockRouter.back.mockClear();
   mockRouter.replace.mockClear();
+  lastRedirectHref = null;
   delete process.env.EXPO_PUBLIC_PERENUAL_KEY;
 });
 
@@ -62,7 +68,7 @@ let store: any = null;
     render(withStore(<AddEdit />, (s) => (store = s)));
     fireEvent.press(screen.getByText('Save'));
     expect(store?.plants).toEqual([]);
-    expect(mockRouter.replace).not.toHaveBeenCalled();
+    expect(lastRedirectHref).toBeNull();
 
     fireEvent.changeText(screen.getByPlaceholderText('Marcel'), 'Fernando');
     fireEvent.press(screen.getByText('Save'));
@@ -86,7 +92,7 @@ let store: any = null;
     expect(added?.photos).toEqual([]);
     // The store also prepends a 'joined' log entry per addPlant().
     expect(store?.log[0]).toMatchObject({ plantId: added?.id, kind: 'joined' });
-    expect(mockRouter.replace).toHaveBeenCalledWith('/garden');
+    expect(lastRedirectHref).toBe('/garden');
   });
 
   it('steps the water cadence and reflects singular/plural copy', () => {

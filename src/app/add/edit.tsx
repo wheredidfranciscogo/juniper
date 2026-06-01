@@ -19,7 +19,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Redirect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, radii, spacing, text } from '../../theme';
@@ -83,6 +83,7 @@ export default function AddEdit() {
   const [icon, setIcon] = React.useState<PlantIconName>('leaf');
   const [pressing, setPressing] = React.useState<PressingTone>('moss');
   const [photoUri, setPhotoUri] = React.useState<string | null>(null);
+  const [saved, setSaved] = React.useState(false);
 
   const canSave = name.trim().length > 0 && species.trim().length > 0;
 
@@ -106,8 +107,10 @@ export default function AddEdit() {
       journal: [],
     };
     addPlant(plant);
-    router.replace('/garden');
+    setSaved(true);
   };
+
+  if (saved) return <Redirect href="/garden" />;
 
   const fillFromSearch = (r: SpeciesResult) => {
     if (!name && r.commonName) setName(r.commonName);
