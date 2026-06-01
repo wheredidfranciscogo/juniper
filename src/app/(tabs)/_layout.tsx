@@ -42,9 +42,17 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
-  const handlePress = (name: string) => {
-    const event = navigation.emit({ type: 'tabPress', target: name, canPreventDefault: true });
-    if (!event.defaultPrevented) navigation.navigate(name);
+  const handlePress = (routeName: string) => {
+    const route = state.routes.find((r) => r.name === routeName);
+    if (!route) return;
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+    if (state.routes[state.index]?.key !== route.key && !event.defaultPrevented) {
+      navigation.navigate(route.name, route.params);
+    }
   };
 
   return (
@@ -93,6 +101,8 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >
+      {/* index just redirects to /today — hide it from the tab bar. */}
+      <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="today" />
       <Tabs.Screen name="garden" />
       <Tabs.Screen name="log" />
