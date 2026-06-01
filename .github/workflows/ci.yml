@@ -27,6 +27,11 @@ jobs:
       - name: Unit & component tests
         run: npm run test:ci
 
+      - name: Verify web bundle builds
+        # Catches broken imports, missing screens, and route resolution
+        # issues that unit tests miss. Cheap (~30s) and broad.
+        run: npx expo export --platform web --output-dir /tmp/expo-export
+
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4

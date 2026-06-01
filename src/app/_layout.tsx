@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -59,12 +58,8 @@ export default function RootLayout() {
 
   const ready = (serifLoaded || serifError) && (sansLoaded || sansError) && (monoLoaded || monoError);
 
-  useEffect(() => {
-    if (ready) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [ready]);
-
+  // RootStack hides the native splash once the store hydrates; we just gate
+  // mounting it on fonts so screens render with the right typography.
   if (!ready) return null;
 
   return (

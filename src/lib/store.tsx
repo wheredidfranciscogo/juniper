@@ -1,9 +1,15 @@
 /**
- * In-memory app store. Holds onboarding state, user profile, plants, and log.
+ * App store — onboarding state, profile, plants, and log.
+ * Hydrated from AsyncStorage on mount and persisted on every state change
+ * so the app survives reloads. Versioned for forward compatibility; if the
+ * schema changes, bump STORAGE_VERSION and the persisted blob is ignored.
+ *
  * Phase-1 only — to be replaced with Supabase-backed hooks (task #13).
  */
 
 import * as React from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { PLANTS_SEED } from '../data/seed';
 import type { ArchetypeKey, LogEntry, LogKind, Plant } from '../data/types';
 
@@ -22,9 +28,17 @@ interface AppActions {
   addPlant: (plant: Plant) => void;
 }
 
-type Store = AppState & AppActions;
+type Store = AppState & AppActions & { hydrated: boolean };
 
 const StoreCtx = React.createContext<Store | null>(null);
+
+const STORAGE_KEY = '@juniper/store';
+const STORAGE_VERSION = 1;
+
+interface PersistedBlob {
+  version: typeof STORAGE_VERSION;
+  state: AppState;
+}
 
 const initialState: AppState = {
   onboarded: false,
@@ -52,6 +66,41 @@ function actionVerb(kind: LogKind, plantName: string): string {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<AppState>(initialState);
+  const [hydrated, setHydrated] = React.useState(false);
+
+  // Load persisted state once on mount.
+  React.useEffect(() => {
+    let cancelled = false;
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then((raw) => {
+        if (cancelled || !raw) return;
+        try {
+          const parsed = JSON.parse(raw) as PersistedBlob;
+          if (parsed?.version === STORAGE_VERSION && parsed.state) {
+            setState(parsed.state);
+          }
+        } catch {
+          // Corrupt blob — fall through to initialState; next save overwrites it.
+        }
+      })
+      .catch(() => {
+        // AsyncStorage is unavailable — proceed without persistence.
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist on state change, but only after hydration so the initialState
+  // render doesn't overwrite a real saved state.
+  React.useEffect(() => {
+    if (!hydrated) return;
+    const blob: PersistedBlob = { version: STORAGE_VERSION, state };
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(blob)).catch(() => {});
+  }, [state, hydrated]);
 
   const completeOnboarding = React.useCallback<AppActions['completeOnboarding']>(
     ({ userName, archetype, seed }) => {
@@ -116,8 +165,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo<Store>(
-    () => ({ ...state, completeOnboarding, waterPlant, logAction, addPlant }),
-    [state, completeOnboarding, waterPlant, logAction, addPlant],
+    () => ({ ...state, hydrated, completeOnboarding, waterPlant, logAction, addPlant }),
+    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

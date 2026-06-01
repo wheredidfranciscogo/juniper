@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { Text } from 'react-native';
-import { render, screen, act } from '@testing-library/react-native';
+import { render, screen, act, waitFor } from '@testing-library/react-native';
 
 jest.mock('expo-router', () => {
   const ReactLib = require('react') as typeof import('react');
@@ -49,20 +49,24 @@ beforeEach(() => {
   store = null;
 });
 
-const mount = () =>
-  render(
+async function mount() {
+  const result = render(
     <StoreProvider>
       <RootStack />
       <CaptureStore />
     </StoreProvider>,
   );
+  // RootStack renders null until AsyncStorage hydration resolves.
+  await waitFor(() => expect(store?.hydrated).toBe(true));
+  return result;
+}
 
 const PRE_ONBOARDING = ['index', '(onboarding)'];
 const POST_ONBOARDING = ['(tabs)', 'add', 'plant/[id]'];
 
 describe('RootStack — onboarding gate', () => {
-  it('exposes the onboarding routes and hides the app routes before completion', () => {
-    mount();
+  it('exposes the onboarding routes and hides the app routes before completion', async () => {
+    await mount();
     for (const name of PRE_ONBOARDING) {
       expect(screen.getByText(`SCREEN:${name}`)).toBeTruthy();
     }
@@ -71,8 +75,8 @@ describe('RootStack — onboarding gate', () => {
     }
   });
 
-  it('swaps the route set when completeOnboarding flips the store flag', () => {
-    mount();
+  it('swaps the route set when completeOnboarding flips the store flag', async () => {
+    await mount();
     expect(screen.queryByText('SCREEN:(tabs)')).toBeNull();
 
     act(() => {
@@ -87,11 +91,11 @@ describe('RootStack — onboarding gate', () => {
     }
   });
 
-  it('does not depend on imperative router calls — the navigator is driven entirely by guard state', () => {
+  it('does not depend on imperative router calls — the navigator is driven entirely by guard state', async () => {
     // Sanity: if a future refactor reverts to <Stack /> with auto-detection
     // (no Stack.Protected), both sets would be visible simultaneously and
     // this assertion would fail.
-    mount();
+    await mount();
     const exposed = PRE_ONBOARDING.filter((n) => screen.queryByText(`SCREEN:${n}`));
     const hidden = POST_ONBOARDING.filter((n) => screen.queryByText(`SCREEN:${n}`));
     expect(exposed).toHaveLength(PRE_ONBOARDING.length);
