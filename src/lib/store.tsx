@@ -26,6 +26,7 @@ interface AppActions {
   waterPlant: (plantId: string) => void;
   logAction: (plantId: string, kind: LogKind, text?: string) => void;
   addPlant: (plant: Plant) => void;
+  updatePlant: (plantId: string, patch: Partial<Plant>) => void;
 }
 
 type Store = AppState & AppActions & { hydrated: boolean };
@@ -164,9 +165,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const updatePlant = React.useCallback<AppActions['updatePlant']>((plantId, patch) => {
+    setState((s) => {
+      if (!s.plants.some((p) => p.id === plantId)) return s;
+      return {
+        ...s,
+        plants: s.plants.map((p) => (p.id === plantId ? { ...p, ...patch, id: p.id } : p)),
+      };
+    });
+  }, []);
+
   const value = React.useMemo<Store>(
-    () => ({ ...state, hydrated, completeOnboarding, waterPlant, logAction, addPlant }),
-    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant],
+    () => ({ ...state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant }),
+    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

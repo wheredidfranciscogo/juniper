@@ -1,11 +1,13 @@
 /**
- * Add Plant — combined edit screen for all three entry paths.
+ * Combined add / edit screen.
  *
- *   ?path=photo  → capture/library buttons (identifier is a stub) -> manual form
- *   ?path=search → Perenual species search -> tap result to pre-fill -> manual form
- *   ?path=manual → blank form
+ *   ?path=photo   → capture/library buttons (identifier is stubbed) → manual form
+ *   ?path=search  → Perenual species search → tap result to pre-fill → manual form
+ *   ?path=manual  → blank form
+ *   ?id=<plantId> → pre-fill from an existing plant; Save calls updatePlant
  *
- * Save is gated on name + species; tapping it calls `addPlant` and routes to the Garden tab.
+ * Save is gated on name + species. New plants go through addPlant; existing
+ * plants through updatePlant. Both flows redirect to /garden afterwards.
  */
 
 import * as React from 'react';
@@ -69,19 +71,29 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 export default function AddEdit() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { addPlant } = useStore();
-  const params = useLocalSearchParams<{ path?: string }>();
-  const path: Path =
-    params.path === 'photo' || params.path === 'search' ? params.path : 'manual';
+  const { addPlant, updatePlant, plants } = useStore();
+  const params = useLocalSearchParams<{ path?: string; id?: string }>();
 
-  const [name, setName] = React.useState('');
-  const [species, setSpecies] = React.useState('');
-  const [nickname, setNickname] = React.useState('');
-  const [waterEvery, setWaterEvery] = React.useState(7);
-  const [light, setLight] = React.useState<string>('bright indirect');
-  const [temp, setTemp] = React.useState<string>('warm');
-  const [icon, setIcon] = React.useState<PlantIconName>('leaf');
-  const [pressing, setPressing] = React.useState<PressingTone>('moss');
+  const editingPlant = params.id ? plants.find((p) => p.id === params.id) : undefined;
+  const isEditing = Boolean(editingPlant);
+  // While editing, suppress the photo/search panes — those are entry-point
+  // affordances that don't make sense once the plant exists.
+  const path: Path = isEditing
+    ? 'manual'
+    : params.path === 'photo' || params.path === 'search'
+      ? params.path
+      : 'manual';
+
+  // Lazy initialisers seed the form from `editingPlant` when present without
+  // re-seeding on every render.
+  const [name, setName] = React.useState(() => editingPlant?.name ?? '');
+  const [species, setSpecies] = React.useState(() => editingPlant?.species ?? '');
+  const [nickname, setNickname] = React.useState(() => editingPlant?.nickname ?? '');
+  const [waterEvery, setWaterEvery] = React.useState(() => editingPlant?.waterEvery ?? 7);
+  const [light, setLight] = React.useState<string>(() => editingPlant?.light ?? 'bright indirect');
+  const [temp, setTemp] = React.useState<string>(() => editingPlant?.temp ?? 'warm');
+  const [icon, setIcon] = React.useState<PlantIconName>(() => editingPlant?.icon ?? 'leaf');
+  const [pressing, setPressing] = React.useState<PressingTone>(() => editingPlant?.pressing ?? 'moss');
   const [photoUri, setPhotoUri] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
 
@@ -89,27 +101,42 @@ export default function AddEdit() {
 
   const handleSave = () => {
     if (!canSave) return;
-    const date = todayISO();
-    const plant: Plant = {
-      id: newId(),
-      name: name.trim(),
-      species: species.trim(),
-      nickname: nickname.trim() || undefined,
-      pressing,
-      icon,
-      waterEvery,
-      daysSinceWater: 0,
-      light,
-      temp,
-      tendedDays: 0,
-      addedISO: date,
-      photos: photoUri ? [{ date, uri: photoUri }] : [],
-      journal: [],
-    };
-    addPlant(plant);
+    if (editingPlant) {
+      updatePlant(editingPlant.id, {
+        name: name.trim(),
+        species: species.trim(),
+        nickname: nickname.trim() || undefined,
+        pressing,
+        icon,
+        waterEvery,
+        light,
+        temp,
+      });
+    } else {
+      const date = todayISO();
+      const plant: Plant = {
+        id: newId(),
+        name: name.trim(),
+        species: species.trim(),
+        nickname: nickname.trim() || undefined,
+        pressing,
+        icon,
+        waterEvery,
+        daysSinceWater: 0,
+        light,
+        temp,
+        tendedDays: 0,
+        addedISO: date,
+        photos: photoUri ? [{ date, uri: photoUri }] : [],
+        journal: [],
+      };
+      addPlant(plant);
+    }
     setSaved(true);
   };
 
+  // If an id was provided but no plant matches, bounce — likely a stale link.
+  if (params.id && !editingPlant) return <Redirect href="/garden" />;
   if (saved) return <Redirect href="/garden" />;
 
   const fillFromSearch = (r: SpeciesResult) => {
@@ -125,7 +152,7 @@ export default function AddEdit() {
         <Pressable onPress={() => router.back()} hitSlop={10}>
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
-        <Text style={styles.overline}>{PATH_LABEL[path]}</Text>
+        <Text style={styles.overline}>{isEditing ? 'EDITING' : PATH_LABEL[path]}</Text>
         <Pressable onPress={handleSave} disabled={!canSave} hitSlop={10}>
           <Text style={[styles.save, !canSave && styles.saveDisabled]}>Save</Text>
         </Pressable>

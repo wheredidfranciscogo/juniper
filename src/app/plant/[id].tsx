@@ -132,8 +132,10 @@ export default function PlantDetail() {
         <IconBack size={20} color={colors.ink} />
       </Pressable>
       <Pressable
+        onPress={() => router.push({ pathname: '/add/edit', params: { id: plant.id } })}
         style={[styles.float, styles.floatRight, { top: insets.top + 10 }]}
         hitSlop={10}
+        accessibilityLabel="Edit plant"
       >
         <IconPencil size={18} color={colors.ink} />
       </Pressable>

@@ -127,6 +127,41 @@ describe('addPlant', () => {
   });
 });
 
+describe('updatePlant', () => {
+  it('merges the patch into the matching plant', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'marcel', name: 'Marcel', waterEvery: 7 })));
+
+    act(() => result.current.updatePlant('marcel', { name: 'Marcel II', waterEvery: 10 }));
+
+    const updated = result.current.plants.find((p) => p.id === 'marcel');
+    expect(updated?.name).toBe('Marcel II');
+    expect(updated?.waterEvery).toBe(10);
+    // Untouched fields are preserved.
+    expect(updated?.species).toBe('Nephrolepis exaltata');
+  });
+
+  it('does not change the plant id even if the patch tries to', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'marcel', name: 'Marcel' })));
+
+    act(() => result.current.updatePlant('marcel', { id: 'hijacked' } as unknown as Partial<Plant>));
+
+    expect(result.current.plants.map((p) => p.id)).toContain('marcel');
+    expect(result.current.plants.map((p) => p.id)).not.toContain('hijacked');
+  });
+
+  it('is a no-op for an unknown plant id', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'marcel', name: 'Marcel' })));
+    const before = result.current.plants;
+
+    act(() => result.current.updatePlant('ghost', { name: 'Phantom' }));
+
+    expect(result.current.plants).toBe(before);
+  });
+});
+
 describe('persistence', () => {
   it('starts with hydrated=false and flips to true once AsyncStorage resolves', async () => {
     const { result } = renderStore();
