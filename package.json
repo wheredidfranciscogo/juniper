@@ -51,5 +51,10 @@
     "jest-expo": "~54.0.0",
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
+  },
+  "//overrides": "Lift transitive build-time deps past their CVEs without bumping the whole SDK. See issue #11.",
+  "overrides": {
+    "postcss": "^8.5.10",
+    "uuid": "^11.1.1"
   }
 }
