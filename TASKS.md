@@ -100,8 +100,14 @@ emulator, a native build, or network/API access that's blocked here.
 - [ ] **Expo version mismatch**: `AGENTS.md` says "read the v56.0.0 docs"
       but `package.json` pins Expo `~54.0.0`. Reconcile the instruction or
       the SDK.
-- [ ] `package-lock.json` reports 16 moderate-severity audit warnings;
-      decide whether to `npm audit fix`.
+- [x] **Audit cleared** (#11): the 16 moderate warnings all rooted in
+      two build-time CVEs — `postcss < 8.5.10` (XSS in CSS stringify,
+      build-only via `@expo/metro-config`) and `uuid < 11.1.1` (buffer
+      bounds in `v3/v5/v6`, build-only via `xcode`). Resolved via npm
+      `overrides` in package.json that lift both deps past the patch
+      threshold without bumping the SDK. `npm audit` reports **0
+      vulnerabilities**; full verification (tsc / 105 tests / bundle)
+      passed.
 - [ ] The Phase 1 commit referenced `status/STATUS.md`, which was never
       committed — confirm whether that doc should live in the repo.
 - [x] `experiments.reactCompiler` disabled in `app.json` — the
