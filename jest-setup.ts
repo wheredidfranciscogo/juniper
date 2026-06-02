@@ -77,6 +77,22 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: null })),
 }));
 
+// AsyncStorage is native — default to "no persisted state" so each test
+// starts empty. Tests that want to exercise hydration can override.
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+    clear: jest.fn(() => Promise.resolve()),
+    getAllKeys: jest.fn(() => Promise.resolve([])),
+    multiGet: jest.fn(() => Promise.resolve([])),
+    multiSet: jest.fn(() => Promise.resolve()),
+    multiRemove: jest.fn(() => Promise.resolve()),
+  },
+}));
+
 // Haptics talks to a native module that doesn't exist under Jest.
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),
@@ -85,3 +101,15 @@ jest.mock('expo-haptics', () => ({
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
+
+// The store's hydration effect resolves on a microtask, which fires after
+// short synchronous tests have already exited renderHook. The resulting
+// "not wrapped in act" warning is benign here — the test never asserts on
+// post-hydration state. Patch console.error at setup-file load time so
+// react-test-renderer doesn't cache the original reference and bypass us.
+// Real act violations elsewhere still surface.
+const originalConsoleError = console.error;
+console.error = (...args: unknown[]) => {
+  if (typeof args[0] === 'string' && args[0].includes('not wrapped in act')) return;
+  originalConsoleError(...args);
+};

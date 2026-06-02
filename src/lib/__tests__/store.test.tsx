@@ -1,9 +1,17 @@
 import * as React from 'react';
-import { renderHook, act } from '@testing-library/react-native';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { StoreProvider, useStore } from '../store';
 import { PLANTS_SEED } from '../../data/seed';
 import type { Plant } from '../../data/types';
+
+const mockedAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+
+beforeEach(() => {
+  mockedAsyncStorage.getItem.mockReset().mockResolvedValue(null);
+  mockedAsyncStorage.setItem.mockReset().mockResolvedValue(undefined);
+});
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <StoreProvider>{children}</StoreProvider>
@@ -116,5 +124,88 @@ describe('addPlant', () => {
     act(() => result.current.addPlant(makePlant({ id: 'olive', name: 'Olive' })));
     expect(result.current.plants.map((p) => p.id)).toContain('olive');
     expect(result.current.log[0]).toMatchObject({ plantId: 'olive', kind: 'joined' });
+  });
+});
+
+describe('persistence', () => {
+  it('starts with hydrated=false and flips to true once AsyncStorage resolves', async () => {
+    const { result } = renderStore();
+    expect(result.current.hydrated).toBe(false);
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+  });
+
+  it('restores onboarded state from a previously saved blob', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        state: {
+          onboarded: true,
+          userName: 'Restored',
+          archetype: 'forager',
+          plants: [makePlant({ id: 'restored', name: 'Restored Plant' })],
+          log: [],
+        },
+      }),
+    );
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.onboarded).toBe(true);
+    expect(result.current.userName).toBe('Restored');
+    expect(result.current.archetype).toBe('forager');
+    expect(result.current.plants.map((p) => p.id)).toEqual(['restored']);
+  });
+
+  it('ignores a persisted blob with a mismatched version', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 999,
+        state: { ...({} as object), onboarded: true, userName: 'Stale' },
+      }),
+    );
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.onboarded).toBe(false);
+    expect(result.current.userName).toBe('');
+  });
+
+  it('survives a corrupt persisted blob without throwing', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce('not json {{{');
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.onboarded).toBe(false);
+  });
+
+  it('saves to AsyncStorage on state change after hydration', async () => {
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    mockedAsyncStorage.setItem.mockClear();
+
+    act(() => {
+      result.current.completeOnboarding({ userName: 'June', archetype: 'whisperer', seed: false });
+    });
+
+    await waitFor(() => {
+      expect(mockedAsyncStorage.setItem).toHaveBeenCalled();
+    });
+    const [key, value] = mockedAsyncStorage.setItem.mock.calls[0];
+    expect(key).toBe('@juniper/store');
+    const blob = JSON.parse(value);
+    expect(blob.version).toBe(1);
+    expect(blob.state.onboarded).toBe(true);
+    expect(blob.state.userName).toBe('June');
+  });
+
+  it('does not overwrite saved state with initialState before hydration', async () => {
+    // If the persistence effect fires before hydration, it would wipe a real
+    // saved state with the empty initialState — a classic store-rehydration bug.
+    mockedAsyncStorage.getItem.mockImplementationOnce(
+      () => new Promise(() => {
+        // Never resolves — hydration never completes during this test window.
+      }),
+    );
+    renderStore();
+    // Give microtasks a chance to flush; setItem must remain unbcalled.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(mockedAsyncStorage.setItem).not.toHaveBeenCalled();
   });
 });

@@ -8,15 +8,28 @@
  * flips, the navigator's screen set changes and React Navigation
  * reconciles the active route — no imperative cross-stack router calls
  * required.
+ *
+ * Renders nothing until the store has hydrated from AsyncStorage so the
+ * user doesn't see a flash of the onboarding flow before persisted state
+ * loads. The native splash stays visible during this window.
  */
 
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { colors } from '../theme';
 import { useStore } from './store';
 
 export function RootStack() {
-  const { onboarded } = useStore();
+  const { onboarded, hydrated } = useStore();
+
+  useEffect(() => {
+    if (hydrated) SplashScreen.hideAsync().catch(() => {});
+  }, [hydrated]);
+
+  if (!hydrated) return null;
+
   return (
     <Stack
       screenOptions={{
