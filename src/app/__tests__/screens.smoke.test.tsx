@@ -116,9 +116,17 @@ describe('Garden', () => {
 });
 
 describe('Log', () => {
-  it('renders the section title', () => {
+  it('renders the empty-state copy when no entries have been recorded', () => {
     renderScreen(<Log />);
     expect(screen.getByText('The Log')).toBeTruthy();
+    expect(screen.getByText("No notes yet. Plants don't mind waiting.")).toBeTruthy();
+  });
+
+  it('renders the seeded feed entries via LogFeed', () => {
+    renderScreen(<Log />, { seed: true });
+    expect(screen.getByText('The Log')).toBeTruthy();
+    // completeOnboarding(seed: true) prepends one "joined" entry per seeded plant.
+    expect(screen.getByText('Marcel joined you.')).toBeTruthy();
   });
 });
 

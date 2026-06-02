@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 
 // Mutable params + router + redirect tracker so each test can drive the path variant.
-let mockParams: { path?: string } = {};
+let mockParams: { path?: string; id?: string } = {};
 const mockRouter = { back: jest.fn(), replace: jest.fn(), push: jest.fn() };
 let lastRedirectHref: string | null = null;
 
@@ -125,5 +125,96 @@ describe('AddEdit — photo path', () => {
     expect(screen.getByText('A LIKENESS')).toBeTruthy();
     expect(screen.getByText('Take photo')).toBeTruthy();
     expect(screen.getByText('From library')).toBeTruthy();
+  });
+});
+
+describe('AddEdit — edit path (id param)', () => {
+  const MARCEL: Plant = {
+    id: 'marcel',
+    name: 'Marcel',
+    species: 'Monstera deliciosa',
+    nickname: 'The dramatic one',
+    pressing: 'moss',
+    icon: 'monstera',
+    waterEvery: 7,
+    daysSinceWater: 3,
+    light: 'bright indirect',
+    temp: 'warm',
+    tendedDays: 100,
+    addedISO: '2025-09-17',
+    photos: [],
+    journal: [],
+  };
+
+  /**
+   * Mounts AddEdit under a StoreProvider that's been seeded with the given
+   * plants. The inner wrapper holds AddEdit's mount until the seed has
+   * actually landed in the store — otherwise AddEdit's useState initialisers
+   * run with the empty store and the form never pre-fills.
+   */
+  function renderWithPlants(plants: Plant[]) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let store: any = null;
+    function SeedAndMount() {
+      const s = useStore();
+      store = s;
+      const seeded = plants.every((target) => s.plants.some((p: Plant) => p.id === target.id));
+      React.useEffect(() => {
+        if (seeded) return;
+        for (const plant of plants) {
+          if (!s.plants.some((p: Plant) => p.id === plant.id)) s.addPlant(plant);
+        }
+      }, [seeded, s]);
+      if (!seeded) return null;
+      return <AddEdit />;
+    }
+    const result = render(
+      <StoreProvider>
+        <SeedAndMount />
+      </StoreProvider>,
+    );
+    return { ...result, getStore: () => store };
+  }
+
+  it('pre-fills the form with the matching plant', () => {
+    mockParams = { id: 'marcel' };
+    renderWithPlants([MARCEL]);
+
+    expect(screen.getByText('EDITING')).toBeTruthy();
+    expect(screen.getByDisplayValue('Marcel')).toBeTruthy();
+    expect(screen.getByDisplayValue('Monstera deliciosa')).toBeTruthy();
+    expect(screen.getByDisplayValue('The dramatic one')).toBeTruthy();
+    expect(screen.getByText('Water every 7 days')).toBeTruthy();
+  });
+
+  it('saves via updatePlant and preserves untouched fields', () => {
+    mockParams = { id: 'marcel' };
+    const { getStore } = renderWithPlants([MARCEL]);
+
+    fireEvent.changeText(screen.getByDisplayValue('Marcel'), 'Marcel II');
+    fireEvent.press(screen.getByText('Save'));
+
+    const updated = getStore().plants.find((p: Plant) => p.id === 'marcel');
+    expect(updated.name).toBe('Marcel II');
+    // Untouched fields preserved.
+    expect(updated.daysSinceWater).toBe(3);
+    expect(updated.tendedDays).toBe(100);
+    expect(updated.addedISO).toBe('2025-09-17');
+    expect(lastRedirectHref).toBe('/garden');
+  });
+
+  it('redirects to /garden when the id refers to no existing plant', () => {
+    mockParams = { id: 'ghost' };
+    render(withStore(<AddEdit />));
+    expect(lastRedirectHref).toBe('/garden');
+  });
+
+  it('does not show the photo or search blocks while editing, even with path=photo', () => {
+    mockParams = { id: 'marcel', path: 'photo' };
+    renderWithPlants([MARCEL]);
+
+    expect(screen.queryByText('A LIKENESS')).toBeNull();
+    expect(screen.queryByText('FIND THEIR NAME')).toBeNull();
+    expect(screen.getByText('EDITING')).toBeTruthy();
   });
 });
