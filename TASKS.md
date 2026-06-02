@@ -104,9 +104,11 @@ emulator, a native build, or network/API access that's blocked here.
       decide whether to `npm audit fix`.
 - [ ] The Phase 1 commit referenced `status/STATUS.md`, which was never
       committed — confirm whether that doc should live in the repo.
-- [ ] `experiments.reactCompiler: true` in `app.json` is still on. Worth
-      keeping an eye on after the routing debug — experimental features
-      can interact with hooks in subtle ways.
+- [x] `experiments.reactCompiler` disabled in `app.json` — the
+      experimental compiler was a candidate for the post-onboarding
+      routing surprises; turning it off is risk-mitigation. `typedRoutes`
+      stays on (zero runtime cost, types are useful once we adopt typed
+      Href). See issue #12.
 
 ## Next likely tasks
 
