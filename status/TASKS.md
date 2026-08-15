@@ -22,10 +22,18 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 ### The loop (D7 — this is the product)
 
-- [ ] **EAS setup first** (D6). Add `eas.json` (development / preview / production, copied
-      from Alchemilla), set bundle identifiers, and cut a **development build**. Notifications
-      cannot be trusted in Expo Go — build the dev client *before* writing the scheduler, not
-      after debugging phantom failures.
+- [~] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
+      config plugin and the EAS project are all in (`c3a4796`, `853c749`). Android
+      development build cut. **One step left, and it needs a human:**
+  - [ ] **Cut the iOS development build interactively.** EAS has to create the ad-hoc
+        provisioning profile and distribution certificate, and it refuses to do that in
+        `--non-interactive`. Your iPhone (UDID `00008150-…E9401C`) is already registered
+        under team `62NSMDCDAD` from the Alchemilla work, and the Apple session is cached,
+        so this should be a matter of confirming the prompts:
+        ```
+        cd juniper-app && npx eas build --profile development --platform ios
+        ```
+        Install the result, then run `npx expo start --dev-client --port 8082` and scan.
 - [ ] **`src/lib/notifications.ts`** — port the shape of
       `alchemilla-app/src/lib/notifications.ts`: a rolling queue of one-shot local
       notifications, an idempotent `syncReminders()` that cancels all and reschedules, an
