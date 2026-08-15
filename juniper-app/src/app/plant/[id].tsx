@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -13,6 +13,8 @@ import { colors, fonts, radii, spacing, text } from '../../theme';
 import { useStore } from '../../lib/store';
 import { daysSinceWatered } from '../../lib/watering';
 import { tendedDays } from '../../lib/stats';
+import { savePhoto } from '../../lib/photos';
+import { captureFromCamera, pickFromLibrary } from '../../lib/image-picker';
 import type { LogKind } from '../../data/types';
 import { Pressing } from '../../components/Pressing';
 import { WaterButton } from '../../components/WaterButton';
@@ -34,7 +36,8 @@ export default function PlantDetail() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { plants, log, waterPlant, logAction } = useStore();
+  const { plants, log, waterPlant, logAction, updatePlant } = useStore();
+  const [addingPhoto, setAddingPhoto] = React.useState(false);
   const plant = plants.find((p) => p.id === id);
 
   const plantLog = React.useMemo(
@@ -52,6 +55,42 @@ export default function PlantDetail() {
 
   const watered = daysSinceWatered(plant, new Date()) === 0;
   const wateredLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long' });
+
+  /**
+   * Add a photograph to this plant's record.
+   *
+   * The picked image is copied out of the picker's cache directory before its URI is
+   * stored — see src/lib/photos.ts. Storing the cache URI directly would work today and
+   * become a broken image whenever the OS reclaimed the space.
+   */
+  const onAddPhoto = () => {
+    const run = async (pick: () => Promise<string | null>) => {
+      setAddingPhoto(true);
+      try {
+        const picked = await pick();
+        if (!picked) return;
+
+        const stored = await savePhoto(picked);
+        if (!stored) {
+          Alert.alert('Could not save that photo', 'The image could not be copied. Try again.');
+          return;
+        }
+
+        const date = new Date().toISOString().slice(0, 10);
+        // Newest first, matching how the timeline reads.
+        updatePlant(plant.id, { photos: [{ date, uri: stored }, ...plant.photos] });
+        logAction(plant.id, 'observed', `Photographed ${plant.name}.`);
+      } finally {
+        setAddingPhoto(false);
+      }
+    };
+
+    Alert.alert('Add a photograph', undefined, [
+      { text: 'Take one', onPress: () => void run(captureFromCamera) },
+      { text: 'Choose from library', onPress: () => void run(pickFromLibrary) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   return (
     <View style={styles.root}>
@@ -95,10 +134,22 @@ export default function PlantDetail() {
             <ActionBtn Icon={IconJournal} label="Note" onPress={() => logAction(plant.id, 'note', 'Wrote a note.')} />
           </View>
 
-          {/* Photo timeline */}
-          {plant.photos.length > 0 && (
+          {/* Photo timeline. Always rendered — the add tile is the only way to start one. */}
+          {(
             <View style={styles.section}>
-              <Text style={styles.sectionOverline}>A SLOW RECORD</Text>
+              <View style={styles.sectionHead}>
+                <Text style={styles.sectionOverline}>A SLOW RECORD</Text>
+                <Pressable onPress={onAddPhoto} hitSlop={10} disabled={addingPhoto}>
+                  <Text style={styles.sectionAction}>
+                    {addingPhoto ? 'adding…' : '+ photo'}
+                  </Text>
+                </Pressable>
+              </View>
+              {plant.photos.length === 0 && (
+                <Text style={styles.timelineEmpty}>
+                  No photographs yet. The first one is the start of the record.
+                </Text>
+              )}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -106,7 +157,18 @@ export default function PlantDetail() {
               >
                 {plant.photos.map((photo, i) => (
                   <View key={i} style={styles.timelineTile}>
-                    <Pressing plant={plant} ratio={4 / 5} radius={radii.md} />
+                    {/* A real photo when one was taken; the herbarium pressing stands in
+                        for the seeded history, which has dates but no images. */}
+                    {photo.uri ? (
+                      <Image
+                        source={{ uri: photo.uri }}
+                        style={styles.timelinePhoto}
+                        resizeMode="cover"
+                        accessibilityIgnoresInvertColors
+                      />
+                    ) : (
+                      <Pressing plant={plant} ratio={4 / 5} radius={radii.md} />
+                    )}
                     <Text style={styles.timelineDate}>
                       {new Date(photo.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase()}
                     </Text>
@@ -214,6 +276,10 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.section, gap: spacing.base },
   sectionOverline: text.overlineMd,
 
+  sectionHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionAction: { ...text.hint, color: colors.clayDeep },
+  timelineEmpty: { ...text.hint, marginTop: spacing.xs },
+  timelinePhoto: { width: 120, height: 150, borderRadius: radii.md, backgroundColor: colors.surface2 },
   timeline: { gap: 12, paddingRight: spacing.page },
   timelineTile: { width: 120, gap: 8 },
   timelineDate: { ...text.monoTimestamp, fontSize: 9, letterSpacing: 1.4 },

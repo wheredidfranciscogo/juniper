@@ -122,6 +122,39 @@ jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: { DATE: 'date', DAILY: 'daily', TIME_INTERVAL: 'timeInterval' },
 }));
 
+// expo-file-system's SDK 54 API is a native-backed class (File/Directory/Paths). Stub it
+// with plain objects so backup.ts and photos.ts can be tested for their decisions —
+// what gets written, when a copy is refused, what never gets deleted — without a device.
+jest.mock('expo-file-system', () => {
+  const makeFile = jest.fn(() => ({
+    exists: false,
+    uri: 'file:///cache/stub.json',
+    create: jest.fn(),
+    write: jest.fn(),
+    delete: jest.fn(),
+    copy: jest.fn(),
+    move: jest.fn(),
+    text: jest.fn(() => Promise.resolve('')),
+  }));
+  const makeDirectory = jest.fn(() => ({
+    exists: true,
+    uri: 'file:///documents/photos/',
+    create: jest.fn(),
+    delete: jest.fn(),
+    list: jest.fn(() => []),
+  }));
+  return {
+    File: makeFile,
+    Directory: makeDirectory,
+    Paths: { cache: 'file:///cache/', document: 'file:///documents/' },
+  };
+});
+
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+  shareAsync: jest.fn(() => Promise.resolve()),
+}));
+
 // The store's hydration effect resolves on a microtask, which fires after
 // short synchronous tests have already exited renderHook. The resulting
 // "not wrapped in act" warning is benign here — the test never asserts on

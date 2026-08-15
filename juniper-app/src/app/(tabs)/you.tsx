@@ -14,12 +14,22 @@
  *     sensible times are genuinely enough.
  *  3. "Watering schedule" is omitted — cadence is per plant and already lives on the
  *     plant's edit form. A global version would contradict it.
- *  4. "Export your journal" is omitted until it works. It's queued as its own task;
- *     it gets a row when there's something behind it.
+ *  4. "Export your journal" is now a real row — it writes the whole garden to JSON and
+ *     hands it to the share sheet. It was held back until it did something.
  */
 
 import * as React from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radii, spacing, text } from '../../theme';
@@ -32,6 +42,7 @@ import {
   hasPermission,
   setReminder,
 } from '../../lib/notifications';
+import { exportBackup } from '../../lib/backup';
 
 /** Six sensible times. See divergence note 2. */
 const TIME_OPTIONS = ['07:00', '08:00', '09:00', '12:00', '18:00', '20:00'];
@@ -46,12 +57,13 @@ function prettyTime(hhmm: string): string {
 
 export default function You() {
   const insets = useSafeAreaInsets();
-  const { userName, archetype, plants } = useStore();
+  const { userName, archetype, plants, log } = useStore();
 
   const [enabled, setEnabled] = React.useState(false);
   const [time, setTime] = React.useState(DEFAULT_TIME);
   const [denied, setDenied] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
 
   // Load the stored preference once. If the pref says "on" but the OS permission has
   // since been revoked in Settings, show the toggle as off — claiming reminders are on
@@ -84,6 +96,24 @@ export default function You() {
       return;
     }
     setDenied(false);
+  };
+
+  const onExport = async () => {
+    setExporting(true);
+    try {
+      const result = await exportBackup({ onboarded: true, userName, archetype, plants, log });
+      if (result.ok) return;
+      Alert.alert(
+        result.reason === 'empty' ? 'Nothing to back up yet' : 'Could not export',
+        result.reason === 'empty'
+          ? 'Add a plant first — then there will be a garden worth keeping a copy of.'
+          : result.reason === 'unavailable'
+            ? 'Sharing is not available on this device.'
+            : 'Something went wrong writing the file. Try again.',
+      );
+    } finally {
+      setExporting(false);
+    }
   };
 
   const onPickTime = async (next: string) => {
@@ -186,6 +216,26 @@ export default function You() {
         </Text>
       )}
 
+      {/* ---------- Your garden ---------- */}
+      <Text style={[styles.overline, styles.sectionGap]}>YOUR GARDEN</Text>
+      <View style={styles.card}>
+        <Pressable
+          style={styles.row}
+          onPress={onExport}
+          disabled={exporting}
+          accessibilityRole="button"
+        >
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>Save a copy</Text>
+            <Text style={styles.rowHint}>
+              Writes your plants, photos-list and journal to a file you can keep somewhere
+              safe. Juniper doesn&apos;t upload it — you choose where it goes.
+            </Text>
+          </View>
+          {exporting ? <ActivityIndicator color={colors.inkFaint} /> : <Text style={styles.chevron}>→</Text>}
+        </Pressable>
+      </View>
+
       {/* ---------- About ---------- */}
       <Text style={[styles.overline, styles.sectionGap]}>ABOUT</Text>
       <View style={styles.card}>
@@ -273,6 +323,7 @@ const styles = StyleSheet.create({
   },
   noticeText: { ...text.hint, color: colors.dried },
 
+  chevron: { ...text.hint, color: colors.inkFaint, fontSize: 16 },
   footnote: { ...text.hint, paddingHorizontal: spacing.xs },
   footer: { ...text.footer, textAlign: 'center', marginTop: spacing.section },
 });

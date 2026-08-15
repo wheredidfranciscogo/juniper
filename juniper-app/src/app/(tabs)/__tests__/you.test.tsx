@@ -5,8 +5,10 @@
  */
 
 import * as React from 'react';
+import { Alert } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
+import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import You from '../you';
@@ -20,6 +22,7 @@ jest.mock('react-native-safe-area-context', () => ({
 
 const mockNotifications = Notifications as jest.Mocked<typeof Notifications>;
 const mockStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+const mockSharing = Sharing as jest.Mocked<typeof Sharing>;
 
 const plant = (over: Partial<Plant> = {}): Plant => ({
   id: 'marcel',
@@ -77,6 +80,8 @@ beforeEach(() => {
     canAskAgain: true,
   } as never);
   mockNotifications.requestPermissionsAsync.mockResolvedValue({ granted: true } as never);
+  mockSharing.isAvailableAsync.mockResolvedValue(true);
+  mockSharing.shareAsync.mockResolvedValue(undefined as never);
 });
 
 describe('You — identity and stats', () => {
@@ -180,5 +185,40 @@ describe('You — reminders', () => {
     mockStorage.getItem.mockResolvedValue(JSON.stringify({ enabled: true, time: '09:00' }));
     await mount([]);
     await waitFor(() => expect(screen.getByText(/add a plant and the first nudge/)).toBeTruthy());
+  });
+});
+
+describe('You — backup', () => {
+  it('exports the garden to the share sheet', async () => {
+    await mount([plant()]);
+    // Seed adds the plant in an effect; pressing before it lands would exercise the
+    // empty-garden path instead of the one under test.
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Save a copy'));
+    });
+
+    await waitFor(() => expect(mockSharing.shareAsync).toHaveBeenCalled());
+    const [, options] = mockSharing.shareAsync.mock.calls[0];
+    expect(options).toEqual(expect.objectContaining({ mimeType: 'application/json' }));
+  });
+
+  it('says so plainly rather than sharing an empty file', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await mount([]);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Save a copy'));
+    });
+
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('Nothing to back up yet', expect.any(String)));
+    expect(mockSharing.shareAsync).not.toHaveBeenCalled();
+    alert.mockRestore();
+  });
+
+  it('makes clear that Juniper is not the one uploading it', async () => {
+    await mount();
+    expect(screen.getByText(/you choose where it goes/)).toBeTruthy();
   });
 });

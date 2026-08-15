@@ -71,11 +71,27 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       incremented, so Plant Detail read "TENDED FOR 247 DAYS" forever — and the seed's stored
       values had already drifted out of step with their own `addedISO`. Now derived in
       `src/lib/stats.ts`, along with the garden stats. 12 tests.
-- [ ] **Backup export** — one button, garden to JSON, straight to the share sheet
-      (`expo-sharing`, already proven in Alchemilla). Cheap insurance against D2's one downside.
-- [ ] **Real photos** — `expo-image-picker` is already a dependency. Capture to the app's
-      document directory, store the URI on `PlantPhoto` (the field already exists), render on
-      the timeline alongside the pressings.
+- [x] **Backup export** — "Save a copy" on the You tab writes the whole garden to
+      `juniper-garden-YYYY-MM-DD.json` and hands it to the share sheet. `buildBackup` is pure
+      and node-testable; the file goes to the CACHE directory, not documents, because it is a
+      transient artefact and writing it to documents would accumulate a full copy of the
+      garden on every export. Refuses to export an empty garden. 10 tests.
+- [ ] **Backup IMPORT — the other half, and the honest gap.** An export you cannot restore is
+      a data dump, not insurance. Restoring needs a file picker (`expo-document-picker`, a new
+      dependency) and a merge decision: replace the garden wholesale, or merge by plant id and
+      reconcile conflicts. Until this lands, the export protects you only if you are willing to
+      hand the JSON back to a future version.
+- [x] **Real photos** — picked images are copied out of the picker's cache directory into the
+      app's document directory before their URI is stored (`src/lib/photos.ts`), because the OS
+      may clear that cache at any time and a stored cache URI becomes a broken image weeks
+      later. Add-photo affordance on Plant Detail's "A SLOW RECORD"; both camera and library.
+      13 tests.
+- [x] **Fixed: the photo timeline never displayed photos.** It rendered a `Pressing`
+      placeholder for every entry and never read `photo.uri` — so the image captured during
+      Add Plant was stored and then never shown to anyone. Third instance of the same shape as
+      the `daysSinceWater` and `tendedDays` bugs: a field written but never actually consumed.
+      The timeline now renders the real image when there is one and falls back to the pressing
+      for the seeded history, which has dates but no images.
 
 ### Ship
 

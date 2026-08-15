@@ -37,6 +37,7 @@ import {
   type SpeciesResult,
 } from '../../lib/perenual';
 import { captureFromCamera, pickFromLibrary } from '../../lib/image-picker';
+import { savePhoto } from '../../lib/photos';
 
 type Path = 'photo' | 'search' | 'manual';
 
@@ -218,7 +219,11 @@ function PhotoBlock({
     setBusy(true);
     try {
       const uri = kind === 'camera' ? await captureFromCamera() : await pickFromLibrary();
-      if (uri) onCapture(uri);
+      if (!uri) return;
+      // Copy out of the picker's cache directory before the URI is held anywhere —
+      // the OS may clear that cache at any point. See src/lib/photos.ts.
+      const stored = await savePhoto(uri);
+      if (stored) onCapture(stored);
     } finally {
       setBusy(false);
     }
