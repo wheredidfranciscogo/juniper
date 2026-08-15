@@ -24,8 +24,10 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 - [~] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
       config plugin and the EAS project are all in (`c3a4796`, `853c749`).
-      **Android development build #1 succeeded** 2026-08-15 (17 min, Expo SDK 54, v1.0.0):
-      [APK](https://expo.dev/artifacts/eas/FtxQbualPAfXgh9Jf2JE95Af_5ye-A7jYU0TRk5eqkY.apk).
+      **Android development build #3** (2026-08-15) is the current one — it carries the
+      reminders, the You tab, backup export and photos:
+      [APK](https://expo.dev/artifacts/eas/UtsXgfznG1J-A_4vf3Q0uSjzcY2TaR-7ICP9kbVh4LI.apk).
+      Builds #1 and #2 are superseded.
       **One step left, and it needs a human:**
   - [ ] **Cut the iOS development build interactively.** EAS has to create the ad-hoc
         provisioning profile and distribution certificate, and it refuses to do that in
