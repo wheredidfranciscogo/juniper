@@ -14,34 +14,11 @@ If an item here contradicts the code, trust the code and fix this file.
 If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 -->
 
-## Phase 0 — Restructure (one pass, then never again)
-
-Setting Juniper up the way Alchemilla is set up. Nothing else starts until this lands.
-
-- [ ] **Collapse to one repo** (D4). Make `juniper-project/` the git root at
-      `github.com/wheredidfranciscogo/juniper`, preserving `juniper-app`'s history as the
-      base. Bring `juniper-design/` and `status/` under version control for the first time.
-      Archive the old standalone `juniper-app` repo.
-- [ ] **Commit the stranded working-tree edits** in `juniper-app`: `app.json` bundle
-      identifiers and the `package.json` `expo run:*` script switch. They've been sitting
-      uncommitted since June.
-- [ ] **Remove the stray `juniper-app/hyperlocal/` folder** — untracked spillover from the
-      other project that shares the dev-server port. Three files, none of them Juniper's.
-- [ ] **Replace the website with static HTML** (D5). Delete the Next.js tracker from
-      `juniper-website/`; write `index.html`, `privacy.html`, `terms.html`, `styles.css`.
-      Add root `vercel.json` with `outputDirectory: "juniper-website"`. The old tracker stays
-      archived at `github.com/…/jungle-jungle` — nothing is lost.
-- [ ] **Finish the rename** (D9). `com.wheredidfranciscogo.juniper`, scheme `juniper`,
-      Maestro `appId`, and every remaining "jungle" in copy and config. **Do not touch the
-      AsyncStorage key `@juniper/store`** — it is user-data-bearing and already correct.
-- [ ] **Strip the web target** (D1). Drop `react-native-web` and `react-dom`; remove the
-      `web` block from `app.json` and the `web` npm script. Note: CI currently uses
-      `expo export --platform web` as a bundle check — swap it for `--platform ios`.
-- [ ] **Delete Supabase from the codebase and docs** (D2). No `supabase.ts` exists yet, so
-      this is comments and plan references only — including the `schema.sql`-style leftovers
-      and any "replace with Supabase-backed hooks" notes in `src/lib/store.tsx`.
-
 ## Phase 1 — Useful
+
+<!-- Phase 0 (the restructure) shipped 2026-08-15 in commits 570d211, bf0f3ff, 2e230f0.
+     See the Done section. -->
+
 
 ### The loop (D7 — this is the product)
 
@@ -94,9 +71,29 @@ Setting Juniper up the way Alchemilla is set up. Nothing else starts until this 
 
 <!-- Phase 1's completed [x] items live in PLAN.md. New completions get appended here. -->
 
-- [x] **2026-08-15 — Plan rewritten against a decision record.** `juniper-design/DECISIONS.md`
-      created (D1–D9); PLAN.md and this file rewritten to match. Supabase cut, web app cut,
-      Phase 3 deleted, notifications promoted to the front of the queue.
+### 2026-08-15 — Phase 0 restructure
+
+- [x] **Plan rewritten against a decision record.** `juniper-design/DECISIONS.md` created
+      (D1–D9); PLAN.md, STATUS.md and this file rewritten to match. Supabase cut, web app
+      cut, Phase 3 deleted, notifications promoted to the front of the queue.
+- [x] **Collapsed to one repo** (`570d211`). Three repos → one at the wrapper folder,
+      `juniper-app` history preserved (87 renames detected). `juniper-design/` and `status/`
+      now under version control. Stranded June working-tree edits committed; stray
+      `hyperlocal/` removed.
+- [x] **Website replaced with static HTML** (`bf0f3ff`). Four files, root `vercel.json`,
+      palette copied from `src/theme/tokens.ts`. Old tracker preserved at
+      `github.com/…/jungle-jungle`; its unpushed branches were verified present on that
+      remote and a local stash archived to `.archive/` before deletion.
+- [x] **Rename finished + web target dropped** (`2e230f0`). Bundle IDs to
+      `com.wheredidfranciscogo.juniper` ahead of the first build. **The splash screen was
+      still rendering "Jungle Jungle"** despite STATUS.md claiming otherwise since May.
+- [x] **CI un-broken.** `.github/` was inside `juniper-app/`, where GitHub never looks —
+      the collapse had silently disabled it. Moved to the root with
+      `working-directory: juniper-app`; bundle check swapped to `--platform ios`.
+- [x] **Supabase references removed** from `src/lib/store.tsx` and `src/data/seed.ts`,
+      which both described the store as a stopgap awaiting a backend. It isn't (D2).
+- [x] **Verified green after every step**: tsc clean, 12 suites / 105 tests,
+      `expo export --platform ios` produces a 4.16 MB bundle.
 - [x] **Both stale `[!]` blockers cleared.** The Phase 1 checkpoint commit and the
       post-onboarding red overlay were both resolved in git back in May/June; the markers were
       never flipped, which is why the loop reported `blocked` for eleven weeks.

@@ -4,7 +4,10 @@
  * so the app survives reloads. Versioned for forward compatibility; if the
  * schema changes, bump STORAGE_VERSION and the persisted blob is ignored.
  *
- * Phase-1 only — to be replaced with Supabase-backed hooks (task #13).
+ * This is the permanent storage layer, not a stopgap. Juniper holds a few dozen
+ * plants and an append-only event log, read whole on every screen — a versioned
+ * JSON blob is the right shape for that. There is no backend and none is planned.
+ * See juniper-design/DECISIONS.md D2.
  */
 
 import * as React from 'react';

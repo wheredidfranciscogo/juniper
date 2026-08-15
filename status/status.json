@@ -2,21 +2,15 @@
   "project": "juniper",
   "last_run": {
     "timestamp": "2026-08-15T00:00:00+10:00",
-    "mode": "manual-replan",
+    "mode": "manual-restructure",
     "result": "success"
   },
-  "state": "replanned-ready",
-  "progress_pct": 70,
+  "state": "ready",
+  "progress_pct": 72,
   "current_task": null,
-  "last_action": "REPLAN. The project had been reporting 'blocked' since 2026-05-25 on two [!] markers that git had already resolved (checkpoint commit 4bdb8f4 on 05-25; post-onboarding overlay fixed for real in c6b9419 via Stack.Protected). Meanwhile ~20 commits of real work landed through 2026-06-03 that no status doc recorded: Add Plant flow, AsyncStorage persistence, Log tab, Plant Detail edit, a 91-test suite with CI, and an npm audit clean-up. Both stale blockers cleared. Wrote juniper-design/DECISIONS.md (D1-D9) modelled on Alchemilla's decision record — the one mechanism Alchemilla had that Juniper didn't. Rewrote PLAN.md and TASKS.md against it. Key calls: native-only, no web app (D1); on-device AsyncStorage, Supabase deleted from the plan (D2); no sync in v1 and no sync decision yet, because CloudKit doesn't transfer to Android (D3); one repo at the wrapper folder (D4); static-HTML website on Vercel (D5); Expo Go for screens, EAS dev build for notifications, EAS production to ship (D6); the watering reminder IS the product and moves to the front of the queue (D7); Phase 3 social deleted entirely and Phase 2 cut to photos (D8); finish the Jungle Jungle rename before the first build (D9). Progress restated at 70% against the new, much smaller Phase 1.",
-  "next_action": "Phase 0 restructure, in order: (1) collapse the three repos into one at github.com/wheredidfranciscogo/juniper, preserving juniper-app history; (2) commit the stranded app.json/package.json edits and delete the stray juniper-app/hyperlocal/ folder; (3) replace the Next.js tracker in juniper-website/ with static HTML + root vercel.json; (4) finish the rename to com.wheredidfranciscogo.juniper, leaving the AsyncStorage key @juniper/store alone; (5) strip the web target. Then Phase 1 opens with EAS setup and a development build, because the notification scheduler cannot be trusted in Expo Go. Awaiting Francisco's go-ahead on the destructive steps (1) and (3).",
+  "last_action": "REPLAN + PHASE 0 RESTRUCTURE, both shipped. The project had reported 'blocked' since 2026-05-25 on two [!] markers git had already resolved (4bdb8f4; c6b9419 via Stack.Protected), while ~20 commits of June work went unrecorded. Wrote juniper-design/DECISIONS.md (D1-D9) — the mechanism Alchemilla had and Juniper didn't — and rewrote PLAN.md, TASKS.md and STATUS.md against it. Then shipped the restructure in three commits: 570d211 collapsed three repos into one at the wrapper folder with juniper-app's history preserved (87 renames), bringing juniper-design/ and status/ under version control and folding in the June working-tree edits; bf0f3ff replaced the Next.js tracker with a four-file static site deployed from the root via vercel.json; 2e230f0 finished the Jungle Jungle rename to com.wheredidfranciscogo.juniper ahead of the first EAS build and dropped the web target. Two things surfaced that the docs had been wrong about for months: the splash screen was still rendering 'Jungle Jungle', and .github/ sat inside juniper-app/ where GitHub never reads it — so CI had been dead since the collapse and is now fixed with working-directory: juniper-app. Verified green throughout: tsc clean, 12 suites / 105 tests, expo export --platform ios at 4.16 MB.",
+  "next_action": "Phase 1 opens with EAS setup (D6): add eas.json with development/preview/production profiles copied from Alchemilla, then cut a DEVELOPMENT build before writing any scheduler code — local notification behaviour in Expo Go differs from a real build on both platforms, and trusting it produces reminders that work in dev and not in life. Then src/lib/notifications.ts, porting the shape of alchemilla-app/src/lib/notifications.ts (rolling one-shot queue, idempotent syncReminders, Android channel, permission requested post-onboarding) with Juniper's difference: schedule per plant off lastWatered + frequency rather than one daily nudge. Keep nextWateringDate() RN-free so it is node-testable. Remaining human items: push the new repo to github.com/wheredidfranciscogo/juniper and archive the old juniper-app repo; point Vercel at the new repo.",
   "fix_attempts": 0,
-  "blockers": [
-    {
-      "description": "Phase 0 steps 1 and 3 are destructive and outward-facing (new GitHub repo, deletion of the local Next.js web app). The old tracker is preserved at github.com/wheredidfranciscogo/jungle-jungle so nothing is actually lost, but both need an explicit go-ahead before execution.",
-      "needs": "human",
-      "since": "2026-08-15"
-    }
-  ],
+  "blockers": [],
   "open_prs": []
 }

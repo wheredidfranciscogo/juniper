@@ -1,6 +1,7 @@
 /**
  * Seed data ported from juniper-design/data.jsx.
- * Used for the prototype UI phase; replaced by Supabase queries in a later task.
+ * Demo garden used to populate a new install so the app isn't empty on first run.
+ * Not a stand-in for a backend — there isn't one (DECISIONS.md D2).
  */
 
 import type { ArchetypeKey, Archetype, OnboardingAnswers, OnboardingStep, Plant } from './types';
