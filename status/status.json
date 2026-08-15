@@ -1,0 +1,22 @@
+{
+  "project": "juniper",
+  "last_run": {
+    "timestamp": "2026-08-15T00:00:00+10:00",
+    "mode": "manual-replan",
+    "result": "success"
+  },
+  "state": "replanned-ready",
+  "progress_pct": 70,
+  "current_task": null,
+  "last_action": "REPLAN. The project had been reporting 'blocked' since 2026-05-25 on two [!] markers that git had already resolved (checkpoint commit 4bdb8f4 on 05-25; post-onboarding overlay fixed for real in c6b9419 via Stack.Protected). Meanwhile ~20 commits of real work landed through 2026-06-03 that no status doc recorded: Add Plant flow, AsyncStorage persistence, Log tab, Plant Detail edit, a 91-test suite with CI, and an npm audit clean-up. Both stale blockers cleared. Wrote juniper-design/DECISIONS.md (D1-D9) modelled on Alchemilla's decision record — the one mechanism Alchemilla had that Juniper didn't. Rewrote PLAN.md and TASKS.md against it. Key calls: native-only, no web app (D1); on-device AsyncStorage, Supabase deleted from the plan (D2); no sync in v1 and no sync decision yet, because CloudKit doesn't transfer to Android (D3); one repo at the wrapper folder (D4); static-HTML website on Vercel (D5); Expo Go for screens, EAS dev build for notifications, EAS production to ship (D6); the watering reminder IS the product and moves to the front of the queue (D7); Phase 3 social deleted entirely and Phase 2 cut to photos (D8); finish the Jungle Jungle rename before the first build (D9). Progress restated at 70% against the new, much smaller Phase 1.",
+  "next_action": "Phase 0 restructure, in order: (1) collapse the three repos into one at github.com/wheredidfranciscogo/juniper, preserving juniper-app history; (2) commit the stranded app.json/package.json edits and delete the stray juniper-app/hyperlocal/ folder; (3) replace the Next.js tracker in juniper-website/ with static HTML + root vercel.json; (4) finish the rename to com.wheredidfranciscogo.juniper, leaving the AsyncStorage key @juniper/store alone; (5) strip the web target. Then Phase 1 opens with EAS setup and a development build, because the notification scheduler cannot be trusted in Expo Go. Awaiting Francisco's go-ahead on the destructive steps (1) and (3).",
+  "fix_attempts": 0,
+  "blockers": [
+    {
+      "description": "Phase 0 steps 1 and 3 are destructive and outward-facing (new GitHub repo, deletion of the local Next.js web app). The old tracker is preserved at github.com/wheredidfranciscogo/jungle-jungle so nothing is actually lost, but both need an explicit go-ahead before execution.",
+      "needs": "human",
+      "since": "2026-08-15"
+    }
+  ],
+  "open_prs": []
+}

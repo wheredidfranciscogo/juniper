@@ -1,0 +1,212 @@
+/* Jungle Jungle — herbarium tokens */
+:root {
+  --paper: #FAF9F5;
+  --surface: #F5F2EA;
+  --surface-2: #EFEBDF;
+  --ink: #2D2A26;
+  --ink-muted: #7A716A;
+  --ink-faint: #A89F95;
+  --clay: #CC785C;
+  --clay-deep: #B5654A;
+  --clay-soft: #E8B8A6;
+  --moss: #3F5D3E;
+  --moss-soft: #6B8A6A;
+  --dried: #B8826C;
+  --hairline: #E8E2D5;
+  --hairline-strong: #D9D2C2;
+
+  --serif: 'Source Serif 4', 'Source Serif Pro', 'Iowan Old Style', Georgia, serif;
+  --sans: 'Public Sans', -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+
+  --ease: cubic-bezier(0.32, 0.72, 0.32, 1);
+  --ease-long: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #2a2620;
+  font-family: var(--sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'ss01', 'ss02';
+}
+
+/* paper texture — extremely subtle */
+.paper-bg {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(204, 120, 92, 0.025) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(63, 93, 62, 0.02) 0%, transparent 50%);
+  position: relative;
+}
+.paper-bg::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(90deg,
+      transparent, transparent 2px,
+      rgba(45, 42, 38, 0.008) 2px, rgba(45, 42, 38, 0.008) 3px);
+  opacity: 0.7;
+}
+
+.serif { font-family: var(--serif); }
+.sans  { font-family: var(--sans); }
+.mono  { font-family: var(--mono); font-feature-settings: 'tnum'; }
+.italic { font-style: italic; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+.hairline { background: var(--hairline); }
+.hairline-t { border-top: 1px solid var(--hairline); }
+.hairline-b { border-bottom: 1px solid var(--hairline); }
+
+button, input, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+
+/* Card */
+.jj-card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--hairline);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* Clay button */
+.jj-btn-clay {
+  background: var(--clay);
+  color: #FAF9F5;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: background 280ms var(--ease), transform 280ms var(--ease);
+}
+.jj-btn-clay:hover { background: var(--clay-deep); }
+.jj-btn-clay:active { transform: scale(0.98); }
+.jj-btn-clay[disabled] {
+  background: var(--surface-2); color: var(--ink-muted); cursor: default;
+}
+
+.jj-btn-ghost {
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+  border-radius: 12px;
+  padding: 13px 18px;
+  background: transparent;
+  font-weight: 500;
+  font-size: 15px;
+  transition: background 240ms var(--ease);
+}
+.jj-btn-ghost:hover { background: var(--surface); }
+
+/* Water ripple — single slow moss expansion */
+@keyframes jj-ripple {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.55; }
+  60%  { opacity: 0.35; }
+  100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
+}
+.jj-ripple-dot {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--moss);
+  pointer-events: none;
+  animation: jj-ripple 900ms var(--ease-long) forwards;
+}
+
+/* Page fade */
+@keyframes jj-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.jj-fade { animation: jj-fade-in 360ms var(--ease) both; }
+
+/* Hide scrollbars cleanly */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Progress hairline */
+.jj-progress {
+  height: 1px;
+  background: var(--hairline);
+  position: relative;
+}
+.jj-progress > span {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--ink);
+  transition: width 500ms var(--ease-long);
+}
+
+/* Plant-photo placeholder — herbarium pressing */
+.jj-pressing {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(255,253,247,0.5) 0%, transparent 50%),
+    linear-gradient(135deg, #ECE6D5 0%, #DDD3BC 100%);
+  overflow: hidden;
+}
+.jj-pressing.moss {
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(255,253,247,0.4) 0%, transparent 50%),
+    linear-gradient(135deg, #C8CFB8 0%, #97A48A 100%);
+}
+.jj-pressing.clay {
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(255,253,247,0.45) 0%, transparent 50%),
+    linear-gradient(135deg, #E8C9B7 0%, #C99A82 100%);
+}
+.jj-pressing.deep {
+  background:
+    radial-gradient(ellipse at 30% 25%, rgba(255,253,247,0.3) 0%, transparent 50%),
+    linear-gradient(135deg, #6B7758 0%, #3F4B36 100%);
+}
+
+/* Chip — hairline filter */
+.jj-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 9999px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  background: transparent;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transition: all 220ms var(--ease);
+}
+.jj-chip.active {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* Tab bar */
+.jj-tabbar {
+  display: flex;
+  border-top: 1px solid var(--hairline);
+  background: var(--paper);
+  padding: 10px 8px 0;
+}
+.jj-tabbar button {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 0 10px;
+  color: var(--ink-faint);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  transition: color 200ms var(--ease);
+}
+.jj-tabbar button.active { color: var(--ink); }

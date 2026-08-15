@@ -1,4 +1,4 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Juniper — one repo, three folders. Paths are relative to the project root.
 
 # dependencies
 node_modules/
@@ -9,7 +9,11 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Generated native folders (Continuous Native Generation — never commit these)
+/juniper-app/ios/
+/juniper-app/android/
+
+# Native signing material — never commit
 .kotlin/
 *.orig.*
 *.jks
@@ -39,9 +43,10 @@ yarn-error.*
 
 # testing
 /coverage
+juniper-app/coverage/
 
-example
+# EAS
+.easignore
 
-# generated native folders
-/ios
-/android
+# Local archive of pre-collapse artefacts (see DECISIONS.md D4)
+.archive/
