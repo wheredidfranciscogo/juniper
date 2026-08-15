@@ -102,6 +102,26 @@ jest.mock('expo-haptics', () => ({
   ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
 }));
 
+// expo-notifications registers device-push listeners as an import side effect, which
+// both warns loudly under Jest and reaches for native modules that aren't there. Juniper
+// only ever schedules LOCAL notifications, so none of that machinery is wanted — stub the
+// surface the app actually calls. The scheduling *decisions* are tested for real in
+// src/lib/__tests__/watering.test.ts, which is pure and needs no mock at all.
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn(() => Promise.resolve()),
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true, canAskAgain: true })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  scheduleNotificationAsync: jest.fn(() => Promise.resolve('notification-id')),
+  cancelAllScheduledNotificationsAsync: jest.fn(() => Promise.resolve()),
+  getAllScheduledNotificationsAsync: jest.fn(() => Promise.resolve([])),
+  getLastNotificationResponseAsync: jest.fn(() => Promise.resolve(null)),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  AndroidImportance: { DEFAULT: 3, HIGH: 4, LOW: 2 },
+  SchedulableTriggerInputTypes: { DATE: 'date', DAILY: 'daily', TIME_INTERVAL: 'timeInterval' },
+}));
+
 // The store's hydration effect resolves on a microtask, which fires after
 // short synchronous tests have already exited renderHook. The resulting
 // "not wrapped in act" warning is benign here — the test never asserts on

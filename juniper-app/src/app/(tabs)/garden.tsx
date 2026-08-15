@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing, text } from '../../theme';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
+import { daysUntilWater, isThirsty } from '../../lib/watering';
 import { Pressing } from '../../components/Pressing';
 
 type Filter = 'all' | 'thirsty' | 'indoor' | 'outdoor';
@@ -30,7 +31,7 @@ export default function Garden() {
   const [filter, setFilter] = React.useState<Filter>('all');
 
   const filtered = React.useMemo(() => {
-    if (filter === 'thirsty') return plants.filter((p) => p.daysSinceWater >= p.waterEvery);
+    if (filter === 'thirsty') return plants.filter((p) => isThirsty(p, new Date()));
     return plants;
   }, [plants, filter]);
 
@@ -93,8 +94,9 @@ function Row({
   isFirst: boolean;
   onPress: () => void;
 }) {
-  const thirsty = plant.daysSinceWater >= plant.waterEvery;
-  const daysRemaining = plant.waterEvery - plant.daysSinceWater;
+  const now = new Date();
+  const thirsty = isThirsty(plant, now);
+  const daysRemaining = daysUntilWater(plant, now);
   return (
     <Pressable
       onPress={onPress}

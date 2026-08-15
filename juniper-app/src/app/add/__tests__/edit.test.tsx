@@ -87,7 +87,8 @@ let store: any = null;
     const added = store?.plants.find((p: Plant) => p.name === 'Fernando');
     expect(added).toBeTruthy();
     expect(added?.species).toBe('Nephrolepis exaltata');
-    expect(added?.daysSinceWater).toBe(0);
+    // A new plant counts as watered now, so its first reminder is a full cadence away.
+    expect(Date.now() - Date.parse(added!.lastWateredISO)).toBeLessThan(5_000);
     expect(added?.tendedDays).toBe(0);
     expect(added?.photos).toEqual([]);
     // The store also prepends a 'joined' log entry per addPlant().
@@ -137,7 +138,7 @@ describe('AddEdit — edit path (id param)', () => {
     pressing: 'moss',
     icon: 'monstera',
     waterEvery: 7,
-    daysSinceWater: 3,
+    lastWateredISO: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     light: 'bright indirect',
     temp: 'warm',
     tendedDays: 100,
@@ -197,7 +198,7 @@ describe('AddEdit — edit path (id param)', () => {
     const updated = getStore().plants.find((p: Plant) => p.id === 'marcel');
     expect(updated.name).toBe('Marcel II');
     // Untouched fields preserved.
-    expect(updated.daysSinceWater).toBe(3);
+    expect(updated.lastWateredISO).toBe(MARCEL.lastWateredISO);
     expect(updated.tendedDays).toBe(100);
     expect(updated.addedISO).toBe('2025-09-17');
     expect(lastRedirectHref).toBe('/garden');

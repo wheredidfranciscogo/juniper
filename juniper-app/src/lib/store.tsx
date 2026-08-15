@@ -13,7 +13,7 @@
 import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { PLANTS_SEED } from '../data/seed';
+import { plantsSeed } from '../data/seed';
 import type { ArchetypeKey, LogEntry, LogKind, Plant } from '../data/types';
 
 export interface AppState {
@@ -37,11 +37,45 @@ type Store = AppState & AppActions & { hydrated: boolean };
 const StoreCtx = React.createContext<Store | null>(null);
 
 const STORAGE_KEY = '@juniper/store';
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 interface PersistedBlob {
   version: typeof STORAGE_VERSION;
   state: AppState;
+}
+
+/** v1 plants stored a relative counter; v2 stores an absolute timestamp. */
+interface PlantV1 extends Omit<Plant, 'lastWateredISO'> {
+  daysSinceWater?: number;
+}
+
+/**
+ * Bring a persisted blob up to the current schema, or return null if it can't be.
+ *
+ * v1 -> v2: `daysSinceWater: number` becomes `lastWateredISO: string`. The counter was
+ * frozen the moment it was written (nothing ever incremented it), so the best available
+ * reading is "that many days before now" — which is exactly what it meant when saved.
+ */
+function migrate(raw: unknown): AppState | null {
+  const blob = raw as { version?: number; state?: AppState } | null;
+  if (!blob?.state) return null;
+
+  if (blob.version === STORAGE_VERSION) return blob.state;
+
+  if (blob.version === 1) {
+    const now = Date.now();
+    return {
+      ...blob.state,
+      plants: (blob.state.plants as unknown as PlantV1[]).map((p) => {
+        const { daysSinceWater, ...rest } = p;
+        const days = typeof daysSinceWater === 'number' ? Math.max(0, daysSinceWater) : 0;
+        return { ...rest, lastWateredISO: new Date(now - days * 86_400_000).toISOString() };
+      }),
+    };
+  }
+
+  // Unknown / future version — discard rather than guess.
+  return null;
 }
 
 const initialState: AppState = {
@@ -79,10 +113,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .then((raw) => {
         if (cancelled || !raw) return;
         try {
-          const parsed = JSON.parse(raw) as PersistedBlob;
-          if (parsed?.version === STORAGE_VERSION && parsed.state) {
-            setState(parsed.state);
-          }
+          const migrated = migrate(JSON.parse(raw));
+          if (migrated) setState(migrated);
         } catch {
           // Corrupt blob — fall through to initialState; next save overwrites it.
         }
@@ -108,14 +140,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const completeOnboarding = React.useCallback<AppActions['completeOnboarding']>(
     ({ userName, archetype, seed }) => {
+      const garden = seed ? plantsSeed() : null;
       setState((s) => ({
         ...s,
         onboarded: true,
         userName,
         archetype,
-        plants: seed ? PLANTS_SEED : s.plants,
-        log: seed
-          ? PLANTS_SEED.map((p) => ({
+        plants: garden ?? s.plants,
+        log: garden
+          ? garden.map((p) => ({
               id: uid('l'),
               plantId: p.id,
               kind: 'joined' as LogKind,
@@ -134,7 +167,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (!plant) return s;
       return {
         ...s,
-        plants: s.plants.map((p) => (p.id === plantId ? { ...p, daysSinceWater: 0 } : p)),
+        plants: s.plants.map((p) =>
+          p.id === plantId ? { ...p, lastWateredISO: new Date().toISOString() } : p,
+        ),
         log: [
           { id: uid('l'), plantId, kind: 'water', text: actionVerb('water', plant.name), when: new Date().toISOString() },
           ...s.log,

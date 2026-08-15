@@ -122,7 +122,9 @@ export default function AddEdit() {
         pressing,
         icon,
         waterEvery,
-        daysSinceWater: 0,
+        // A new plant counts as watered now, so its first reminder lands one full
+        // cadence away rather than immediately.
+        lastWateredISO: new Date().toISOString(),
         light,
         temp,
         tendedDays: 0,

@@ -36,21 +36,27 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
         cd juniper-app && npx eas build --profile development --platform ios
         ```
         Install the result, then run `npx expo start --dev-client --port 8082` and scan.
-- [ ] **`src/lib/notifications.ts`** — port the shape of
-      `alchemilla-app/src/lib/notifications.ts`: a rolling queue of one-shot local
-      notifications, an idempotent `syncReminders()` that cancels all and reschedules, an
-      Android channel, and a permission request that fires **post-onboarding**, never at launch.
-      Juniper's difference: schedule **per plant**, keyed off `lastWatered + frequency`, rather
-      than one daily nudge. Re-sync on: app focus, watering, adding a plant, editing a cadence,
-      changing the reminder time.
-- [ ] **Warm copy, never scolding** — "Marcel could use a drink." Not "You missed 3 waterings."
-      No streaks, no red badges, no guilt. The design is calm; the notifications must match.
-- [ ] **Deep-link the tap** — notification opens `plant/[id]` directly, not the tab root.
-- [ ] **Reschedule on water** — tapping the `WaterButton` cancels that plant's pending
-      reminder and queues the next one at `now + frequency`.
-- [ ] **Test the scheduler as a pure function** — `nextWateringDate(plant, now)` and the queue
-      builder should be RN-free and node-testable, the way Alchemilla's insight engine is.
-      That is what makes a small test suite trustworthy.
+- [x] **Fixed the model bug that made the whole loop impossible.** `Plant` stored
+      `daysSinceWater: number`, a frozen counter nothing ever incremented — `waterPlant` set
+      it to 0 and it stayed there, so a plant watered once could never become thirsty again.
+      Replaced with an absolute `lastWateredISO`; everything time-related is derived from the
+      clock in `src/lib/watering.ts`. Storage schema v1 → v2 with a migration.
+- [x] **`src/lib/watering.ts`** — pure, RN-free, node-testable: `daysSinceWatered`,
+      `nextWateringDate`, `isThirsty`, `daysUntilWater`, `buildReminderQueue`. Calendar-day
+      arithmetic rather than millisecond division, so daylight saving can't shift a plant a
+      day early. 25 tests.
+- [x] **`src/lib/notifications.ts`** — idempotent `syncReminders()` (cancel-all then rebuild),
+      Android channel, permission requested post-onboarding, prefs in AsyncStorage. One pending
+      notification per plant — the *next* one only, since watering moves every later date.
+      13 tests.
+- [x] **`src/lib/use-reminders.ts`** — resync on garden change and on app foreground; taps
+      deep-link to `plant/[id]`, handling both the warm listener and the cold-start
+      `getLastNotificationResponseAsync` path that otherwise silently does nothing.
+- [x] **Warm copy, never scolding** — four rotating lines, "Marcel could use a drink." A test
+      asserts the body never matches /missed|overdue|forgot|neglect|streak/.
+- [ ] **Reminders are currently inert — nothing can switch them on.** The preference defaults
+      to off and the only control surface is the You tab, which is still a stub. This is the
+      next task, and until it lands the scheduler never runs on device.
 
 ### The screens that make the loop controllable
 

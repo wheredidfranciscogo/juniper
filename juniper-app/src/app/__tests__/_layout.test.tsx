@@ -32,7 +32,8 @@ jest.mock('expo-router', () => {
   Stack.Protected = ({ guard, children }) =>
     guard ? ReactLib.createElement(ReactLib.Fragment, null, children) : null;
 
-  return { Stack };
+  // RootStack now also mounts the reminder hooks, which resolve a router.
+  return { Stack, useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }) };
 });
 
 import { RootStack } from '../../lib/root-stack';

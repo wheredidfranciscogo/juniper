@@ -27,8 +27,15 @@ export interface Plant {
   nickname?: string;
   pressing: PressingTone;
   icon: PlantIconName;
+  /** Watering cadence in whole days. */
   waterEvery: number;
-  daysSinceWater: number;
+  /**
+   * Absolute timestamp of the last watering. Everything time-related — thirsty state,
+   * "last watered" copy, the next reminder — is derived from this via src/lib/watering.ts.
+   * It replaced a stored `daysSinceWater` counter that nothing ever incremented, which
+   * meant a plant watered once could never become thirsty again.
+   */
+  lastWateredISO: string;
   light: string;
   temp: string;
   tendedDays: number;

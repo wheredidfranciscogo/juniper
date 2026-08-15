@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, radii, spacing, text } from '../../theme';
 import { useStore } from '../../lib/store';
+import { daysSinceWatered } from '../../lib/watering';
 import type { LogKind } from '../../data/types';
 import { Pressing } from '../../components/Pressing';
 import { WaterButton } from '../../components/WaterButton';
@@ -48,7 +49,7 @@ export default function PlantDetail() {
     );
   }
 
-  const watered = plant.daysSinceWater === 0;
+  const watered = daysSinceWatered(plant, new Date()) === 0;
   const wateredLabel = new Date().toLocaleDateString('en-GB', { weekday: 'long' });
 
   return (

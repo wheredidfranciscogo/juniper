@@ -1,4 +1,5 @@
-import { pickArchetype, PLANTS_SEED, ONBOARDING, ARCHETYPES } from '../seed';
+import { pickArchetype, plantsSeed, ONBOARDING, ARCHETYPES } from '../seed';
+import type { Plant } from '../types';
 import type { ArchetypeKey, OnboardingAnswers } from '../types';
 
 describe('pickArchetype', () => {
@@ -43,16 +44,16 @@ describe('pickArchetype', () => {
 
 describe('seed data integrity', () => {
   it('gives every plant a unique id', () => {
-    const ids = PLANTS_SEED.map((p) => p.id);
+    const ids = plantsSeed().map((p: Plant) => p.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('gives every plant the fields the store and UI rely on', () => {
-    for (const plant of PLANTS_SEED) {
+    for (const plant of plantsSeed()) {
       expect(plant.name).toBeTruthy();
       expect(plant.addedISO).toBeTruthy();
       expect(typeof plant.waterEvery).toBe('number');
-      expect(typeof plant.daysSinceWater).toBe('number');
+      expect(Number.isNaN(Date.parse(plant.lastWateredISO))).toBe(false);
       expect(Array.isArray(plant.photos)).toBe(true);
       expect(Array.isArray(plant.journal)).toBe(true);
     }

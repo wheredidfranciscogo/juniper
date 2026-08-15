@@ -20,9 +20,16 @@ import * as SplashScreen from 'expo-splash-screen';
 
 import { colors } from '../theme';
 import { useStore } from './store';
+import { useReminderSync, useReminderTaps } from './use-reminders';
 
 export function RootStack() {
-  const { onboarded, hydrated } = useStore();
+  const { onboarded, hydrated, plants } = useStore();
+
+  // Keep the OS reminder queue in step with the garden, and route taps to the plant.
+  // Taps are only wired once onboarded, so a notification can never drop someone into
+  // a plant screen behind the onboarding gate.
+  useReminderSync(plants, hydrated);
+  useReminderTaps(hydrated && onboarded);
 
   useEffect(() => {
     if (hydrated) SplashScreen.hideAsync().catch(() => {});

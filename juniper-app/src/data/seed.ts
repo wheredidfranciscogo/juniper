@@ -6,7 +6,24 @@
 
 import type { ArchetypeKey, Archetype, OnboardingAnswers, OnboardingStep, Plant } from './types';
 
-export const PLANTS_SEED: Plant[] = [
+/** Local midnight `n` days before `now`, as an ISO timestamp. */
+function daysAgo(n: number, now: Date): string {
+  const d = new Date(now);
+  d.setDate(d.getDate() - n);
+  d.setHours(9, 0, 0, 0);
+  return d.toISOString();
+}
+
+/**
+ * The demo garden, built relative to `now` so Marcel, Juniper and Sage are already
+ * past due the moment onboarding finishes and Today has something to show.
+ *
+ * This is a function rather than a constant because the seeded watering dates are
+ * relative: a module-load constant would freeze them at import time and slowly drift
+ * as the process stayed alive.
+ */
+export function plantsSeed(now: Date = new Date()): Plant[] {
+  return [
   {
     id: 'marcel',
     name: 'Marcel',
@@ -15,7 +32,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'moss',
     icon: 'monstera',
     waterEvery: 7,
-    daysSinceWater: 8,
+    lastWateredISO: daysAgo(8, now),
     light: 'bright indirect',
     temp: 'warm',
     tendedDays: 247,
@@ -42,7 +59,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'clay',
     icon: 'leaf',
     waterEvery: 10,
-    daysSinceWater: 11,
+    lastWateredISO: daysAgo(11, now),
     light: 'bright direct',
     temp: 'warm',
     tendedDays: 412,
@@ -64,7 +81,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'moss',
     icon: 'herb',
     waterEvery: 21,
-    daysSinceWater: 12,
+    lastWateredISO: daysAgo(12, now),
     light: 'tolerates low',
     temp: 'any',
     tendedDays: 198,
@@ -80,7 +97,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'clay',
     icon: 'leaf',
     waterEvery: 5,
-    daysSinceWater: 3,
+    lastWateredISO: daysAgo(3, now),
     light: 'full sun',
     temp: 'warm',
     tendedDays: 89,
@@ -96,7 +113,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'moss',
     icon: 'flower',
     waterEvery: 6,
-    daysSinceWater: 4,
+    lastWateredISO: daysAgo(4, now),
     light: 'bright indirect',
     temp: 'warm',
     tendedDays: 132,
@@ -112,7 +129,7 @@ export const PLANTS_SEED: Plant[] = [
     pressing: 'deep',
     icon: 'fern',
     waterEvery: 9,
-    daysSinceWater: 6,
+    lastWateredISO: daysAgo(6, now),
     light: 'bright indirect',
     temp: 'warm',
     tendedDays: 312,
@@ -120,7 +137,8 @@ export const PLANTS_SEED: Plant[] = [
     photos: [{ date: '2026-04-19', label: '' }],
     journal: [],
   },
-];
+  ];
+}
 
 export const ARCHETYPES: Record<ArchetypeKey, Archetype> = {
   whisperer: {

@@ -21,6 +21,7 @@ import { ARCHETYPES } from '../../data/seed';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
 import { greetingFor, lastWateredLabel } from '../../lib/today-utils';
+import { daysSinceWatered, daysUntilWater, isThirsty } from '../../lib/watering';
 import { Pressing } from '../../components/Pressing';
 import { Pill } from '../../components/Pill';
 import { WaterButton } from '../../components/WaterButton';
@@ -32,10 +33,13 @@ export default function Today() {
   const { width } = useWindowDimensions();
   const { userName, archetype, plants, waterPlant } = useStore();
 
-  const thirsty = plants.filter((p) => p.daysSinceWater >= p.waterEvery);
+  // Recomputed against the clock on every render — see src/lib/watering.ts for why
+  // this is derived rather than stored.
+  const now = new Date();
+  const thirsty = plants.filter((p) => isThirsty(p, now));
   const upcoming = plants
-    .filter((p) => p.daysSinceWater < p.waterEvery)
-    .map((p) => ({ ...p, daysRemaining: p.waterEvery - p.daysSinceWater }))
+    .filter((p) => !isThirsty(p, now))
+    .map((p) => ({ ...p, daysRemaining: daysUntilWater(p, now) }))
     .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
   const cardWidth = Math.round(width * 0.85);
@@ -138,7 +142,7 @@ function ThirstyCard({
   onWater: () => void;
   onOpen: () => void;
 }) {
-  const watered = plant.daysSinceWater === 0;
+  const watered = daysSinceWatered(plant, new Date()) === 0;
   return (
     <View style={[styles.card, { width }]}>
       <Pressable onPress={onOpen}>
@@ -158,7 +162,7 @@ function ThirstyCard({
           wateredLabel={new Date().toLocaleDateString('en-GB', { weekday: 'long' })}
           onWater={onWater}
         />
-        <Text style={styles.lastWatered}>{lastWateredLabel(plant.daysSinceWater)}</Text>
+        <Text style={styles.lastWatered}>{lastWateredLabel(daysSinceWatered(plant, new Date()))}</Text>
       </View>
     </View>
   );

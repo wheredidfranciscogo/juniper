@@ -3,7 +3,7 @@ import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { StoreProvider, useStore } from '../store';
-import { PLANTS_SEED } from '../../data/seed';
+import { plantsSeed } from '../../data/seed';
 import type { Plant } from '../../data/types';
 
 const mockedAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
@@ -26,7 +26,7 @@ const makePlant = (over: Partial<Plant> = {}): Plant => ({
   pressing: 'moss',
   icon: 'fern',
   waterEvery: 7,
-  daysSinceWater: 2,
+  lastWateredISO: new Date(Date.now() - 2 * 86_400_000).toISOString(),
   light: 'bright indirect',
   temp: 'warm',
   tendedDays: 10,
@@ -62,8 +62,8 @@ describe('completeOnboarding', () => {
     expect(result.current.onboarded).toBe(true);
     expect(result.current.userName).toBe('June');
     expect(result.current.archetype).toBe('forager');
-    expect(result.current.plants).toHaveLength(PLANTS_SEED.length);
-    expect(result.current.log).toHaveLength(PLANTS_SEED.length);
+    expect(result.current.plants).toHaveLength(plantsSeed().length);
+    expect(result.current.log).toHaveLength(plantsSeed().length);
     expect(result.current.log.every((e) => e.kind === 'joined')).toBe(true);
   });
 
@@ -79,13 +79,21 @@ describe('completeOnboarding', () => {
 });
 
 describe('waterPlant', () => {
-  it('resets daysSinceWater and prepends a water log entry', () => {
+  it('stamps lastWateredISO to now and prepends a water log entry', () => {
     const { result } = renderStore();
-    act(() => result.current.addPlant(makePlant({ id: 'marcel', name: 'Marcel', daysSinceWater: 8 })));
+    const eightDaysAgo = new Date(Date.now() - 8 * 86_400_000).toISOString();
+    act(() =>
+      result.current.addPlant(
+        makePlant({ id: 'marcel', name: 'Marcel', lastWateredISO: eightDaysAgo }),
+      ),
+    );
     act(() => result.current.waterPlant('marcel'));
 
     const marcel = result.current.plants.find((p) => p.id === 'marcel');
-    expect(marcel?.daysSinceWater).toBe(0);
+    // Watering must move the timestamp to now, not merely zero a counter — that bug is
+    // exactly why a plant could previously never become thirsty a second time.
+    expect(marcel?.lastWateredISO).not.toBe(eightDaysAgo);
+    expect(Date.now() - Date.parse(marcel!.lastWateredISO)).toBeLessThan(5_000);
 
     const newest = result.current.log[0];
     expect(newest.kind).toBe('water');
@@ -203,6 +211,53 @@ describe('persistence', () => {
     expect(result.current.userName).toBe('');
   });
 
+  it('migrates a v1 blob, converting daysSinceWater into lastWateredISO', async () => {
+    // v1 stored a frozen day-count. Anyone who ran the app before the schema change has
+    // one of these on disk, and discarding it would wipe their garden.
+    const v1Plant = {
+      id: 'marcel',
+      name: 'Marcel',
+      species: 'Monstera deliciosa',
+      pressing: 'moss',
+      icon: 'monstera',
+      waterEvery: 7,
+      daysSinceWater: 8,
+      light: 'bright indirect',
+      temp: 'warm',
+      tendedDays: 247,
+      addedISO: '2025-09-17',
+      photos: [],
+      journal: [],
+    };
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        state: { onboarded: true, userName: 'June', archetype: 'steady', plants: [v1Plant], log: [] },
+      }),
+    );
+
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+
+    expect(result.current.userName).toBe('June');
+    const marcel = result.current.plants[0] as Plant & { daysSinceWater?: number };
+    expect(marcel.daysSinceWater).toBeUndefined();
+
+    // "8 days since watered" becomes a timestamp 8 days back, so the plant stays thirsty
+    // rather than silently resetting to freshly-watered on upgrade.
+    const daysBack = Math.round((Date.now() - Date.parse(marcel.lastWateredISO)) / 86_400_000);
+    expect(daysBack).toBe(8);
+  });
+
+  it('discards a blob from an unknown future version rather than guessing', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(
+      JSON.stringify({ version: 99, state: { onboarded: true, userName: 'Future' } }),
+    );
+    const { result } = renderStore();
+    await waitFor(() => expect(result.current.hydrated).toBe(true));
+    expect(result.current.onboarded).toBe(false);
+  });
+
   it('survives a corrupt persisted blob without throwing', async () => {
     mockedAsyncStorage.getItem.mockResolvedValueOnce('not json {{{');
     const { result } = renderStore();
@@ -225,7 +280,7 @@ describe('persistence', () => {
     const [key, value] = mockedAsyncStorage.setItem.mock.calls[0];
     expect(key).toBe('@juniper/store');
     const blob = JSON.parse(value);
-    expect(blob.version).toBe(1);
+    expect(blob.version).toBe(2);
     expect(blob.state.onboarded).toBe(true);
     expect(blob.state.userName).toBe('June');
   });
