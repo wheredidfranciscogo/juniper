@@ -38,6 +38,18 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # The runner ships ~30GB of toolchains this job never touches, and the first two
+      # attempts at this workflow both ran the disk to 100%. None of the paths below are
+      # needed to build an Android APK. Best-effort: a failed rm must not fail the job.
+      - name: Free unrelated toolchains
+        run: |
+          echo "before: $(df -h / | tail -1)"
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+                      /opt/hostedtoolcache/CodeQL /usr/share/swift \
+                      /usr/local/lib/node_modules/npm/node_modules/node-gyp 2>/dev/null || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "after:  $(df -h / | tail -1)"
+
       - name: Install dependencies
         run: npm ci
 
@@ -52,28 +64,36 @@ jobs:
           curl -Ls https://get.maestro.mobile.dev | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
-      # The first real run of this workflow died here with "No space left on device"
-      # while unpacking the emulator: npm ci, expo prebuild and the Gradle build had
-      # already consumed the runner's disk, and the emulator plus its API-34 system
-      # image needs several GB more.
+      # The first run of this workflow died here with "No space left on device" while
+      # unpacking the emulator; the second died because a plain `rm -rf` of the Gradle
+      # caches raced the daemon still releasing files ("Directory not empty") and
+      # bash -e killed the job over it.
       #
-      # This runs AFTER the APK is built on purpose — everything removed below is
-      # either a toolchain the build no longer needs, or a Gradle cache whose only
-      # product (the APK) is already on disk. Removing the NDK before the build would
-      # be a different and much worse idea.
+      # Cleanup is best-effort, and the step is judged on the thing that actually
+      # matters — whether there is room for the emulator image — not on whether every
+      # individual rm succeeded.
+      #
+      # Runs AFTER the APK is built on purpose: the NDK and the Gradle caches are only
+      # safe to remove once their product is on disk.
       - name: Reclaim disk space before booting the emulator
         run: |
-          echo "before:"; df -h / | tail -1
+          echo "before: $(df -h / | tail -1)"
+
           ./android/gradlew --stop || true
-          rm -rf ~/.gradle/caches ~/.gradle/wrapper ~/.gradle/daemon
+          sleep 3   # let the daemon actually exit before deleting what it was holding
+          rm -rf ~/.gradle/caches ~/.gradle/wrapper ~/.gradle/daemon 2>/dev/null || true
           sudo rm -rf /usr/local/lib/android/sdk/ndk \
-                      /usr/share/dotnet \
-                      /opt/ghc \
-                      /usr/local/share/boost \
-                      /opt/hostedtoolcache/CodeQL \
-                      /usr/share/swift
-          sudo docker image prune --all --force > /dev/null 2>&1 || true
-          echo "after:"; df -h / | tail -1
+                      /usr/local/lib/android/sdk/system-images \
+                      /usr/local/lib/android/sdk/cmake 2>/dev/null || true
+
+          echo "after:  $(df -h / | tail -1)"
+
+          avail=$(df --output=avail -BG / | tail -1 | tr -dc '0-9')
+          echo "${avail}G available"
+          if [ "${avail:-0}" -lt 12 ]; then
+            echo "::error::Only ${avail}G free. The API-34 emulator image needs more than that."
+            exit 1
+          fi
 
       - name: Run flows on emulator
         uses: reactivecircus/android-emulator-runner@v2
