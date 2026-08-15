@@ -33,12 +33,35 @@ export default function Today() {
   const { width } = useWindowDimensions();
   const { userName, archetype, plants, waterPlant } = useStore();
 
+  /**
+   * Plants watered during this visit to the screen.
+   *
+   * Thirst is derived from the store, so the instant `waterPlant` lands the plant stops
+   * being thirsty and its card would drop straight out of the list — unmounting mid-tap,
+   * before the ripple, the clay-to-moss crossfade, or the "Watered, Tuesday." label ever
+   * appeared. The handoff calls that animation the moment of delight; it was never once
+   * visible. Holding the id here keeps the card on screen so the interaction can finish
+   * and settle into its watered state.
+   *
+   * Deliberately not persisted: it resets on relaunch, at which point the plant simply
+   * belongs to Upcoming like anything else that isn't due.
+   */
+  const [justWatered, setJustWatered] = React.useState<ReadonlySet<string>>(() => new Set());
+
+  const handleWater = React.useCallback(
+    (plantId: string) => {
+      waterPlant(plantId);
+      setJustWatered((prev) => new Set(prev).add(plantId));
+    },
+    [waterPlant],
+  );
+
   // Recomputed against the clock on every render — see src/lib/watering.ts for why
   // this is derived rather than stored.
   const now = new Date();
-  const thirsty = plants.filter((p) => isThirsty(p, now));
+  const thirsty = plants.filter((p) => isThirsty(p, now) || justWatered.has(p.id));
   const upcoming = plants
-    .filter((p) => !isThirsty(p, now))
+    .filter((p) => !isThirsty(p, now) && !justWatered.has(p.id))
     .map((p) => ({ ...p, daysRemaining: daysUntilWater(p, now) }))
     .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
@@ -82,7 +105,7 @@ export default function Today() {
               key={p.id}
               plant={p}
               width={cardWidth}
-              onWater={() => waterPlant(p.id)}
+              onWater={() => handleWater(p.id)}
               onOpen={() => router.push({ pathname: '/plant/[id]', params: { id: p.id } })}
             />
           ))}

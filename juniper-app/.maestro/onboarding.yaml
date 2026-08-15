@@ -1,19 +1,26 @@
 # E2E: first-run splash -> 5 onboarding questions -> name -> reveal -> Today.
 #
-# Maestro drives a real build on a simulator/emulator, so it cannot run in this
-# headless container or in plain `jest`. To run locally:
-#   1. brew install maestro            (or: curl -Ls https://get.maestro.mobile.dev | bash)
-#   2. Build & install the app on a booted device:  npx expo run:ios   (or run:android)
-#   3. Set `appId` below to that build's bundle id / package name.
-#   4. maestro test .maestro/onboarding.yaml
+# This is the base flow; the others start with `runFlow: onboarding.yaml` to reach a
+# seeded Today screen. It begins with `clearState`, so every flow starts from a genuine
+# first install rather than inheriting whatever the previous one left behind.
 #
-# If you test inside Expo Go instead of a dev build, use appId: host.exp.Exponent.
+# HOW TO RUN
+#   CI:    the "E2E (Maestro)" workflow (workflow_dispatch) builds a debug APK, boots an
+#          emulator, and runs everything in this folder. That is the supported path.
+#   Local: needs a booted simulator/emulator and a real build — Maestro drives an
+#          installed binary, so it cannot run under jest.
+#            brew install maestro
+#            npx expo run:android          (or run:ios)
+#            maestro test .maestro/
+#
+# Testing inside Expo Go instead of a dev build? Use appId: host.exp.Exponent.
 appId: com.wheredidfranciscogo.juniper
 tags:
   - onboarding
 ---
 - clearState
 - launchApp
+
 - assertVisible: "tap anywhere to begin"
 - tapOn: "tap anywhere to begin"
 
@@ -34,10 +41,13 @@ tags:
 
 - assertVisible: "And what should we call you?"
 - inputText: "June"
+- hideKeyboard
 - tapOn: "Continue"
 
+# Archetype reveal. The answers above map to The Plant Whisperer via pickArchetype().
 - assertVisible: "Begin"
 - tapOn: "Begin"
 
-# Landed on Today with the seeded garden (Marcel is overdue for water).
+# Landed on Today with the seeded garden. Marcel is seeded 8 days since water on a
+# 7-day cadence, so he is thirsty the moment onboarding finishes.
 - assertVisible: "Water Marcel"

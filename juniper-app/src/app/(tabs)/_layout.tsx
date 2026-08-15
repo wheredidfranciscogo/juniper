@@ -54,6 +54,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       <Pressable
         onPress={() => router.push('/add')}
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        testID="tab-add"
         accessibilityRole="button"
         accessibilityLabel="Add a plant"
       >
@@ -68,6 +69,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 function TabButton({
+  name,
   label,
   Icon,
   active,
@@ -75,7 +77,17 @@ function TabButton({
 }: TabConfig & { active: boolean; onPress: () => void }) {
   const tint = active ? colors.ink : colors.inkFaint;
   return (
-    <Pressable onPress={onPress} style={styles.tabBtn} hitSlop={6}>
+    // testID so the Maestro flows can tap a tab by identity rather than by its label.
+    // Matching on the visible text is fragile here: "today" also appears in the body
+    // copy ("Last watered today."), so a text tap can hit the wrong element entirely.
+    <Pressable
+      onPress={onPress}
+      style={styles.tabBtn}
+      hitSlop={6}
+      testID={`tab-${name}`}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
       <Icon size={22} color={tint} stroke={1.5} />
       <Text style={[styles.tabLabel, { color: tint }]}>{label}</Text>
     </Pressable>

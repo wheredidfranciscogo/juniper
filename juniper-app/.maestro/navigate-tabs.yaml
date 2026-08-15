@@ -1,20 +1,35 @@
 # E2E: the four bottom tabs route to their screens.
-# See onboarding.yaml for how to run Maestro and what `appId` to set.
+#
+# Tabs are tapped by testID, not by their visible label. The labels are lowercase words
+# that also occur in body copy — "today" appears inside "Last watered today." on the
+# Today screen — so a text tap can land on the wrong element and pass for the wrong
+# reason. See onboarding.yaml for how to run these.
 appId: com.wheredidfranciscogo.juniper
 tags:
   - navigation
 ---
 - runFlow: onboarding.yaml
 
-- tapOn: "garden"
+- tapOn:
+    id: "tab-garden"
 - assertVisible: "The Garden"
 - assertVisible: "Thirsty"
 
-- tapOn: "log"
+- tapOn:
+    id: "tab-log"
 - assertVisible: "The Log"
 
-- tapOn: "you"
+- tapOn:
+    id: "tab-you"
 - assertVisible: "YOU ARE"
 
-- tapOn: "today"
+- tapOn:
+    id: "tab-today"
+- assertVisible: "Water Marcel"
+
+# The centre FAB opens the add-plant modal, and Cancel returns without adding anything.
+- tapOn:
+    id: "tab-add"
+- assertVisible: "Cancel"
+- tapOn: "Cancel"
 - assertVisible: "Water Marcel"

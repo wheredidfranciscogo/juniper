@@ -1,0 +1,47 @@
+# E2E: adding a plant by hand, and finding it in the garden afterwards.
+#
+# Only the manual path is driven here. The photo path opens the camera and the search
+# path needs a Perenual API key and a network round-trip — neither belongs in a flow
+# that has to pass deterministically on a cold emulator. Both are covered by unit tests
+# (edit.test.tsx, perenual.test.ts).
+#
+# See onboarding.yaml for how to run these.
+appId: com.wheredidfranciscogo.juniper
+tags:
+  - add
+---
+- runFlow: onboarding.yaml
+
+- tapOn:
+    id: "tab-add"
+- assertVisible: "WELCOME THE NEW ONE"
+- tapOn: "Add manually"
+
+# Save is gated on name + species, so it must not be possible yet.
+- assertVisible: "Name"
+- tapOn: "Marcel"          # the Name field's placeholder
+- inputText: "Fernando"
+- hideKeyboard
+
+- tapOn: "Monstera deliciosa"   # the Species field's placeholder
+- inputText: "Nephrolepis exaltata"
+- hideKeyboard
+
+- tapOn: "Save"
+
+# Saving redirects to the Garden, where the new plant should be listed.
+- assertVisible: "The Garden"
+- assertVisible: "Fernando"
+
+# A plant added today counts as watered today, so its first reminder is a full cadence
+# away and it must NOT show up under the Thirsty filter.
+- tapOn: "Thirsty"
+- assertNotVisible: "Fernando"
+- tapOn: "All"
+- assertVisible: "Fernando"
+
+# It persists across a relaunch — the store is the only copy there is.
+- launchApp
+- tapOn:
+    id: "tab-garden"
+- assertVisible: "Fernando"

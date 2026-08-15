@@ -1,17 +1,47 @@
 # E2E: the signature interaction — watering a thirsty plant from the Today tab.
-# Reuses the onboarding flow to reach a seeded Today screen.
-# See onboarding.yaml for how to run Maestro and what `appId` to set.
+#
+# This is the flow that matters most: the watering loop IS the product (DECISIONS.md D7).
+# It also guards two bugs that survived for months because nothing exercised them:
+#
+#   1. `daysSinceWater` was a stored counter nothing ever incremented, so watering a
+#      plant set it to 0 and it could never become thirsty again. Watering now moves a
+#      real timestamp, which is what makes the assertions below mean anything.
+#   2. The watered card used to unmount the instant it stopped being thirsty, so the
+#      ripple and the clay-to-moss crossfade were never visible. The card now stays for
+#      the rest of the visit.
+#
+# See onboarding.yaml for how to run these.
 appId: com.wheredidfranciscogo.juniper
 tags:
   - water
 ---
 - runFlow: onboarding.yaml
 
-# Marcel is seeded 8 days since water (waters every 7) -> shown as THIRSTY.
+# Marcel is seeded 8 days since water on a 7-day cadence -> THIRSTY.
 - assertVisible: "THIRSTY"
 - assertVisible: "Water Marcel"
 - tapOn: "Water Marcel"
 
-# After watering: pill flips, button shows the done state, last-watered resets.
+# The card stays put so the animation can finish, then settles into the watered state.
 - assertVisible: "WATERED"
 - assertVisible: "Last watered today."
+
+# The change is real, not just local component state: Garden derives thirst from the
+# same timestamp, so Marcel must no longer appear under the Thirsty filter.
+- tapOn:
+    id: "tab-garden"
+- tapOn: "Thirsty"
+- assertNotVisible: "Marcel"
+- tapOn: "All"
+- assertVisible: "Marcel"
+
+# And it survives a relaunch, which is the real test of persistence. After restarting,
+# the just-watered card is gone (that state is intentionally per-visit) and Marcel has
+# moved to Upcoming, still not thirsty.
+- launchApp
+- assertVisible: "Water Juniper"
+- assertNotVisible: "Water Marcel"
+- tapOn:
+    id: "tab-garden"
+- tapOn: "Thirsty"
+- assertNotVisible: "Marcel"

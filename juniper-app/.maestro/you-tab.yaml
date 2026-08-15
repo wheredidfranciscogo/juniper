@@ -1,0 +1,48 @@
+# E2E: the You tab — archetype, garden stats, and the reminder controls.
+#
+# SCOPE NOTE: this flow deliberately stops at the edge of the OS.
+#
+# Turning reminders on raises the system notification prompt, "Save a copy" opens the
+# share sheet, and adding a photo opens the camera or the library. Driving those means
+# tapping OS chrome whose wording and layout change between Android versions — flaky
+# tests that mostly prove the OS still has buttons. The decision logic behind all three
+# is unit-tested instead (notifications.test.ts, backup.test.ts, photos.test.ts, and
+# you.test.tsx for the screen states), where permission-denied and revoked-after-the-fact
+# can actually be simulated.
+#
+# What this flow does prove: the controls exist, are reachable, and render honestly
+# before anything is granted.
+#
+# See onboarding.yaml for how to run these.
+appId: com.wheredidfranciscogo.juniper
+tags:
+  - you
+---
+- runFlow: onboarding.yaml
+
+- tapOn:
+    id: "tab-you"
+
+# Archetype, from the onboarding answers in the base flow.
+- assertVisible: "YOU ARE"
+- assertVisible: "The Plant Whisperer"
+
+# Stats card, derived from the seeded garden.
+- assertVisible: "IN YOUR CARE"
+- assertVisible: "6 plants"
+- assertVisible: "LONGEST TENDED"
+- assertVisible: "PLANT-DAYS"
+
+# Reminders start off, and the copy says so rather than implying they are running.
+- assertVisible: "REMINDERS"
+- assertVisible: "Tell me when to water"
+- assertVisible: "Off. Juniper will keep the record, but stay silent."
+
+# Backup is reachable, and is explicit that Juniper is not the one uploading anything.
+- assertVisible: "YOUR GARDEN"
+- assertVisible: "Save a copy"
+- assertVisible: "you choose where it goes"
+
+# The privacy claim is on the screen itself, not only on the website.
+- assertVisible: "ABOUT"
+- assertVisible: "No account, no server, nothing uploaded."
