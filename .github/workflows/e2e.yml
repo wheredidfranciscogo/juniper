@@ -25,7 +25,7 @@ on:
 
 jobs:
   build:
-    name: Build debug APK
+    name: Build release APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
     defaults:
@@ -61,13 +61,23 @@ jobs:
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
 
-      - name: Build debug APK
-        run: ./android/gradlew -p android assembleDebug
+      # RELEASE, not debug. `expo-dev-client` is a dependency (it is what makes the EAS
+      # development builds work), and in a DEBUG build it takes over the launch entirely:
+      # the app boots into the dev-launcher screen — "Start a local development server
+      # with: npx expo start" — and waits for a Metro server that does not exist on CI.
+      # That is exactly how the first real Maestro run failed, 5/5 flows at the very
+      # first assertion, with a screenshot of the launcher to prove it.
+      #
+      # Release excludes the dev launcher and embeds the JS bundle, so the APK is
+      # genuinely standalone. No signing setup needed: Expo's generated build.gradle
+      # signs release with the debug keystore by default.
+      - name: Build release APK
+        run: ./android/gradlew -p android assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: juniper-app/android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-release
+          path: juniper-app/android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 7
 
@@ -82,7 +92,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: app-debug
+          name: app-release
           path: apk
 
       # Without this the emulator falls back to software rendering and takes 10+ minutes
@@ -132,7 +142,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            adb install -r apk/app-debug.apk
+            adb install -r apk/app-release.apk
             maestro test --format junit --output maestro-report.xml juniper-app/.maestro/
 
       - name: Upload Maestro output
