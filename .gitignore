@@ -45,8 +45,5 @@ yarn-error.*
 /coverage
 juniper-app/coverage/
 
-# EAS
-.easignore
-
 # Local archive of pre-collapse artefacts (see DECISIONS.md D4)
 .archive/

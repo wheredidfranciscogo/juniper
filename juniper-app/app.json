@@ -32,10 +32,24 @@
             "imageWidth": 76
           }
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#3F5D3E",
+          "defaultChannel": "watering"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "wheredidfranciscogo",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e5ec95fe-f8c0-478c-834d-4cb9d15837cf"
+      }
     }
   }
 }
