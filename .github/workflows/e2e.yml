@@ -52,6 +52,29 @@ jobs:
           curl -Ls https://get.maestro.mobile.dev | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
+      # The first real run of this workflow died here with "No space left on device"
+      # while unpacking the emulator: npm ci, expo prebuild and the Gradle build had
+      # already consumed the runner's disk, and the emulator plus its API-34 system
+      # image needs several GB more.
+      #
+      # This runs AFTER the APK is built on purpose — everything removed below is
+      # either a toolchain the build no longer needs, or a Gradle cache whose only
+      # product (the APK) is already on disk. Removing the NDK before the build would
+      # be a different and much worse idea.
+      - name: Reclaim disk space before booting the emulator
+        run: |
+          echo "before:"; df -h / | tail -1
+          ./android/gradlew --stop || true
+          rm -rf ~/.gradle/caches ~/.gradle/wrapper ~/.gradle/daemon
+          sudo rm -rf /usr/local/lib/android/sdk/ndk \
+                      /usr/share/dotnet \
+                      /opt/ghc \
+                      /usr/local/share/boost \
+                      /opt/hostedtoolcache/CodeQL \
+                      /usr/share/swift
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "after:"; df -h / | tail -1
+
       - name: Run flows on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
