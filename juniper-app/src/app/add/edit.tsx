@@ -127,7 +127,6 @@ export default function AddEdit() {
         lastWateredISO: new Date().toISOString(),
         light,
         temp,
-        tendedDays: 0,
         addedISO: date,
         photos: photoUri ? [{ date, uri: photoUri }] : [],
         journal: [],

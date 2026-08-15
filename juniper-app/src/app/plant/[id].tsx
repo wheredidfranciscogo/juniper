@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, radii, spacing, text } from '../../theme';
 import { useStore } from '../../lib/store';
 import { daysSinceWatered } from '../../lib/watering';
+import { tendedDays } from '../../lib/stats';
 import type { LogKind } from '../../data/types';
 import { Pressing } from '../../components/Pressing';
 import { WaterButton } from '../../components/WaterButton';
@@ -66,7 +67,7 @@ export default function PlantDetail() {
 
         {/* Body */}
         <View style={styles.body}>
-          <Text style={styles.tended}>TENDED FOR {plant.tendedDays} DAYS</Text>
+          <Text style={styles.tended}>TENDED FOR {tendedDays(plant, new Date())} DAYS</Text>
           <Text style={styles.name}>{plant.name}</Text>
           <Text style={styles.species}>{plant.species}</Text>
           {plant.nickname ? <Text style={styles.nickname}>{plant.nickname}</Text> : null}

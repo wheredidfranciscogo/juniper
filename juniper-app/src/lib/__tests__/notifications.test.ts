@@ -29,7 +29,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
   lastWateredISO: new Date(Date.now() - 3 * 86_400_000).toISOString(),
   light: 'bright indirect',
   temp: 'warm',
-  tendedDays: 10,
   addedISO: '2025-09-17',
   photos: [],
   journal: [],

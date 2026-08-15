@@ -54,14 +54,23 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       `getLastNotificationResponseAsync` path that otherwise silently does nothing.
 - [x] **Warm copy, never scolding** — four rotating lines, "Marcel could use a drink." A test
       asserts the body never matches /missed|overdue|forgot|neglect|streak/.
-- [ ] **Reminders are currently inert — nothing can switch them on.** The preference defaults
-      to off and the only control surface is the You tab, which is still a stub. This is the
-      next task, and until it lands the scheduler never runs on device.
+- [x] **Reminders can now be switched on.** The You tab carries the toggle and the time
+      picker; the loop is complete end to end in code.
 
 ### The screens that make the loop controllable
 
-- [ ] **You tab** (`src/app/(tabs)/you.tsx`) — currently a stub. Archetype, stats card, and the
-      settings that matter: notifications on/off, reminder time, and export.
+- [x] **You tab** — archetype, stats card (in your care / longest tended / plant-days), and a
+      working reminder toggle + time picker. 9 component tests covering the states that matter
+      most: a toggle must never read "on" while the OS will never deliver anything.
+      **Four deliberate divergences from the handoff**, written up at the top of `you.tsx`:
+      reminders are inline rather than a chevron row to a screen that doesn't exist; the time
+      control is preset chips rather than a native wheel, which would have meant a native
+      dependency and the end of Expo Go (D6); "Watering schedule" is dropped because cadence is
+      per plant already; "Export your journal" is left out until it works.
+- [x] **Fixed `tendedDays`, the same frozen-counter bug in miniature.** It was stored and never
+      incremented, so Plant Detail read "TENDED FOR 247 DAYS" forever — and the seed's stored
+      values had already drifted out of step with their own `addedISO`. Now derived in
+      `src/lib/stats.ts`, along with the garden stats. 12 tests.
 - [ ] **Backup export** — one button, garden to JSON, straight to the share sheet
       (`expo-sharing`, already proven in Alchemilla). Cheap insurance against D2's one downside.
 - [ ] **Real photos** — `expo-image-picker` is already a dependency. Capture to the app's

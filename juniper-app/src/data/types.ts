@@ -38,7 +38,6 @@ export interface Plant {
   lastWateredISO: string;
   light: string;
   temp: string;
-  tendedDays: number;
   addedISO: string;
   photos: PlantPhoto[];
   journal: JournalEntry[];
