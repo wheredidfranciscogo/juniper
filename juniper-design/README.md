@@ -1,7 +1,7 @@
-# Handoff: Jungle Jungle — plant care app
+# Handoff: Juniper — plant care app
 
 ## Overview
-**Jungle Jungle** is an iOS plant-care app with a deliberately calm, warm, herbarium-notebook aesthetic. It tracks watering, supports an activity log, and personalises the experience around a "tending archetype" assigned during onboarding.
+**Juniper** is a plant-care app with a deliberately calm, warm, herbarium-notebook aesthetic. It tracks watering, supports an activity log, and personalises the experience around a "tending archetype" assigned during onboarding.
 
 The product opposite of the typical green-saturated, gamified plant app: paper cream and terracotta clay, literary serif typography, custom line-art botanical icons, slow eases, no confetti.
 
@@ -84,7 +84,7 @@ Bottom tab bar, 5 items:
 
 ### 1. Splash
 - Full-bleed paper background.
-- Centred: line-art seedling icon (moss, 56px), gap, "Jungle *Jungle*" wordmark in serif 44px (the second "Jungle" italic), small subtitle in sans 14px muted: "A quiet place for your plants."
+- Centred: line-art seedling icon (moss, 56px), gap, "*Juniper*" wordmark in serif 44px (fully italic — the prototype's two-word "Jungle *Jungle*" mark predates the rename, see DECISIONS.md D9), small subtitle in sans 14px muted: "A quiet place for your plants."
 - Top: tiny mono caption "EST. MMXXVI" (date stamp feel) in 10px ink-faint, 0.22em letter-spacing.
 - Bottom: faint "tap anywhere to begin" 12px ink-faint.
 - **No "Get Started" button** — the entire screen is the tap target.
@@ -186,7 +186,7 @@ Mapping is in `pickArchetype()` in `data.jsx`. Simple priority logic; can be rep
 ### 9. You
 - Overline "YOU ARE", serif italic 36px archetype name, serif 17px archetype body.
 - Stats card: plants in your care / longest tended / time spent tending (in "plant-days").
-- Settings list: Watering schedule / Notification preferences / Export your journal / About Jungle Jungle. Serif 16px label, faint "→" right.
+- Settings list: Watering schedule / Notification preferences / Export your journal / About Juniper. Serif 16px label, faint "→" right.
 
 ## Interactions & behaviour
 

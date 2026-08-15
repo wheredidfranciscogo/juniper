@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Jungle Jungle",
-    "slug": "jungle-app",
+    "name": "Juniper",
+    "slug": "juniper",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "jungleapp",
+    "scheme": "juniper",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.wheredidfranciscogo.jungleapp"
+      "bundleIdentifier": "com.wheredidfranciscogo.juniper"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,11 +19,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.wheredidfranciscogo.jungleapp"
-    },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "package": "com.wheredidfranciscogo.juniper"
     },
     "plugins": [
       "expo-router",

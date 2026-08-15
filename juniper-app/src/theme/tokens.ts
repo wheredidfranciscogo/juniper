@@ -1,6 +1,6 @@
 /**
- * Jungle Jungle — herbarium design tokens.
- * Source of truth: design_handoff_jungle_jungle/styles.css + README.md.
+ * Juniper — herbarium design tokens.
+ * Source of truth: juniper-design/styles.css + README.md.
  * Keep this file aligned with the handoff. No ad-hoc colors elsewhere.
  */
 

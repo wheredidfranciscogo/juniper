@@ -27,9 +27,7 @@ export default function Splash() {
       <View style={styles.center}>
         <IconSeedling size={56} stroke={1.3} color={colors.moss} />
         <View style={styles.gap} />
-        <Text style={styles.title}>
-          Jungle <Text style={styles.titleItalic}>Jungle</Text>
-        </Text>
+        <Text style={[styles.title, styles.titleItalic]}>Juniper</Text>
         <Text style={styles.subtitle}>A quiet place for your plants.</Text>
       </View>
 

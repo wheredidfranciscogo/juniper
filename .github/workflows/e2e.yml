@@ -4,16 +4,20 @@
 # built binary and a booted emulator, which is slow and has prerequisites that
 # this repo doesn't satisfy yet:
 #
-#   * app.json needs `expo.android.package` (e.g. "com.jungle.app") for
-#     `expo prebuild` to generate a native project.
-#   * The `appId` in .maestro/*.yaml must match that package name.
+# Prerequisites are now satisfied: app.json sets expo.android.package and the
+# appId in .maestro/*.yaml matches it (both landed with the rename, D9). The flows
+# themselves have still never been executed against a real build — see status/TASKS.md.
 #
-# Once those are set, this workflow builds a debug APK, installs it on an
-# emulator, and runs every flow in .maestro/.
+# This workflow builds a debug APK, installs it on an emulator, and runs every
+# flow in .maestro/.
 name: E2E (Maestro)
 
 on:
   workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: juniper-app
 
 jobs:
   maestro:
@@ -27,6 +31,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: juniper-app/package-lock.json
 
       - uses: actions/setup-java@v4
         with:
@@ -54,8 +59,8 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-            maestro test .maestro/
+            adb install -r juniper-app/android/app/build/outputs/apk/debug/app-debug.apk
+            maestro test juniper-app/.maestro/
 
       - name: Upload Maestro artifacts
         if: always()

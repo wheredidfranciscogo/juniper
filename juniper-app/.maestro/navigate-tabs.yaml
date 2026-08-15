@@ -1,6 +1,6 @@
 # E2E: the four bottom tabs route to their screens.
 # See onboarding.yaml for how to run Maestro and what `appId` to set.
-appId: com.jungle.app
+appId: com.wheredidfranciscogo.juniper
 tags:
   - navigation
 ---

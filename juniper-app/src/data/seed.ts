@@ -1,5 +1,5 @@
 /**
- * Seed data ported from design_handoff_jungle_jungle/data.jsx.
+ * Seed data ported from juniper-design/data.jsx.
  * Used for the prototype UI phase; replaced by Supabase queries in a later task.
  */
 

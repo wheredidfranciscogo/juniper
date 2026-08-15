@@ -2,7 +2,7 @@
  * PlantPressing — herbarium-pressing photo placeholder.
  * A coloured tile with a low-opacity botanical silhouette + species name +
  * museum-tag № label. Stands in for a real plant photo until the user adds one.
- * Ported from design_handoff_jungle_jungle/pressing.jsx.
+ * Ported from juniper-design/pressing.jsx.
  */
 
 import * as React from 'react';

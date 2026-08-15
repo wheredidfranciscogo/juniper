@@ -1,7 +1,7 @@
 /**
- * Jungle Jungle line-art botanical icons.
+ * Juniper line-art botanical icons.
  * One-weight stroke, no fills, hand-drawn feel.
- * Ported verbatim from design_handoff_jungle_jungle/icons.jsx — keep paths in sync.
+ * Ported verbatim from juniper-design/icons.jsx — keep paths in sync.
  */
 
 import * as React from 'react';

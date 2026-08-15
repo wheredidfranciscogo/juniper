@@ -1,7 +1,7 @@
 # E2E: the signature interaction — watering a thirsty plant from the Today tab.
 # Reuses the onboarding flow to reach a seeded Today screen.
 # See onboarding.yaml for how to run Maestro and what `appId` to set.
-appId: com.jungle.app
+appId: com.wheredidfranciscogo.juniper
 tags:
   - water
 ---
