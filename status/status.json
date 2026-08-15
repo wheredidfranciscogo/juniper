@@ -1,16 +1,22 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-08-15T00:00:00+10:00",
-    "mode": "manual-restructure",
+    "timestamp": "2026-08-15T15:05:00+10:00",
+    "mode": "manual-feature",
     "result": "success"
   },
   "state": "ready",
-  "progress_pct": 72,
+  "progress_pct": 75,
   "current_task": null,
-  "last_action": "REPLAN + PHASE 0 RESTRUCTURE, both shipped. The project had reported 'blocked' since 2026-05-25 on two [!] markers git had already resolved (4bdb8f4; c6b9419 via Stack.Protected), while ~20 commits of June work went unrecorded. Wrote juniper-design/DECISIONS.md (D1-D9) — the mechanism Alchemilla had and Juniper didn't — and rewrote PLAN.md, TASKS.md and STATUS.md against it. Then shipped the restructure in three commits: 570d211 collapsed three repos into one at the wrapper folder with juniper-app's history preserved (87 renames), bringing juniper-design/ and status/ under version control and folding in the June working-tree edits; bf0f3ff replaced the Next.js tracker with a four-file static site deployed from the root via vercel.json; 2e230f0 finished the Jungle Jungle rename to com.wheredidfranciscogo.juniper ahead of the first EAS build and dropped the web target. Two things surfaced that the docs had been wrong about for months: the splash screen was still rendering 'Jungle Jungle', and .github/ sat inside juniper-app/ where GitHub never reads it — so CI had been dead since the collapse and is now fixed with working-directory: juniper-app. Verified green throughout: tsc clean, 12 suites / 105 tests, expo export --platform ios at 4.16 MB.",
-  "next_action": "Phase 1 opens with EAS setup (D6): add eas.json with development/preview/production profiles copied from Alchemilla, then cut a DEVELOPMENT build before writing any scheduler code — local notification behaviour in Expo Go differs from a real build on both platforms, and trusting it produces reminders that work in dev and not in life. Then src/lib/notifications.ts, porting the shape of alchemilla-app/src/lib/notifications.ts (rolling one-shot queue, idempotent syncReminders, Android channel, permission requested post-onboarding) with Juniper's difference: schedule per plant off lastWatered + frequency rather than one daily nudge. Keep nextWateringDate() RN-free so it is node-testable. Remaining human items: push the new repo to github.com/wheredidfranciscogo/juniper and archive the old juniper-app repo; point Vercel at the new repo.",
+  "last_action": "EAS SETUP + DEVELOPMENT BUILD (D6). eas.json with development/preview/production profiles mirroring Alchemilla's (Android profiles build an APK so artifacts install without Play), expo-dev-client added, owner set, EAS project created and linked, and the expo-notifications config plugin wired with the moss accent (#3F5D3E from theme tokens) and a 'watering' default channel \u2014 without that plugin the Android notification icon is a grey square. Also declared ios.infoPlist.ITSAppUsesNonExemptEncryption=false, which EAS flagged; without it the export-compliance question must be answered by hand on every App Store Connect upload. ANDROID DEVELOPMENT BUILD #1 SUCCEEDED (17 min, SDK 54, v1.0.0). Self-inflicted red herring worth remembering: the 'without version control system' warning came from an EAS_NO_VCS env var, which disables VCS by presence rather than value \u2014 git resolves fine from juniper-app with .git at the wrapper folder, so EAS honours the root .gitignore (3.1 MB upload confirms it) and no .easignore is needed.",
+  "next_action": "(1) HUMAN: cut the iOS development build interactively \u2014 `cd juniper-app && npx eas build --profile development --platform ios`. EAS must create the ad-hoc provisioning profile and distribution certificate and refuses to in non-interactive mode. The iPhone (UDID 00008150-001E310101E9401C) is already registered under team 62NSMDCDAD from the Alchemilla work and the Apple session is cached, so it should be confirming prompts. Then `npx expo start --dev-client --port 8082` (8081 is held by hyperlocal-app). (2) Then the actual product work: src/lib/notifications.ts \u2014 rolling one-shot local queue, idempotent syncReminders(), Android channel, permission requested post-onboarding; scheduled PER PLANT off lastWatered + frequency rather than one daily nudge. Keep nextWateringDate() RN-free so it is node-testable.",
   "fix_attempts": 0,
-  "blockers": [],
+  "blockers": [
+    {
+      "description": "iOS development build requires interactive EAS credential setup (ad-hoc provisioning profile + distribution certificate). Android is done and unblocked; this only gates testing notifications on the iPhone specifically.",
+      "needs": "human",
+      "since": "2026-08-15"
+    }
+  ],
   "open_prs": []
 }

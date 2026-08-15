@@ -23,8 +23,10 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 ### The loop (D7 — this is the product)
 
 - [~] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
-      config plugin and the EAS project are all in (`c3a4796`, `853c749`). Android
-      development build cut. **One step left, and it needs a human:**
+      config plugin and the EAS project are all in (`c3a4796`, `853c749`).
+      **Android development build #1 succeeded** 2026-08-15 (17 min, Expo SDK 54, v1.0.0):
+      [APK](https://expo.dev/artifacts/eas/FtxQbualPAfXgh9Jf2JE95Af_5ye-A7jYU0TRk5eqkY.apk).
+      **One step left, and it needs a human:**
   - [ ] **Cut the iOS development build interactively.** EAS has to create the ad-hoc
         provisioning profile and distribution certificate, and it refuses to do that in
         `--non-interactive`. Your iPhone (UDID `00008150-…E9401C`) is already registered
