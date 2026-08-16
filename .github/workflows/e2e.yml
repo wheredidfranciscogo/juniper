@@ -116,7 +116,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-34-pixel6
+          key: avd-34-pixel6-v2
 
       # First run only: create and snapshot the AVD without running anything, so every
       # later run boots from the snapshot instead of a cold start.
@@ -130,7 +130,10 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: false
-          script: echo "AVD snapshot created."
+          script: |
+            # Bake the setting into the snapshot as well as applying it at run time.
+            adb shell settings put global hide_error_dialogs 1
+            echo "AVD snapshot created."
 
       - name: Run flows on emulator
         uses: reactivecircus/android-emulator-runner@v2
@@ -142,6 +145,12 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            # The Pixel launcher (Quickstep) ANRs on this emulator, and its "isn't
+            # responding" dialog steals the focused window. Maestro dumps only the
+            # focused window's hierarchy, so every assertion failed against the dialog
+            # while Juniper rendered perfectly behind it — the failure screenshot showed
+            # the splash greyed out underneath. This suppresses those system dialogs.
+            adb shell settings put global hide_error_dialogs 1
             adb install -r apk/app-release.apk
             maestro test --format junit --output maestro-report.xml juniper-app/.maestro/
 
