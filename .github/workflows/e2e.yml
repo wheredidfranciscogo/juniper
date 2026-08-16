@@ -27,7 +27,11 @@ jobs:
   build:
     name: Build release APK
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The one release build that succeeded took 44m37s — seventeen seconds inside the
+    # old 45-minute limit — and the next one was cancelled mid-Gradle for want of a
+    # few more. A release build compiles Hermes bytecode and crunches resources that a
+    # debug build skips, so ~45 minutes cold is simply what it costs here.
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: juniper-app
@@ -54,6 +58,19 @@ jobs:
                       /opt/hostedtoolcache/CodeQL /usr/share/swift 2>/dev/null || true
           sudo docker image prune --all --force > /dev/null 2>&1 || true
           echo "after:  $(df -h / | tail -1)"
+
+      # Gradle's dependency cache. Keyed on package-lock.json rather than the *.gradle
+      # files, because those do not exist yet — `expo prebuild` generates them later in
+      # this job, so any hash of them at this point would be a hash of nothing.
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('juniper-app/package-lock.json') }}
+          restore-keys: |
+            gradle-
 
       - name: Install dependencies
         run: npm ci
