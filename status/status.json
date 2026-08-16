@@ -1,21 +1,26 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-08-15T15:05:00+10:00",
+    "timestamp": "2026-08-16T11:30:00+10:00",
     "mode": "manual-feature",
-    "result": "success"
+    "result": "partial"
   },
   "state": "ready",
-  "progress_pct": 75,
+  "progress_pct": 82,
   "current_task": null,
-  "last_action": "EAS SETUP + DEVELOPMENT BUILD (D6). eas.json with development/preview/production profiles mirroring Alchemilla's (Android profiles build an APK so artifacts install without Play), expo-dev-client added, owner set, EAS project created and linked, and the expo-notifications config plugin wired with the moss accent (#3F5D3E from theme tokens) and a 'watering' default channel \u2014 without that plugin the Android notification icon is a grey square. Also declared ios.infoPlist.ITSAppUsesNonExemptEncryption=false, which EAS flagged; without it the export-compliance question must be answered by hand on every App Store Connect upload. ANDROID DEVELOPMENT BUILD #1 SUCCEEDED (17 min, SDK 54, v1.0.0). Self-inflicted red herring worth remembering: the 'without version control system' warning came from an EAS_NO_VCS env var, which disables VCS by presence rather than value \u2014 git resolves fine from juniper-app with .git at the wrapper folder, so EAS honours the root .gitignore (3.1 MB upload confirms it) and no .easignore is needed.",
-  "next_action": "(1) HUMAN: cut the iOS development build interactively \u2014 `cd juniper-app && npx eas build --profile development --platform ios`. EAS must create the ad-hoc provisioning profile and distribution certificate and refuses to in non-interactive mode. The iPhone (UDID 00008150-001E310101E9401C) is already registered under team 62NSMDCDAD from the Alchemilla work and the Apple session is cached, so it should be confirming prompts. Then `npx expo start --dev-client --port 8082` (8081 is held by hyperlocal-app). (2) Then the actual product work: src/lib/notifications.ts \u2014 rolling one-shot local queue, idempotent syncReminders(), Android channel, permission requested post-onboarding; scheduled PER PLANT off lastWatered + frequency rather than one daily nudge. Keep nextWateringDate() RN-free so it is node-testable.",
+  "last_action": "MAESTRO FLOWS written and audited; E2E execution abandoned on CI by decision. Five flows now (onboarding, navigate-tabs, water-plant, you-tab, add-plant), tapping tabs by testID rather than label because 'today' also appears in 'Last watered today.'. Auditing them found a real bug: Today derives thirst from the store, so watering a plant unmounted its card mid-tap and the ripple and clay-to-moss crossfade were never visible to anyone; Today now holds just-watered ids for the visit. Also built earlier this session: garden backup export, real photographs (copied out of the picker's cache directory before their URI is stored), and the fix for the photo timeline never rendering photo.uri at all. 19 suites / 196 tests green. SEVEN CI attempts executed ZERO assertions \u2014 disk exhaustion, a racy rm of mine, a job timeout, expo-dev-client hijacking the debug APK into its launcher, the emulator's Pixel launcher ANR stealing the focused window, and a build cancelled 17 seconds past a limit the passing build had cleared by 17 seconds. All six diagnosed and fixed in e2e.yml; none were the app or the flows. Proven: release APK builds clean and Juniper renders its splash on Android 34.",
+  "next_action": "(1) Run the flows on a real device \u2014 `brew install maestro && maestro test juniper-app/.maestro/`. About a minute against a phone, versus 45 minutes a cycle on a free Linux runner. Expect at least one assertion to need adjusting; they have never executed. (2) HUMAN, still outstanding: `cd juniper-app && npx eas build --profile development --platform ios` \u2014 EAS needs to create the ad-hoc provisioning profile interactively. (3) Then Phase 1 is down to Android fidelity, TestFlight/Play internal, and two weeks of real use. Backup IMPORT remains deliberately unbuilt: it needs a file picker and a merge decision, and an export you cannot restore is a data dump rather than insurance.",
   "fix_attempts": 0,
   "blockers": [
     {
-      "description": "iOS development build requires interactive EAS credential setup (ad-hoc provisioning profile + distribution certificate). Android is done and unblocked; this only gates testing notifications on the iPhone specifically.",
+      "description": "iOS development build requires interactive EAS credential setup (ad-hoc provisioning profile + distribution certificate). The device and Apple session are already in place; it should be confirming prompts.",
       "needs": "human",
       "since": "2026-08-15"
+    },
+    {
+      "description": "The five Maestro flows have never executed a single assertion. Written, audited against the current screens, and correct as far as static review can establish \u2014 but unverified against a real device. Running them on the phone is the agreed path; CI execution was abandoned after seven attempts, all of which failed on infrastructure rather than on the app.",
+      "needs": "human",
+      "since": "2026-08-16"
     }
   ],
   "open_prs": []

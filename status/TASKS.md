@@ -98,8 +98,37 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 ### Ship
 
 - [ ] **Both platforms at fidelity** — the design is iOS-flavoured; verify Android.
-- [ ] **Run the Maestro flows against a real build.** They were authored from on-screen text
-      and have never once been executed.
+- [~] **Run the Maestro flows against a real build.** Flows are written, audited against the
+      current screens, and extended to five (`onboarding`, `navigate-tabs`, `water-plant`,
+      `you-tab`, `add-plant`). **Still never executed a single assertion.** Decision on
+      2026-08-16: stop trying to make GitHub's emulator cooperate and run them on the phone
+      instead — `maestro test .maestro/` against a real device takes about a minute.
+      ```
+      brew install maestro
+      maestro test juniper-app/.maestro/
+      ```
+      (Set `appId: host.exp.Exponent` in the flows if testing through Expo Go rather than a
+      dev build.)
+
+      The E2E workflow is left in a known state, with six separate infrastructure problems
+      diagnosed and fixed in `.github/workflows/e2e.yml` — it is worth resuming rather than
+      restarting if it is ever wanted:
+        1. Runner disk exhausted unpacking the emulator → split into two jobs, each with its
+           own fresh 72G disk; unrelated toolchains freed.
+        2. A racy `rm -rf` of the Gradle caches killed the job under `bash -e` → cleanup is
+           best-effort and judged on free space, not on every rm succeeding.
+        3. 45-minute job timeout fired while the emulator was still booting → KVM enabled and
+           the AVD cached and snapshotted.
+        4. Debug APK booted into the expo-dev-client launcher → build `assembleRelease`
+           (see DECISIONS.md D6).
+        5. The emulator's Pixel launcher ANR'd and its dialog stole the focused window, which
+           is all Maestro can read → `settings put global hide_error_dialogs 1`.
+        6. Build cancelled at exactly 45 minutes; the one that passed took 44m37s → timeout
+           raised to 90 and Gradle dependencies cached.
+      What was proven along the way: `expo prebuild` generates a working native project, the
+      release APK builds on a clean machine, and Juniper launches and renders its splash
+      correctly on Android 34 (screenshot in the run artifacts). What was never proven: any
+      flow assertion.
 - [ ] **TestFlight + Google Play internal track.**
 - [ ] **Two weeks of real use on your own plants** before calling Phase 1 done.
 

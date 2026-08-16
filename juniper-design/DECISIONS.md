@@ -146,6 +146,13 @@ is four HTML files and has never once needed maintenance.
   edits are already sitting uncommitted in the working tree.
 - Add `eas.json` with development / preview / production profiles, copied from Alchemilla.
 - Budget a dev build *before* starting notification work, not after.
+- **A locally built DEBUG APK is not a runnable copy of Juniper.** Since `expo-dev-client`
+  became a dependency, a debug build boots into the dev-launcher screen ("Start a local
+  development server with: `npx expo start`") and waits for a Metro server. `npx expo
+  run:android` still works because it starts Metro for you — but a debug APK handed to
+  anyone else just shows them the launcher. Use `assembleRelease`, or an EAS build, for
+  anything that has to stand on its own. Discovered the hard way: it failed all five
+  Maestro flows at their first assertion, on CI, with a screenshot of the launcher.
 
 ---
 
