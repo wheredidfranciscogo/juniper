@@ -1,15 +1,15 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-08-16T11:30:00+10:00",
+    "timestamp": "2026-08-16T14:00:00+10:00",
     "mode": "manual-feature",
-    "result": "partial"
+    "result": "success"
   },
   "state": "ready",
-  "progress_pct": 82,
+  "progress_pct": 86,
   "current_task": null,
-  "last_action": "MAESTRO FLOWS written and audited; E2E execution abandoned on CI by decision. Five flows now (onboarding, navigate-tabs, water-plant, you-tab, add-plant), tapping tabs by testID rather than label because 'today' also appears in 'Last watered today.'. Auditing them found a real bug: Today derives thirst from the store, so watering a plant unmounted its card mid-tap and the ripple and clay-to-moss crossfade were never visible to anyone; Today now holds just-watered ids for the visit. Also built earlier this session: garden backup export, real photographs (copied out of the picker's cache directory before their URI is stored), and the fix for the photo timeline never rendering photo.uri at all. 19 suites / 196 tests green. SEVEN CI attempts executed ZERO assertions \u2014 disk exhaustion, a racy rm of mine, a job timeout, expo-dev-client hijacking the debug APK into its launcher, the emulator's Pixel launcher ANR stealing the focused window, and a build cancelled 17 seconds past a limit the passing build had cleared by 17 seconds. All six diagnosed and fixed in e2e.yml; none were the app or the flows. Proven: release APK builds clean and Juniper renders its splash on Android 34.",
-  "next_action": "(1) Run the flows on a real device \u2014 `brew install maestro && maestro test juniper-app/.maestro/`. About a minute against a phone, versus 45 minutes a cycle on a free Linux runner. Expect at least one assertion to need adjusting; they have never executed. (2) HUMAN, still outstanding: `cd juniper-app && npx eas build --profile development --platform ios` \u2014 EAS needs to create the ad-hoc provisioning profile interactively. (3) Then Phase 1 is down to Android fidelity, TestFlight/Play internal, and two weeks of real use. Backup IMPORT remains deliberately unbuilt: it needs a file picker and a merge decision, and an export you cannot restore is a data dump rather than insurance.",
+  "last_action": "BACKUP IMPORT shipped, closing the last open feature in Phase 1's queue. The merge question is settled as DECISIONS.md D10: restoring REPLACES the garden rather than merging. Every plant carries the lastWateredISO that drives thirst and the reminders, so a merge must answer 'which timestamp wins?' \u2014 backup wins makes a plant you watered yesterday look parched and fires a wrong reminder; current wins means the import did nothing for the plants you had; newest wins is a blend nobody chose and leaves you unable to state what your garden is. Replace is the only rule you can say in a sentence. parseBackup is pure and treats the file as untrusted: wrong app, future format, malformed or duplicate plants, orphan log entries, absurd cadences, unparseable dates (repaired to now, not 1970, which would fire a reminder on restore), and photo URIs from another device. The confirmation names real counts on both sides and is worded differently for an empty garden. Reminders reschedule for free because useReminderSync watches `plants`. 19 suites / 227 tests green.",
+  "next_action": "Phase 1 has no unbuilt features left. Remaining are all device-bound: (1) HUMAN \u2014 `cd juniper-app && npx eas build --profile development --platform ios`, EAS needs to create the provisioning profile interactively. (2) Run the Maestro flows on a real phone \u2014 `brew install maestro && maestro test juniper-app/.maestro/`; they have still never executed an assertion. (3) Verify Android fidelity. (4) TestFlight + Play internal. (5) Two weeks of real use, which is the actual definition of done.",
   "fix_attempts": 0,
   "blockers": [
     {

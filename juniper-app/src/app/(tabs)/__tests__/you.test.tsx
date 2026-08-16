@@ -9,6 +9,7 @@ import { Alert } from 'react-native';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import * as Notifications from 'expo-notifications';
 import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import You from '../you';
@@ -23,6 +24,7 @@ jest.mock('react-native-safe-area-context', () => ({
 const mockNotifications = Notifications as jest.Mocked<typeof Notifications>;
 const mockStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 const mockSharing = Sharing as jest.Mocked<typeof Sharing>;
+const mockPicker = DocumentPicker as jest.Mocked<typeof DocumentPicker>;
 
 const plant = (over: Partial<Plant> = {}): Plant => ({
   id: 'marcel',
@@ -220,5 +222,125 @@ describe('You — backup', () => {
   it('makes clear that Juniper is not the one uploading it', async () => {
     await mount();
     expect(screen.getByText(/you choose where it goes/)).toBeTruthy();
+  });
+});
+
+
+describe('You — restore', () => {
+  const backupFile = JSON.stringify({
+    app: 'juniper',
+    format: 1,
+    exportedAt: '2026-08-01T09:00:00.000Z',
+    profile: { userName: 'June', archetype: 'forager' },
+    plants: [
+      { id: 'a', name: 'Alpha', species: 'Aloe vera', waterEvery: 7, lastWateredISO: '2026-08-01T09:00:00.000Z', addedISO: '2025-01-01' },
+      { id: 'b', name: 'Beta', species: 'Ficus lyrata', waterEvery: 10, lastWateredISO: '2026-08-01T09:00:00.000Z', addedISO: '2025-01-01' },
+    ],
+    log: [],
+  });
+
+  const pickReturns = (text: string) => {
+    mockPicker.getDocumentAsync.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///tmp/backup.json' }],
+    } as never);
+    const { File } = jest.requireMock('expo-file-system');
+    (File as jest.Mock).mockImplementationOnce(() => ({ text: jest.fn(() => Promise.resolve(text)) }));
+  };
+
+  it('offers restore, and is explicit that it replaces rather than merges', async () => {
+    await mount();
+    expect(screen.getByText('Restore from a copy')).toBeTruthy();
+    expect(screen.getByText(/replaces what's here rather than merging/)).toBeTruthy();
+  });
+
+  it('confirms before replacing, naming what is in the file and what is lost', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await mount([plant()]);
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
+    pickReturns(backupFile);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Restore from a copy'));
+    });
+
+    await waitFor(() => expect(alert).toHaveBeenCalled());
+    const [title, body] = alert.mock.calls[0];
+    expect(title).toBe('Replace your garden?');
+    // Real numbers on both sides — "Are you sure?" is not enough for an act with no undo.
+    expect(body).toContain('2 plants');
+    expect(body).toContain('Your current 1 plant will be replaced');
+    expect(body).toContain("can't be undone");
+    alert.mockRestore();
+  });
+
+  it('does not call it a replacement when the garden is empty', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await mount([]);
+    pickReturns(backupFile);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Restore from a copy'));
+    });
+
+    await waitFor(() => expect(alert).toHaveBeenCalled());
+    const [title, body] = alert.mock.calls[0];
+    expect(title).toBe('Restore your garden?');
+    expect(body).not.toContain('will be replaced');
+    alert.mockRestore();
+  });
+
+  it('only replaces once the confirm button is pressed', async () => {
+    let confirm: (() => void) | undefined;
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _b, buttons) => {
+      confirm = (buttons as { text: string; onPress?: () => void }[])?.find(
+        (b) => b.text === 'Replace' || b.text === 'Restore',
+      )?.onPress;
+    });
+
+    await mount([plant()]);
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
+    pickReturns(backupFile);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Restore from a copy'));
+    });
+    await waitFor(() => expect(confirm).toBeDefined());
+
+    // Nothing has changed yet — the dialog is the gate.
+    expect(screen.getByText('1 plant')).toBeTruthy();
+
+    await act(async () => {
+      confirm?.();
+    });
+    await waitFor(() => expect(screen.getByText('2 plants')).toBeTruthy());
+    alert.mockRestore();
+  });
+
+  it('explains a file it cannot read instead of failing silently', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await mount();
+    pickReturns('{"app":"something-else"}');
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Restore from a copy'));
+    });
+
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('Could not restore', expect.stringContaining('Juniper backup')));
+    alert.mockRestore();
+  });
+
+  it('says nothing at all when the picker is cancelled', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    await mount();
+    mockPicker.getDocumentAsync.mockResolvedValue({ canceled: true, assets: null } as never);
+
+    await act(async () => {
+      fireEvent.press(screen.getByText('Restore from a copy'));
+    });
+
+    await waitFor(() => expect(mockPicker.getDocumentAsync).toHaveBeenCalled());
+    expect(alert).not.toHaveBeenCalled();
+    alert.mockRestore();
   });
 });

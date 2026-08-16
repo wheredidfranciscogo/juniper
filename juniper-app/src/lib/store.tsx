@@ -30,6 +30,17 @@ interface AppActions {
   logAction: (plantId: string, kind: LogKind, text?: string) => void;
   addPlant: (plant: Plant) => void;
   updatePlant: (plantId: string, patch: Partial<Plant>) => void;
+  /**
+   * Replace the entire garden — used by backup restore. Not a merge: see
+   * DECISIONS.md D10 for why blending two sets of `lastWateredISO` produces a garden
+   * nobody chose. Reminders reschedule on their own, because useReminderSync watches
+   * `plants` and this changes the whole array.
+   */
+  replaceGarden: (input: {
+    plants: Plant[];
+    log: LogEntry[];
+    profile: { userName: string; archetype: ArchetypeKey };
+  }) => void;
 }
 
 type Store = AppState & AppActions & { hydrated: boolean };
@@ -213,9 +224,34 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const replaceGarden = React.useCallback<AppActions['replaceGarden']>(
+    ({ plants, log, profile }) => {
+      setState((s) => ({
+        ...s,
+        // Restoring into a fresh install must leave the app past onboarding — otherwise
+        // the route guard bounces straight back to the questions with a full garden.
+        onboarded: true,
+        userName: profile.userName || s.userName,
+        archetype: profile.archetype,
+        plants,
+        log,
+      }));
+    },
+    [],
+  );
+
   const value = React.useMemo<Store>(
-    () => ({ ...state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant }),
-    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant],
+    () => ({
+      ...state,
+      hydrated,
+      completeOnboarding,
+      waterPlant,
+      logAction,
+      addPlant,
+      updatePlant,
+      replaceGarden,
+    }),
+    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant, replaceGarden],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

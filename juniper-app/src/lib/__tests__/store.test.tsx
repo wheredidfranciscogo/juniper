@@ -169,6 +169,61 @@ describe('updatePlant', () => {
   });
 });
 
+describe('replaceGarden', () => {
+  const restored = [makePlant({ id: 'a', name: 'Alpha' }), makePlant({ id: 'b', name: 'Beta' })];
+  const profile = { userName: 'Restored', archetype: 'forager' as const };
+
+  it('replaces the whole garden rather than merging into it', () => {
+    // Merging is the decision this action exists to avoid — see DECISIONS.md D10.
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'existing', name: 'Existing' })));
+
+    act(() => result.current.replaceGarden({ plants: restored, log: [], profile }));
+
+    expect(result.current.plants.map((p) => p.id)).toEqual(['a', 'b']);
+    expect(result.current.plants.map((p) => p.id)).not.toContain('existing');
+  });
+
+  it('replaces the log too, so no entry outlives the plant it referred to', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'existing', name: 'Existing' })));
+    expect(result.current.log.length).toBeGreaterThan(0);
+
+    act(() => result.current.replaceGarden({ plants: restored, log: [], profile }));
+    expect(result.current.log).toEqual([]);
+  });
+
+  it('marks the app onboarded, so restoring on a fresh install lands in the app', () => {
+    // Without this the route guard bounces straight back to the onboarding questions
+    // with a fully restored garden sitting behind it.
+    const { result } = renderStore();
+    expect(result.current.onboarded).toBe(false);
+
+    act(() => result.current.replaceGarden({ plants: restored, log: [], profile }));
+
+    expect(result.current.onboarded).toBe(true);
+    expect(result.current.userName).toBe('Restored');
+    expect(result.current.archetype).toBe('forager');
+  });
+
+  it('keeps the existing name when the backup has none', () => {
+    const { result } = renderStore();
+    act(() =>
+      result.current.completeOnboarding({ userName: 'June', archetype: 'steady', seed: false }),
+    );
+
+    act(() =>
+      result.current.replaceGarden({
+        plants: restored,
+        log: [],
+        profile: { userName: '', archetype: 'whisperer' },
+      }),
+    );
+
+    expect(result.current.userName).toBe('June');
+  });
+});
+
 describe('persistence', () => {
   it('starts with hydrated=false and flips to true once AsyncStorage resolves', async () => {
     const { result } = renderStore();

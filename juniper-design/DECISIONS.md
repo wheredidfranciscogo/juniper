@@ -8,6 +8,50 @@ contradicts PLAN.md or TASKS.md, this file wins and the other one gets fixed.
 
 ---
 
+## D10 — Restoring a backup replaces the garden. It does not merge.
+**Date:** 2026-08-16 · **Status:** Decided
+
+**Context.** Export shipped without import, which made it a data dump rather than
+insurance (D2's one real downside). Import needs a merge decision, and that decision is
+the whole substance of the feature.
+
+**Decision.** Importing a backup **replaces** the entire garden — plants, log, name and
+archetype — behind an explicit confirmation that states the counts on both sides. There
+is no merge-by-plant-id.
+
+**Why.** Merge sounds kinder and is where silent corruption lives. Every plant in a
+backup carries a `lastWateredISO`, and that timestamp *is* the watering loop: it decides
+thirst, the Today list, and when the next reminder fires. So a merge has to answer "which
+timestamp wins?" and every answer is bad:
+
+- **Backup wins** — a three-week-old file makes a plant you watered yesterday look
+  parched, and fires a reminder that is simply wrong.
+- **Current wins** — then importing did nothing for the plants you already had, which is
+  usually the whole reason you were importing.
+- **Newest wins** — plausible, and the worst of the three: the result is a blend nobody
+  chose, and *you can no longer say what your garden is*.
+
+That last point decides it. After a replace you can state your data in one sentence: it
+is the file. After a merge you cannot state it at all, and an app whose entire job is
+telling you when to water cannot afford ambiguity in the field that drives the reminders.
+
+**Consequences / rules.**
+- The confirmation must name real numbers — how many plants and entries are in the file,
+  how many are about to be discarded, and when the backup was taken. "Are you sure?" is
+  not enough for an irreversible act with no undo and no server-side copy.
+- Restoring into an **empty** garden is the common case (new phone, reinstall) and is
+  trivially safe; the confirmation should not treat it as if it were destructive.
+- A picked file is untrusted input. Parsing must validate rather than trust: wrong app,
+  unknown future format, malformed plants, duplicate ids, unparseable dates. A bad file
+  must fail with a sentence a person can act on, never a crash and never a half-imported
+  garden.
+- Import replaces state through a single store action so the existing reminder resync
+  (which watches `plants`) reschedules everything automatically. No special-casing.
+- If merge is ever genuinely wanted, it needs a real conflict UI — per-plant, showing both
+  timestamps — not a silent rule. That is a different and much larger feature.
+
+---
+
 ## D1 — Native app only. There is no web app.
 **Date:** 2026-08-15 · **Status:** Decided
 

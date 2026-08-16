@@ -150,6 +150,10 @@ jest.mock('expo-file-system', () => {
   };
 });
 
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(() => Promise.resolve({ canceled: true, assets: null })),
+}));
+
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn(() => Promise.resolve(true)),
   shareAsync: jest.fn(() => Promise.resolve()),

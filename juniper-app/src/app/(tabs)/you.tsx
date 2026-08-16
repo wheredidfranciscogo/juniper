@@ -42,7 +42,7 @@ import {
   hasPermission,
   setReminder,
 } from '../../lib/notifications';
-import { exportBackup } from '../../lib/backup';
+import { exportBackup, pickBackup, type ParsedBackup } from '../../lib/backup';
 
 /** Six sensible times. See divergence note 2. */
 const TIME_OPTIONS = ['07:00', '08:00', '09:00', '12:00', '18:00', '20:00'];
@@ -57,13 +57,14 @@ function prettyTime(hhmm: string): string {
 
 export default function You() {
   const insets = useSafeAreaInsets();
-  const { userName, archetype, plants, log } = useStore();
+  const { userName, archetype, plants, log, replaceGarden } = useStore();
 
   const [enabled, setEnabled] = React.useState(false);
   const [time, setTime] = React.useState(DEFAULT_TIME);
   const [denied, setDenied] = React.useState(false);
   const [loaded, setLoaded] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
+  const [importing, setImporting] = React.useState(false);
 
   // Load the stored preference once. If the pref says "on" but the OS permission has
   // since been revoked in Settings, show the toggle as off — claiming reminders are on
@@ -114,6 +115,73 @@ export default function You() {
     } finally {
       setExporting(false);
     }
+  };
+
+  /**
+   * Restore from a backup file. REPLACES the garden — see DECISIONS.md D10.
+   *
+   * The confirmation names real numbers on both sides. "Are you sure?" is not enough
+   * for an act that is irreversible, has no undo, and has no server-side copy to fall
+   * back on.
+   */
+  const onImport = async () => {
+    setImporting(true);
+    let result;
+    try {
+      result = await pickBackup();
+    } finally {
+      setImporting(false);
+    }
+
+    if (!result.ok) {
+      if (result.reason === 'cancelled') return;
+      const message: Record<string, string> = {
+        'not-json': "That file isn't readable as a backup — it may be damaged, or not the file you meant.",
+        'not-juniper': "That doesn't look like a Juniper backup.",
+        'future-format': 'That backup was made by a newer version of Juniper. Update the app first.',
+        'no-plants': "That backup doesn't contain any plants Juniper can read.",
+        unreadable: "That file couldn't be opened.",
+      };
+      Alert.alert('Could not restore', message[result.reason] ?? 'Something went wrong.');
+      return;
+    }
+
+    confirmRestore(result.data);
+  };
+
+  const confirmRestore = (data: ParsedBackup) => {
+    const taken = data.exportedAt
+      ? new Date(data.exportedAt).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : 'an unknown date';
+
+    const incoming = `${data.plants.length} plant${data.plants.length === 1 ? '' : 's'} and ${data.log.length} log ${data.log.length === 1 ? 'entry' : 'entries'}`;
+    const dropped =
+      data.skipped.plants > 0
+        ? `\n\n${data.skipped.plants} entr${data.skipped.plants === 1 ? 'y' : 'ies'} in the file couldn't be read and will be left out.`
+        : '';
+
+    // Restoring into an empty garden is the common case — new phone, reinstall — and
+    // nothing is at stake, so don't dress it up as destructive.
+    const body =
+      plants.length === 0
+        ? `This backup was taken on ${taken} and holds ${incoming}.${dropped}`
+        : `This backup was taken on ${taken} and holds ${incoming}.\n\nYour current ${plants.length} plant${plants.length === 1 ? '' : 's'} will be replaced. This can't be undone.${dropped}`;
+
+    Alert.alert(plants.length === 0 ? 'Restore your garden?' : 'Replace your garden?', body, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: plants.length === 0 ? 'Restore' : 'Replace',
+        style: plants.length === 0 ? 'default' : 'destructive',
+        onPress: () => {
+          replaceGarden({ plants: data.plants, log: data.log, profile: data.profile });
+          Alert.alert('Restored', `${incoming} are back.`);
+        },
+      },
+    ]);
   };
 
   const onPickTime = async (next: string) => {
@@ -233,6 +301,24 @@ export default function You() {
             </Text>
           </View>
           {exporting ? <ActivityIndicator color={colors.inkFaint} /> : <Text style={styles.chevron}>→</Text>}
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        <Pressable
+          style={styles.row}
+          onPress={onImport}
+          disabled={importing}
+          accessibilityRole="button"
+        >
+          <View style={styles.rowText}>
+            <Text style={styles.rowLabel}>Restore from a copy</Text>
+            <Text style={styles.rowHint}>
+              Brings a saved file back. It replaces what&apos;s here rather than merging, so
+              you always know exactly what your garden is.
+            </Text>
+          </View>
+          {importing ? <ActivityIndicator color={colors.inkFaint} /> : <Text style={styles.chevron}>→</Text>}
         </Pressable>
       </View>
 

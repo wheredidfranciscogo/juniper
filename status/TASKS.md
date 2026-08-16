@@ -78,11 +78,14 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       and node-testable; the file goes to the CACHE directory, not documents, because it is a
       transient artefact and writing it to documents would accumulate a full copy of the
       garden on every export. Refuses to export an empty garden. 10 tests.
-- [ ] **Backup IMPORT — the other half, and the honest gap.** An export you cannot restore is
-      a data dump, not insurance. Restoring needs a file picker (`expo-document-picker`, a new
-      dependency) and a merge decision: replace the garden wholesale, or merge by plant id and
-      reconcile conflicts. Until this lands, the export protects you only if you are willing to
-      hand the JSON back to a future version.
+- [x] **Backup import** — "Restore from a copy" on the You tab. The merge question is settled
+      in **DECISIONS.md D10**: restoring **replaces** the garden and does not merge, because
+      every plant carries the `lastWateredISO` that drives thirst and reminders, and every
+      "which timestamp wins?" rule yields a garden nobody chose. The confirmation names real
+      numbers on both sides and is worded differently for an empty garden, where nothing is at
+      stake. `parseBackup` is pure and treats the file as untrusted: wrong app, future format,
+      malformed plants, duplicate ids, orphan log entries, absurd cadences, unparseable dates,
+      and photo URIs from another device are all handled rather than trusted. 21 new tests.
 - [x] **Real photos** — picked images are copied out of the picker's cache directory into the
       app's document directory before their URI is stored (`src/lib/photos.ts`), because the OS
       may clear that cache at any time and a stored cache URI becomes a broken image weeks
