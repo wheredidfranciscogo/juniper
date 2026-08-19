@@ -14,6 +14,7 @@ import {
   useFonts as usePublicSans,
   PublicSans_300Light,
   PublicSans_400Regular,
+  PublicSans_400Regular_Italic,
   PublicSans_500Medium,
   PublicSans_600SemiBold,
   PublicSans_700Bold,
@@ -45,6 +46,7 @@ export default function RootLayout() {
   const [sansLoaded, sansError] = usePublicSans({
     PublicSans_300Light,
     PublicSans_400Regular,
+  PublicSans_400Regular_Italic,
     PublicSans_500Medium,
     PublicSans_600SemiBold,
     PublicSans_700Bold,

@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
   resultRowPressed: { backgroundColor: colors.surface },
   resultText: { flex: 1, gap: 2 },
   resultName: { fontFamily: fonts.serif.regular, fontSize: 16, color: colors.ink },
-  resultSpecies: { ...text.species, fontStyle: 'italic', fontSize: 13 },
+  resultSpecies: { ...text.species, fontSize: 13 },
   resultHint: { ...text.monoTimestamp, color: colors.inkFaint },
 
   field: { gap: 6 },

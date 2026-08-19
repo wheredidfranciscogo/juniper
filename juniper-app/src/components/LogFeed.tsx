@@ -67,5 +67,5 @@ const styles = StyleSheet.create({
   body: { flex: 1 },
   text: { fontFamily: fonts.serif.regular, fontSize: 16, lineHeight: 22, color: colors.ink },
   ts: { ...text.monoTimestamp, paddingTop: 3 },
-  empty: { ...text.bodyMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: spacing.section },
+  empty: { ...text.bodyMuted, fontFamily: fonts.sans.regularItalic, textAlign: 'center', paddingVertical: spacing.section },
 });

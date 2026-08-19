@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   tended: { ...text.overline, marginTop: 8 },
   name: text.plantHero,
   species: text.speciesLg,
-  nickname: { fontFamily: fonts.sans.regular, fontStyle: 'italic', fontSize: 13, color: colors.inkFaint, marginTop: 2 },
+  nickname: { fontFamily: fonts.sans.regularItalic, fontSize: 13, color: colors.inkFaint, marginTop: 2 },
 
   stats: {
     flexDirection: 'row',

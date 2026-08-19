@@ -10,7 +10,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing, text } from '../theme';
+import { colors, fonts, spacing, text } from '../theme';
 import { IconSeedling } from '../components/icons';
 
 export default function Splash() {
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   gap: { height: 28 },
   overline: { ...text.overlineSm, position: 'absolute' },
   title: { ...text.splashTitle, textAlign: 'center' },
-  titleItalic: { fontFamily: 'SourceSerif4_400Regular_Italic' },
+  titleItalic: { fontFamily: fonts.serif.regularItalic },
   subtitle: { ...text.bodyMuted, marginTop: 12, textAlign: 'center' },
-  foot: { ...text.hint, color: colors.inkFaint, position: 'absolute', fontStyle: 'italic' },
+  foot: { ...text.hint, color: colors.inkFaint, position: 'absolute', fontFamily: fonts.sans.regularItalic },
 });

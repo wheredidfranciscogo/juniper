@@ -16,7 +16,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radii, spacing, text } from '../../theme';
+import { colors, fonts, radii, spacing, text } from '../../theme';
 import { ARCHETYPES } from '../../data/seed';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  emptyTitle: { ...text.blurb, fontStyle: 'italic', textAlign: 'center' },
+  emptyTitle: { ...text.blurb, fontFamily: fonts.serif.regularItalic, textAlign: 'center' },
   emptyBody: { ...text.bodyMuted, textAlign: 'center' },
 
   upcoming: { paddingHorizontal: spacing.page, gap: 4 },

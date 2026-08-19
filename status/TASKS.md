@@ -100,7 +100,24 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 ### Ship
 
-- [ ] **Both platforms at fidelity** — the design is iOS-flavoured; verify Android.
+- [~] **Both platforms at fidelity.** Static Android pass done 2026-08-16 — four issues that
+      are invisible on iOS, all fixed:
+        1. **Italics rendered in the wrong typeface.** Five styles used `fontStyle: 'italic'`
+           on families with no italic face loaded. iOS synthesises a slant; Android falls
+           back to the SYSTEM font, so that copy would have shown in Roboto. Loaded
+           `PublicSans_400Regular_Italic` (the handoff asks for sans italic by name) and
+           pointed every italic at a real face.
+        2. **`includeFontPadding` was never disabled.** Android adds vertical padding on top
+           of the explicit lineHeight every preset sets, so text sits low and blocks run
+           tall. Applied once in `tokens.ts` rather than at ~30 call sites.
+        3. **`userInterfaceStyle` was `automatic`** on an app with no dark mode (D8). On a
+           phone set to dark, native surfaces — including the Alert dialogs the restore flow
+           depends on — would render dark against a light app. Now `light`.
+        4. Splash wordmark hardcoded a font-family string instead of the token.
+      Two token guards added, because all of this is invisible on iOS and would regress
+      unnoticed. **Still needs a real device** for what static analysis cannot see: touch
+      targets, the tab bar against gesture navigation, elevation, and whether the cards feel
+      flat in the hand.
 - [~] **Run the Maestro flows against a real build.** Flows are written, audited against the
       current screens, and extended to five (`onboarding`, `navigate-tabs`, `water-plant`,
       `you-tab`, `add-plant`). **Still never executed a single assertion.** Decision on

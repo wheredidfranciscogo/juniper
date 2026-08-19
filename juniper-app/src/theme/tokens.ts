@@ -50,6 +50,11 @@ export const fonts = {
   sans: {
     light: 'PublicSans_300Light',
     regular: 'PublicSans_400Regular',
+    // A real italic face, not `fontStyle: 'italic'`. iOS fakes a slant for a family with
+    // no italic; Android falls back to the SYSTEM font entirely, so italic sans copy
+    // silently rendered in Roboto. The handoff asks for sans italic by name (the plant
+    // nickname), so the face is loaded rather than the design changed.
+    regularItalic: 'PublicSans_400Regular_Italic',
     medium: 'PublicSans_500Medium',
     semibold: 'PublicSans_600SemiBold',
     bold: 'PublicSans_700Bold',
@@ -103,10 +108,24 @@ export const duration = {
 } as const;
 
 /**
+ * Android adds vertical padding above and below every <Text> based on the font's own
+ * metrics (`includeFontPadding` defaults to true). Every preset below sets an explicit
+ * lineHeight from the handoff, and that padding is added ON TOP of it — so on Android
+ * the glyphs sit lower in their box and every text block is taller than drawn. It is
+ * the usual reason a design looks right on iOS and subtly wrong on Android.
+ *
+ * Applied here, once, rather than remembered at ~30 call sites. Ignored on iOS.
+ */
+const androidTextFix = <T extends Record<string, object>>(presets: T): T =>
+  Object.fromEntries(
+    Object.entries(presets).map(([key, value]) => [key, { ...value, includeFontPadding: false }]),
+  ) as T;
+
+/**
  * Typography presets — keep these in sync with the handoff README screen specs.
  * Use via `tokens.text.h1`, etc. in StyleSheet.create.
  */
-export const text = {
+export const text = androidTextFix({
   // Display / serif
   splashTitle: { fontFamily: fonts.serif.regular, fontSize: 44, lineHeight: 52, color: colors.ink },
   archetypeTitle: { fontFamily: fonts.serif.mediumItalic, fontSize: 38, lineHeight: 46, color: colors.ink },
@@ -141,4 +160,4 @@ export const text = {
   monoCaption: { fontFamily: fonts.mono.regular, fontSize: 11, lineHeight: 14, color: colors.inkMuted, letterSpacing: 1.32 },
   monoTimestamp: { fontFamily: fonts.mono.regular, fontSize: 11, lineHeight: 14, color: colors.inkMuted },
   pill: { fontFamily: fonts.mono.medium, fontSize: 9, lineHeight: 12, letterSpacing: 1.8, textTransform: 'uppercase' as const },
-} as const;
+} as const);
