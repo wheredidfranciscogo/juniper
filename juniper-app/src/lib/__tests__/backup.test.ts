@@ -17,7 +17,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
   waterEvery: 7,
   lastWateredISO: '2026-08-01T09:00:00.000Z',
   light: 'bright indirect',
-  temp: 'warm',
   addedISO: '2025-09-17',
   photos: [],
   journal: [],
@@ -27,7 +26,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
 const state = (over: Partial<AppState> = {}): AppState => ({
   onboarded: true,
   userName: 'June',
-  archetype: 'whisperer',
   plants: [plant()],
   log: [{ id: 'l1', plantId: 'marcel', kind: 'water', text: 'Watered Marcel.', when: '2026-08-01T09:00:00.000Z' }],
   ...over,
@@ -41,7 +39,7 @@ describe('buildBackup', () => {
     expect(b.app).toBe('juniper');
     expect(b.format).toBe(BACKUP_FORMAT);
     expect(b.exportedAt).toBe(now.toISOString());
-    expect(b.profile).toEqual({ userName: 'June', archetype: 'whisperer' });
+    expect(b.profile).toEqual({ userName: 'June' });
     expect(b.plants).toHaveLength(1);
     expect(b.log).toHaveLength(1);
   });
@@ -177,7 +175,7 @@ describe('parseBackup — a good file', () => {
     if (!parsed.ok) return;
     expect(parsed.data.plants).toHaveLength(1);
     expect(parsed.data.plants[0].lastWateredISO).toBe('2026-08-01T09:00:00.000Z');
-    expect(parsed.data.profile).toEqual({ userName: 'June', archetype: 'whisperer' });
+    expect(parsed.data.profile).toEqual({ userName: 'June' });
     expect(parsed.data.skipped).toEqual({ plants: 0, log: 0 });
   });
 
@@ -202,7 +200,7 @@ describe('parseBackup — repairing damaged entries', () => {
 
   it('keeps a plant that is merely missing optional fields', () => {
     const { plants } = parseOne({ id: 'p', name: 'Pip' });
-    expect(plants[0]).toMatchObject({ species: 'Unknown species', temp: 'warm', waterEvery: 7 });
+    expect(plants[0]).toMatchObject({ species: 'Unknown species', light: 'bright indirect', waterEvery: 7 });
   });
 
   it('treats an unparseable watering date as watered now, not 1970', () => {
@@ -293,14 +291,16 @@ describe('parseBackup — the log', () => {
 });
 
 describe('parseBackup — the profile', () => {
-  it('falls back to a valid archetype rather than trusting the file', () => {
+  it('ignores an archetype from an older backup rather than rejecting the file', () => {
+    // The archetype was removed from the product; a backup taken before that still
+    // carries one and must still restore cleanly.
     const r = parseBackup(validFile({ profile: { userName: 'X', archetype: 'wizard' } }));
-    expect(r.ok && r.data.profile.archetype).toBe('whisperer');
+    expect(r.ok && r.data.profile).toEqual({ userName: 'X' });
   });
 
   it('copes with no profile at all', () => {
     const r = parseBackup(validFile({ profile: undefined }));
-    expect(r.ok && r.data.profile).toEqual({ userName: '', archetype: 'whisperer' });
+    expect(r.ok && r.data.profile).toEqual({ userName: '' });
   });
 });
 

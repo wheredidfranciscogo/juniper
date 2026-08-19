@@ -1,14 +1,6 @@
 import type { PlantIconName } from '../components/icons';
 import type { PressingTone } from '../components/Pressing';
 
-export type ArchetypeKey = 'whisperer' | 'collector' | 'forager' | 'steady';
-
-export interface Archetype {
-  name: string;
-  blurb: string;
-  body: string;
-}
-
 export interface PlantPhoto {
   date: string; // ISO or display string
   label?: string;
@@ -37,7 +29,12 @@ export interface Plant {
    */
   lastWateredISO: string;
   light: string;
-  temp: string;
+  /**
+   * Where the plant lives. Optional because it was added after the first plants
+   * existed — Garden hides a filter that matches nothing, so an unset value simply
+   * means the plant does not appear under either filter rather than being wrong.
+   */
+  location?: 'indoor' | 'outdoor';
   addedISO: string;
   photos: PlantPhoto[];
   journal: JournalEntry[];
@@ -53,17 +50,3 @@ export interface LogEntry {
   when: string; // ISO timestamp
 }
 
-export interface OnboardingOption {
-  v: string;
-  label: string;
-  hint: string;
-  icon: string;
-}
-
-export interface OnboardingStep {
-  key: string;
-  question: string;
-  options: OnboardingOption[];
-}
-
-export type OnboardingAnswers = Record<string, string>;

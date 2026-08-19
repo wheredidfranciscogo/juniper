@@ -24,7 +24,6 @@ import {
   IconPencil,
   IconDrop,
   IconSun,
-  IconThermometer,
   IconCactus,
   IconSparkle,
   IconWindow,
@@ -115,7 +114,7 @@ export default function PlantDetail() {
           <View style={styles.stats}>
             <Stat Icon={IconDrop} label={`every ${plant.waterEvery} days`} />
             <Stat Icon={IconSun} label={plant.light} />
-            <Stat Icon={IconThermometer} label={plant.temp} />
+            {plant.location ? <Stat Icon={IconWindow} label={plant.location} /> : null}
           </View>
 
           {/* Water button */}

@@ -50,7 +50,6 @@ const ICON_OPTIONS: PlantIconName[] = [
   'herb',
   'seedling',
 ];
-const PRESSING_OPTIONS: PressingTone[] = ['moss', 'clay', 'deep'];
 const LIGHT_OPTIONS = [
   'bright direct',
   'bright indirect',
@@ -58,13 +57,20 @@ const LIGHT_OPTIONS = [
   'tolerates low',
   'full sun',
 ] as const;
-const TEMP_OPTIONS = ['warm', 'any', 'cool'] as const;
+const LOCATION_OPTIONS = ['indoor', 'outdoor'] as const;
 
 const PATH_LABEL: Record<Path, string> = {
   photo: 'FROM A PHOTO',
   search: 'BY NAME',
   manual: 'BY HAND',
 };
+
+/** Rotate the card tone from the name so a garden isn't all one colour. */
+function pickPressing(name: string): PressingTone {
+  const tones: PressingTone[] = ['moss', 'clay', 'deep'];
+  const sum = [...name].reduce((n, c) => n + c.charCodeAt(0), 0);
+  return tones[sum % tones.length];
+}
 
 const newId = () => `p_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -92,9 +98,14 @@ export default function AddEdit() {
   const [nickname, setNickname] = React.useState(() => editingPlant?.nickname ?? '');
   const [waterEvery, setWaterEvery] = React.useState(() => editingPlant?.waterEvery ?? 7);
   const [light, setLight] = React.useState<string>(() => editingPlant?.light ?? 'bright indirect');
-  const [temp, setTemp] = React.useState<string>(() => editingPlant?.temp ?? 'warm');
+  const [location, setLocation] = React.useState<'indoor' | 'outdoor'>(
+    () => editingPlant?.location ?? 'indoor',
+  );
   const [icon, setIcon] = React.useState<PlantIconName>(() => editingPlant?.icon ?? 'leaf');
-  const [pressing, setPressing] = React.useState<PressingTone>(() => editingPlant?.pressing ?? 'moss');
+  // The pressing tone is the illustrated card's colour, not something worth asking
+  // about. Existing plants keep theirs; new ones get one picked from the name so a
+  // garden still looks varied.
+  const pressing: PressingTone = editingPlant?.pressing ?? pickPressing(name);
   const [photoUri, setPhotoUri] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
 
@@ -111,7 +122,7 @@ export default function AddEdit() {
         icon,
         waterEvery,
         light,
-        temp,
+        location,
       });
     } else {
       const date = todayISO();
@@ -127,7 +138,7 @@ export default function AddEdit() {
         // cadence away rather than immediately.
         lastWateredISO: new Date().toISOString(),
         light,
-        temp,
+        location,
         addedISO: date,
         photos: photoUri ? [{ date, uri: photoUri }] : [],
         journal: [],
@@ -195,10 +206,14 @@ export default function AddEdit() {
         />
 
         <Segmented label="Light" options={LIGHT_OPTIONS} value={light} onChange={setLight} />
-        <Segmented label="Temp" options={TEMP_OPTIONS} value={temp} onChange={setTemp} />
+        <Segmented
+          label="Where it lives"
+          options={LOCATION_OPTIONS}
+          value={location}
+          onChange={(v) => setLocation(v as 'indoor' | 'outdoor')}
+        />
 
         <IconPicker value={icon} onChange={setIcon} />
-        <PressingPicker value={pressing} onChange={setPressing} />
       </ScrollView>
     </View>
   );
@@ -328,10 +343,10 @@ function SearchBlock({ onPick }: { onPick: (r: SpeciesResult) => void }) {
         autoCorrect={false}
         returnKeyType="search"
       />
+      {/* Never name the env var — that is a note to the developer, not to the person
+          holding the phone. Say what it means for them and let them move on. */}
       {!hasKey && (
-        <Text style={styles.blockHint}>
-          Add EXPO_PUBLIC_PERENUAL_KEY to .env to enable search, or skip and add by hand.
-        </Text>
+        <Text style={styles.blockHint}>Species search isn&apos;t available yet — fill it in below.</Text>
       )}
       {loading && <ActivityIndicator color={colors.moss} style={styles.searchSpinner} />}
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -474,34 +489,6 @@ function IconPicker({
               style={[styles.iconCell, active && styles.iconCellActive]}
             >
               <Icon size={22} color={active ? colors.ink : colors.inkMuted} stroke={1.4} />
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-function PressingPicker({
-  value,
-  onChange,
-}: {
-  value: PressingTone;
-  onChange: (v: PressingTone) => void;
-}) {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.fieldLabel}>Pressing</Text>
-      <View style={styles.segWrap}>
-        {PRESSING_OPTIONS.map((opt) => {
-          const active = value === opt;
-          return (
-            <Pressable
-              key={opt}
-              onPress={() => onChange(opt)}
-              style={[styles.seg, active && styles.segActive]}
-            >
-              <Text style={[styles.segLabel, active && styles.segLabelActive]}>{opt}</Text>
             </Pressable>
           );
         })}

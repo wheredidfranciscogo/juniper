@@ -37,7 +37,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
   waterEvery: 7,
   lastWateredISO: new Date(Date.now() - 8 * 86_400_000).toISOString(), // thirsty
   light: 'bright indirect',
-  temp: 'warm',
   addedISO: new Date(Date.now() - 100 * 86_400_000).toISOString(),
   photos: [],
   journal: [],
@@ -50,7 +49,7 @@ function Seed({ plants }: { plants: Plant[] }) {
   React.useEffect(() => {
     if (!hydrated || done.current) return;
     done.current = true;
-    completeOnboarding({ userName: 'June', archetype: 'whisperer', seed: false });
+    completeOnboarding({ userName: 'June', seed: false });
     plants.forEach(addPlant);
   }, [hydrated, addPlant, completeOnboarding, plants]);
   return null;

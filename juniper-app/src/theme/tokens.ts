@@ -128,7 +128,7 @@ const androidTextFix = <T extends Record<string, object>>(presets: T): T =>
 export const text = androidTextFix({
   // Display / serif
   splashTitle: { fontFamily: fonts.serif.regular, fontSize: 44, lineHeight: 52, color: colors.ink },
-  archetypeTitle: { fontFamily: fonts.serif.mediumItalic, fontSize: 38, lineHeight: 46, color: colors.ink },
+  displayItalic: { fontFamily: fonts.serif.mediumItalic, fontSize: 38, lineHeight: 46, color: colors.ink },
   plantHero: { fontFamily: fonts.serif.regular, fontSize: 38, lineHeight: 44, color: colors.ink },
   question: { fontFamily: fonts.serif.regular, fontSize: 30, lineHeight: 38, color: colors.ink },
   greeting: { fontFamily: fonts.serif.regular, fontSize: 28, lineHeight: 36, color: colors.ink },

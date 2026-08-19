@@ -28,7 +28,6 @@ const makePlant = (over: Partial<Plant> = {}): Plant => ({
   waterEvery: 7,
   lastWateredISO: new Date(Date.now() - 2 * 86_400_000).toISOString(),
   light: 'bright indirect',
-  temp: 'warm',
   addedISO: '2026-05-01',
   photos: [],
   journal: [],
@@ -56,11 +55,10 @@ describe('completeOnboarding', () => {
   it('seeds plants and a "joined" log entry per plant when seed is true', () => {
     const { result } = renderStore();
     act(() => {
-      result.current.completeOnboarding({ userName: 'June', archetype: 'forager', seed: true });
+      result.current.completeOnboarding({ userName: 'June', seed: true });
     });
     expect(result.current.onboarded).toBe(true);
     expect(result.current.userName).toBe('June');
-    expect(result.current.archetype).toBe('forager');
     expect(result.current.plants).toHaveLength(plantsSeed().length);
     expect(result.current.log).toHaveLength(plantsSeed().length);
     expect(result.current.log.every((e) => e.kind === 'joined')).toBe(true);
@@ -69,7 +67,7 @@ describe('completeOnboarding', () => {
   it('leaves plants and log empty when seed is false', () => {
     const { result } = renderStore();
     act(() => {
-      result.current.completeOnboarding({ userName: 'Ada', archetype: 'steady', seed: false });
+      result.current.completeOnboarding({ userName: 'Ada', seed: false });
     });
     expect(result.current.onboarded).toBe(true);
     expect(result.current.plants).toEqual([]);
@@ -171,7 +169,7 @@ describe('updatePlant', () => {
 
 describe('replaceGarden', () => {
   const restored = [makePlant({ id: 'a', name: 'Alpha' }), makePlant({ id: 'b', name: 'Beta' })];
-  const profile = { userName: 'Restored', archetype: 'forager' as const };
+  const profile = { userName: 'Restored' };
 
   it('replaces the whole garden rather than merging into it', () => {
     // Merging is the decision this action exists to avoid — see DECISIONS.md D10.
@@ -203,20 +201,19 @@ describe('replaceGarden', () => {
 
     expect(result.current.onboarded).toBe(true);
     expect(result.current.userName).toBe('Restored');
-    expect(result.current.archetype).toBe('forager');
   });
 
   it('keeps the existing name when the backup has none', () => {
     const { result } = renderStore();
     act(() =>
-      result.current.completeOnboarding({ userName: 'June', archetype: 'steady', seed: false }),
+      result.current.completeOnboarding({ userName: 'June', seed: false }),
     );
 
     act(() =>
       result.current.replaceGarden({
         plants: restored,
         log: [],
-        profile: { userName: '', archetype: 'whisperer' },
+        profile: { userName: '' },
       }),
     );
 
@@ -248,7 +245,6 @@ describe('persistence', () => {
     await waitFor(() => expect(result.current.hydrated).toBe(true));
     expect(result.current.onboarded).toBe(true);
     expect(result.current.userName).toBe('Restored');
-    expect(result.current.archetype).toBe('forager');
     expect(result.current.plants.map((p) => p.id)).toEqual(['restored']);
   });
 
@@ -277,7 +273,6 @@ describe('persistence', () => {
       waterEvery: 7,
       daysSinceWater: 8,
       light: 'bright indirect',
-      temp: 'warm',
       addedISO: '2025-09-17',
       photos: [],
       journal: [],
@@ -324,7 +319,7 @@ describe('persistence', () => {
     mockedAsyncStorage.setItem.mockClear();
 
     act(() => {
-      result.current.completeOnboarding({ userName: 'June', archetype: 'whisperer', seed: false });
+      result.current.completeOnboarding({ userName: 'June', seed: false });
     });
 
     await waitFor(() => {

@@ -27,7 +27,7 @@ export interface Backup {
   app: 'juniper';
   format: typeof BACKUP_FORMAT;
   exportedAt: string;
-  profile: { userName: string; archetype: string };
+  profile: { userName: string };
   plants: AppState['plants'];
   log: AppState['log'];
 }
@@ -37,7 +37,7 @@ export function buildBackup(state: AppState, now: Date = new Date()): Backup {
     app: 'juniper',
     format: BACKUP_FORMAT,
     exportedAt: now.toISOString(),
-    profile: { userName: state.userName, archetype: state.archetype },
+    profile: { userName: state.userName },
     plants: state.plants,
     log: state.log,
   };
@@ -99,15 +99,14 @@ export async function exportBackup(state: AppState, now: Date = new Date()): Pro
 // A picked file is untrusted input, so parseBackup validates rather than trusts. It is
 // pure, which is what lets the awkward cases be tested properly.
 
-import type { ArchetypeKey, JournalEntry, LogEntry, LogKind, Plant, PlantPhoto } from '../data/types';
+import type { JournalEntry, LogEntry, LogKind, Plant, PlantPhoto } from '../data/types';
 
 const LOG_KINDS: LogKind[] = ['water', 'repot', 'fertilize', 'move', 'note', 'joined', 'observed'];
-const ARCHETYPE_KEYS: ArchetypeKey[] = ['whisperer', 'collector', 'forager', 'steady'];
 
 export interface ParsedBackup {
   plants: Plant[];
   log: LogEntry[];
-  profile: { userName: string; archetype: ArchetypeKey };
+  profile: { userName: string };
   exportedAt: string | null;
   /** Entries dropped as unusable — surfaced so a partial file is never silently partial. */
   skipped: { plants: number; log: number };
@@ -169,7 +168,9 @@ function toPlant(raw: unknown, now: Date): Plant | null {
     // the plant instantly, permanently thirsty and fire a reminder on restore.
     lastWateredISO: isoOr(raw.lastWateredISO, now.toISOString()),
     light: str(raw.light, 'bright indirect'),
-    temp: str(raw.temp, 'warm'),
+    // Older backups predate `location` and carry a `temp` that no longer exists; both
+    // are simply absent rather than guessed at.
+    location: raw.location === 'indoor' || raw.location === 'outdoor' ? raw.location : undefined,
     addedISO: isoOr(raw.addedISO, now.toISOString()),
     photos,
     journal,
@@ -238,17 +239,15 @@ export function parseBackup(rawText: string, now: Date = new Date()): ParseResul
   log.sort((a, b) => Date.parse(b.when) - Date.parse(a.when)); // newest first, as the store holds it
 
   const profile = isObj(parsed.profile) ? parsed.profile : {};
-  const archetype = str(profile.archetype) as ArchetypeKey;
 
   return {
     ok: true,
     data: {
       plants,
       log,
-      profile: {
-        userName: str(profile.userName),
-        archetype: ARCHETYPE_KEYS.includes(archetype) ? archetype : 'whisperer',
-      },
+      // Backups from before the archetype was removed carry one; it is ignored rather
+      // than rejected, so an older file still restores cleanly.
+      profile: { userName: str(profile.userName) },
       exportedAt: typeof parsed.exportedAt === 'string' ? parsed.exportedAt : null,
       skipped: { plants: skippedPlants, log: skippedLog },
     },

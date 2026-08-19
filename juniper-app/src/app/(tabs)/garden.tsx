@@ -1,7 +1,10 @@
 /**
  * Garden screen.
- * Overline + heading → filter chips (All / Thirsty / Indoor / Outdoor) → list.
- * Only the "Thirsty" filter actually filters in V1 — Indoor/Outdoor await metadata.
+ * Overline + heading → filter chips → list.
+ *
+ * A filter that would match nothing is not shown at all. Indoor/Outdoor used to render
+ * unconditionally and do nothing, because no plant carried a location — four chips, two
+ * of them inert. A control that cannot change what you see should not be on screen.
  */
 
 import * as React from 'react';
@@ -17,12 +20,21 @@ import { Pressing } from '../../components/Pressing';
 
 type Filter = 'all' | 'thirsty' | 'indoor' | 'outdoor';
 
-const FILTERS: { v: Filter; label: string }[] = [
+const ALL_FILTERS: { v: Filter; label: string }[] = [
   { v: 'all', label: 'All' },
   { v: 'thirsty', label: 'Thirsty' },
   { v: 'indoor', label: 'Indoor' },
   { v: 'outdoor', label: 'Outdoor' },
 ];
+
+/** Would this filter show anything at all, given the current garden? */
+function matchesAny(filter: Filter, plants: Plant[], now: Date): boolean {
+  switch (filter) {
+    case 'all': return true;
+    case 'thirsty': return plants.some((p) => isThirsty(p, now));
+    default: return plants.some((p) => p.location === filter);
+  }
+}
 
 export default function Garden() {
   const insets = useSafeAreaInsets();
@@ -30,8 +42,28 @@ export default function Garden() {
   const { plants } = useStore();
   const [filter, setFilter] = React.useState<Filter>('all');
 
+  const now = new Date();
+
+  const filters = React.useMemo(
+    // 'All' always stays, even for an empty garden — otherwise the row vanishes
+    // entirely and the screen looks broken rather than empty.
+    () => ALL_FILTERS.filter((f) => f.v === 'all' || matchesAny(f.v, plants, now)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plants],
+  );
+
+  // If the active filter stops matching anything — the last thirsty plant was just
+  // watered, say — fall back to All rather than showing an empty list under a chip
+  // that is no longer offered.
+  React.useEffect(() => {
+    if (!filters.some((f) => f.v === filter)) setFilter('all');
+  }, [filters, filter]);
+
   const filtered = React.useMemo(() => {
     if (filter === 'thirsty') return plants.filter((p) => isThirsty(p, new Date()));
+    if (filter === 'indoor' || filter === 'outdoor') {
+      return plants.filter((p) => p.location === filter);
+    }
     return plants;
   }, [plants, filter]);
 
@@ -56,7 +88,7 @@ export default function Garden() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipsContainer}
       >
-        {FILTERS.map(({ v, label }) => (
+        {filters.map(({ v, label }) => (
           <Pressable
             key={v}
             onPress={() => setFilter(v)}

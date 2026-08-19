@@ -1,78 +1,39 @@
-import { pickArchetype, plantsSeed, ONBOARDING, ARCHETYPES } from '../seed';
-import type { Plant } from '../types';
-import type { ArchetypeKey, OnboardingAnswers } from '../types';
+import { plantsSeed } from '../seed';
+import { isThirsty } from '../../lib/watering';
 
-describe('pickArchetype', () => {
-  it('maps herb tenders to the forager', () => {
-    expect(pickArchetype({ kind: 'herbs' })).toBe('forager');
+describe('the example plant a fresh install starts with', () => {
+  it('is exactly one plant — not a demo garden to clear out', () => {
+    expect(plantsSeed()).toHaveLength(1);
   });
 
-  it('maps the craft draw to the whisperer', () => {
-    expect(pickArchetype({ draw: 'craft' })).toBe('whisperer');
+  it('gives it the fields the store and every screen rely on', () => {
+    const [plant] = plantsSeed();
+    expect(plant.id).toBeTruthy();
+    expect(plant.name).toBeTruthy();
+    expect(plant.species).toBeTruthy();
+    expect(typeof plant.waterEvery).toBe('number');
+    expect(Number.isNaN(Date.parse(plant.lastWateredISO))).toBe(false);
+    expect(Number.isNaN(Date.parse(plant.addedISO))).toBe(false);
+    expect(plant.location).toBe('indoor');
   });
 
-  it('maps a lifelong history to the whisperer', () => {
-    expect(pickArchetype({ history: 'always' })).toBe('whisperer');
+  it('arrives already due, so Today has something to do on first run', () => {
+    const now = new Date();
+    expect(isThirsty(plantsSeed(now)[0], now)).toBe(true);
   });
 
-  it('maps lots-of-time + calm to the steady hand', () => {
-    expect(pickArchetype({ time: 'lots', draw: 'calm' })).toBe('steady');
+  it('looks lived-in — a history of photographs and notes', () => {
+    // The point of one example rather than six is that it shows what a plant looks like
+    // after a year of use. An empty one would teach nothing.
+    const [plant] = plantsSeed();
+    expect(plant.photos.length).toBeGreaterThan(3);
+    expect(plant.journal.length).toBeGreaterThan(1);
   });
 
-  it('maps a mixed garden to the collector', () => {
-    expect(pickArchetype({ kind: 'mix' })).toBe('collector');
-  });
-
-  it('defaults to the whisperer with no answers', () => {
-    expect(pickArchetype({})).toBe('whisperer');
-  });
-
-  it('prioritises herbs over every other rule', () => {
-    const answers: OnboardingAnswers = { kind: 'herbs', draw: 'craft', history: 'always' };
-    expect(pickArchetype(answers)).toBe('forager');
-  });
-
-  it('prioritises the craft draw over a mixed garden', () => {
-    expect(pickArchetype({ kind: 'mix', draw: 'craft' })).toBe('whisperer');
-  });
-
-  it('only returns valid archetype keys', () => {
-    const keys = Object.keys(ARCHETYPES) as ArchetypeKey[];
-    expect(keys).toContain(pickArchetype({ kind: 'mix' }));
-  });
-});
-
-describe('seed data integrity', () => {
-  it('gives every plant a unique id', () => {
-    const ids = plantsSeed().map((p: Plant) => p.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
-  it('gives every plant the fields the store and UI rely on', () => {
-    for (const plant of plantsSeed()) {
-      expect(plant.name).toBeTruthy();
-      expect(plant.addedISO).toBeTruthy();
-      expect(typeof plant.waterEvery).toBe('number');
-      expect(Number.isNaN(Date.parse(plant.lastWateredISO))).toBe(false);
-      expect(Array.isArray(plant.photos)).toBe(true);
-      expect(Array.isArray(plant.journal)).toBe(true);
-    }
-  });
-
-  it('defines a copy entry for every archetype the picker can return', () => {
-    (Object.keys(ARCHETYPES) as ArchetypeKey[]).forEach((key) => {
-      expect(ARCHETYPES[key].name).toBeTruthy();
-      expect(ARCHETYPES[key].blurb).toBeTruthy();
-    });
-  });
-
-  it('ships five onboarding questions, each with options and a unique key', () => {
-    expect(ONBOARDING).toHaveLength(5);
-    const keys = ONBOARDING.map((s) => s.key);
-    expect(new Set(keys).size).toBe(keys.length);
-    for (const step of ONBOARDING) {
-      expect(step.question).toBeTruthy();
-      expect(step.options.length).toBeGreaterThan(0);
-    }
+  it('dates itself relative to now rather than to a frozen calendar', () => {
+    const a = plantsSeed(new Date(2026, 0, 15))[0];
+    const b = plantsSeed(new Date(2027, 0, 15))[0];
+    expect(a.lastWateredISO).not.toBe(b.lastWateredISO);
+    expect(a.addedISO).not.toBe(b.addedISO);
   });
 });

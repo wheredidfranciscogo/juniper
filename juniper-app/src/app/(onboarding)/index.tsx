@@ -1,9 +1,15 @@
 /**
- * Onboarding flow.
- * 5 questions → name capture → archetype reveal → "Begin" routes to /(tabs)/today.
+ * Onboarding — two screens, and only because each one configures something.
  *
- * Internal state for `step` (0–6). Progress hairline at top. Back chevron from step 1.
- * Per the handoff: no percentages, no step counter, just the line filling.
+ * It used to be seven: five personality questions, a name, and an archetype reveal that
+ * christened you "The Plant Whisperer". None of it changed how the app behaved. The rule
+ * now is simply: if an answer doesn't set something up, don't ask it.
+ *
+ *   1. Name      → the Today greeting
+ *   2. Reminders → permission and the daily time, so watering reminders work from day one
+ *
+ * The permission prompt lives on step 2 rather than at launch: asked cold on a first
+ * screen it gets denied, and iOS only lets you ask once.
  */
 
 import * as React from 'react';
@@ -12,295 +18,238 @@ import {
   Text,
   Pressable,
   TextInput,
-  ScrollView,
   StyleSheet,
   Animated,
   Easing,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, spacing, text, radii, BEZIER_BASE, duration } from '../../theme';
-import { ONBOARDING, ARCHETYPES, pickArchetype } from '../../data/seed';
-import type { OnboardingAnswers } from '../../data/types';
-import { AllIcons, IconBack, IconFern, type IconName } from '../../components/icons';
+import { IconBack } from '../../components/icons';
 import { useStore } from '../../lib/store';
+import { DEFAULT_TIME, setReminder } from '../../lib/notifications';
+import { plantsSeed } from '../../data/seed';
 
-const TOTAL_STEPS = ONBOARDING.length + 2; // questions + name + reveal
+const TOTAL_STEPS = 2;
+
+/** The same six slots the You tab offers, so there is one idea of "reminder time". */
+const TIME_OPTIONS = ['07:00', '08:00', '09:00', '12:00', '18:00', '20:00'];
+
+function prettyTime(hhmm: string): string {
+  const [h, m] = hhmm.split(':').map((n) => parseInt(n, 10));
+  const suffix = h < 12 ? 'am' : 'pm';
+  const hour = h % 12 === 0 ? 12 : h % 12;
+  return m === 0 ? `${hour}${suffix}` : `${hour}:${String(m).padStart(2, '0')}${suffix}`;
+}
 
 export default function OnboardingFlow() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const store = useStore();
 
   const [step, setStep] = React.useState(0);
-  const [answers, setAnswers] = React.useState<OnboardingAnswers>({});
   const [name, setName] = React.useState('');
+  const [time, setTime] = React.useState(DEFAULT_TIME);
+  const [busy, setBusy] = React.useState(false);
 
-  // Progress hairline — animated fill width
-  const progressAnim = React.useRef(new Animated.Value(0)).current;
+  const progress = React.useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
   React.useEffect(() => {
-    Animated.timing(progressAnim, {
+    Animated.timing(progress, {
       toValue: (step + 1) / TOTAL_STEPS,
       duration: duration.progress,
       easing: Easing.bezier(...BEZIER_BASE),
       useNativeDriver: false,
     }).start();
-  }, [progressAnim, step]);
+  }, [step, progress]);
 
-  const isQuestion = step < ONBOARDING.length;
-  const isNameStep = step === ONBOARDING.length;
-  const isReveal = step === ONBOARDING.length + 1;
-
-  const archetypeKey = React.useMemo(() => pickArchetype(answers), [answers]);
-  const archetype = ARCHETYPES[archetypeKey];
-
-  const handleOption = (key: string, value: string) => {
-    setAnswers((a) => ({ ...a, [key]: value }));
-    setTimeout(() => setStep((s) => s + 1), 220);
-  };
-
-  const handleBegin = () => {
-    // Just flip the store flag — the root layout's Stack.Protected guards
-    // remove (onboarding) and expose (tabs), so the router handles routing.
-    store.completeOnboarding({
-      userName: name.trim() || 'Friend',
-      archetype: archetypeKey,
-      seed: true,
-    });
+  /**
+   * Finish. The garden starts with one lived-in example plant rather than six demos or
+   * an empty screen — enough to show what the app looks like in use, not enough to have
+   * to clear out before adding your own.
+   */
+  const finish = async (withReminders: boolean) => {
+    setBusy(true);
+    try {
+      if (withReminders) {
+        // Ask before the store flips `onboarded`, so the prompt appears over this
+        // screen rather than over a Today screen sliding in behind it.
+        await setReminder(true, { time, plants: plantsSeed() });
+      }
+      store.completeOnboarding({ userName: name.trim(), seed: true });
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
-    <View style={[styles.root, { paddingTop: insets.top + 16 }]}>
-      {/* Progress hairline */}
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.progressTrack}>
         <Animated.View
           style={[
             styles.progressFill,
-            { width: progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+            { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
           ]}
         />
       </View>
 
-      {/* Back chevron */}
-      {step > 0 && !isReveal && (
-        <Pressable
-          onPress={() => setStep((s) => Math.max(0, s - 1))}
-          style={styles.back}
-          hitSlop={12}
-        >
-          <IconBack size={22} color={colors.ink} />
+      {step > 0 && (
+        <Pressable onPress={() => setStep(step - 1)} style={styles.back} hitSlop={12}>
+          <IconBack size={20} color={colors.inkMuted} />
         </Pressable>
       )}
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {isQuestion && <QuestionStep step={ONBOARDING[step]} onPick={handleOption} />}
-        {isNameStep && <NameStep value={name} onChange={setName} onNext={() => setStep((s) => s + 1)} />}
-        {isReveal && <RevealStep name={archetype.name} blurb={archetype.blurb} body={archetype.body} onBegin={handleBegin} />}
-      </ScrollView>
-    </View>
-  );
-}
-
-/* ---------- Sub-components ---------- */
-
-function QuestionStep({
-  step,
-  onPick,
-}: {
-  step: (typeof ONBOARDING)[number];
-  onPick: (key: string, v: string) => void;
-}) {
-  return (
-    <View style={styles.stepContainer}>
-      <Text style={styles.question}>{step.question}</Text>
-      <View style={styles.optionStack}>
-        {step.options.map((opt) => {
-          const Icon = (AllIcons as Record<string, React.FC<{ size?: number; color?: string; stroke?: number }>>)[opt.icon];
-          return (
-            <Pressable
-              key={opt.v}
-              onPress={() => onPick(step.key, opt.v)}
-              style={({ pressed }) => [styles.optionCard, pressed && styles.optionCardPressed]}
-            >
-              <View style={styles.optionIcon}>
-                {Icon ? <Icon size={26} color={colors.moss} /> : null}
-              </View>
-              <View style={styles.optionText}>
-                <Text style={styles.optionLabel}>{opt.label}</Text>
-                {opt.hint ? <Text style={styles.optionHint}>{opt.hint}</Text> : null}
-              </View>
-            </Pressable>
-          );
-        })}
+      <View style={styles.body}>
+        {step === 0 ? (
+          <NameStep name={name} onChange={setName} onContinue={() => setStep(1)} />
+        ) : (
+          <ReminderStep
+            time={time}
+            onPickTime={setTime}
+            busy={busy}
+            onEnable={() => finish(true)}
+            onSkip={() => finish(false)}
+          />
+        )}
       </View>
     </View>
   );
 }
 
 function NameStep({
-  value,
+  name,
   onChange,
-  onNext,
+  onContinue,
 }: {
-  value: string;
+  name: string;
   onChange: (v: string) => void;
-  onNext: () => void;
+  onContinue: () => void;
 }) {
   return (
-    <View style={styles.stepContainer}>
-      <Text style={styles.question}>And what should we call you?</Text>
-      <Text style={styles.hint}>A first name is plenty. You can change it later.</Text>
+    <View style={styles.step}>
+      <Text style={styles.overline}>FIRST</Text>
+      <Text style={styles.question}>What should we call you?</Text>
       <TextInput
-        style={styles.nameInput}
-        value={value}
+        value={name}
         onChangeText={onChange}
-        placeholder="June"
+        placeholder="your name"
         placeholderTextColor={colors.inkFaint}
+        style={styles.input}
         autoFocus
         autoCapitalize="words"
-        returnKeyType="done"
-        onSubmitEditing={onNext}
+        returnKeyType="next"
+        onSubmitEditing={onContinue}
       />
       <Pressable
-        onPress={onNext}
+        onPress={onContinue}
         style={({ pressed }) => [styles.clayBtn, pressed && styles.clayBtnPressed]}
-        disabled={!value.trim()}
       >
         <Text style={styles.clayBtnLabel}>Continue</Text>
+      </Pressable>
+      <Text style={styles.hint}>Only used to say hello.</Text>
+    </View>
+  );
+}
+
+function ReminderStep({
+  time,
+  onPickTime,
+  busy,
+  onEnable,
+  onSkip,
+}: {
+  time: string;
+  onPickTime: (t: string) => void;
+  busy: boolean;
+  onEnable: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <View style={styles.step}>
+      <Text style={styles.overline}>AND</Text>
+      <Text style={styles.question}>Shall we remind you when to water?</Text>
+      <Text style={styles.blurb}>
+        A quiet nudge, only on the days a plant is actually due. Nothing leaves your phone.
+      </Text>
+
+      <Text style={styles.label}>At what time?</Text>
+      <View style={styles.chips}>
+        {TIME_OPTIONS.map((option) => {
+          const active = option === time;
+          return (
+            <Pressable
+              key={option}
+              onPress={() => onPickTime(option)}
+              style={[styles.chip, active && styles.chipActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+            >
+              <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
+                {prettyTime(option)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Pressable
+        onPress={onEnable}
+        disabled={busy}
+        style={({ pressed }) => [styles.clayBtn, pressed && styles.clayBtnPressed]}
+      >
+        <Text style={styles.clayBtnLabel}>Remind me at {prettyTime(time)}</Text>
+      </Pressable>
+
+      <Pressable onPress={onSkip} disabled={busy} hitSlop={8}>
+        <Text style={styles.skip}>Not now</Text>
       </Pressable>
     </View>
   );
 }
 
-function RevealStep({
-  name,
-  blurb,
-  body,
-  onBegin,
-}: {
-  name: string;
-  blurb: string;
-  body: string;
-  onBegin: () => void;
-}) {
-  const opacity = React.useRef(new Animated.Value(0)).current;
-  const translateY = React.useRef(new Animated.Value(8)).current;
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 700, easing: Easing.bezier(0.4, 0, 0.2, 1), useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: 0, duration: 700, easing: Easing.bezier(0.4, 0, 0.2, 1), useNativeDriver: true }),
-    ]).start();
-  }, [opacity, translateY]);
-
-  return (
-    <Animated.View style={[styles.revealContainer, { opacity, transform: [{ translateY }] }]}>
-      <Text style={styles.revealOverline}>we'd call you</Text>
-      <IconFern size={44} color={colors.moss} stroke={1.3} />
-      <Text style={styles.revealName}>{name}</Text>
-      <Text style={styles.revealBlurb}>{blurb}</Text>
-      <Text style={styles.revealBody}>{body}</Text>
-      <Pressable
-        onPress={onBegin}
-        style={({ pressed }) => [styles.clayBtn, styles.revealBtn, pressed && styles.clayBtnPressed]}
-      >
-        <Text style={styles.clayBtnLabel}>Begin</Text>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-/* ---------- Styles ---------- */
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
-
-  progressTrack: {
-    height: 1,
-    backgroundColor: colors.hairline,
-    marginHorizontal: spacing.page,
-  },
+  progressTrack: { height: 1, backgroundColor: colors.hairline, width: '100%' },
   progressFill: { height: 1, backgroundColor: colors.ink },
+  back: { position: 'absolute', top: 56, left: spacing.page, zIndex: 2 },
+  body: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.page },
+  step: { gap: spacing.base },
 
-  back: {
-    position: 'absolute',
-    top: 36,
-    left: spacing.page,
-    width: 36,
-    height: 36,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
+  overline: text.overline,
+  question: { ...text.question, marginBottom: spacing.xs },
+  blurb: { ...text.blurb, color: colors.inkMuted },
+  label: { ...text.hint, marginTop: spacing.md },
 
-  scroll: { paddingHorizontal: spacing.page, paddingTop: spacing.section + 8 },
-  stepContainer: { gap: spacing.lg, paddingTop: 24 },
-
-  question: { ...text.question },
-
-  optionStack: { gap: 10, marginTop: 8 },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 16,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
-  optionCardPressed: { borderColor: colors.ink, backgroundColor: colors.surface2 },
-  optionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.md,
-    backgroundColor: colors.paper,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
-  optionText: { flex: 1, gap: 2 },
-  optionLabel: { ...text.optionLabel },
-  optionHint: { ...text.cardHint },
-
-  hint: { ...text.hint, marginTop: -8 },
-  nameInput: {
-    ...text.plantHero,
-    fontSize: 32,
-    paddingVertical: 8,
+  input: {
+    ...text.question,
+    fontSize: 24,
     borderBottomWidth: 1,
     borderBottomColor: colors.hairlineStrong,
-    color: colors.ink,
-    fontFamily: 'SourceSerif4_400Regular_Italic',
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
   },
+
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
+    borderWidth: 1,
+    borderColor: colors.hairlineStrong,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.base,
+    backgroundColor: colors.paper,
+  },
+  chipActive: { backgroundColor: colors.moss, borderColor: colors.moss },
+  chipLabel: { ...text.hint, color: colors.ink },
+  chipLabelActive: { color: colors.paper },
 
   clayBtn: {
     backgroundColor: colors.clay,
     borderRadius: radii.md,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: spacing.md,
   },
   clayBtnPressed: { backgroundColor: colors.clayDeep, transform: [{ scale: 0.98 }] },
   clayBtnLabel: { ...text.button },
-
-  revealContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: spacing.section * 2,
-    gap: 18,
-  },
-  revealOverline: { ...text.overline, color: colors.inkFaint },
-  revealName: { ...text.archetypeTitle, textAlign: 'center', marginTop: 4 },
-  revealBlurb: { ...text.blurb, textAlign: 'center', maxWidth: 320 },
-  revealBody: { ...text.bodyMuted, textAlign: 'center', maxWidth: 320, lineHeight: 22 },
-  revealBtn: { alignSelf: 'stretch', marginTop: 18 },
+  skip: { ...text.hint, textAlign: 'center', paddingVertical: spacing.md },
+  hint: { ...text.hint, textAlign: 'center' },
 });

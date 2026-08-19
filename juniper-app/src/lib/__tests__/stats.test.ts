@@ -10,7 +10,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
   waterEvery: 7,
   lastWateredISO: '2026-08-01T09:00:00.000Z',
   light: 'bright indirect',
-  temp: 'warm',
   addedISO: '2025-09-17',
   photos: [],
   journal: [],

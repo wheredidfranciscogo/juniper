@@ -1,5 +1,5 @@
 /**
- * You screen — archetype, garden stats, and the controls that make reminders real.
+ * You screen — a greeting, garden stats, reminders, and your data.
  *
  * DIVERGENCE FROM THE HANDOFF, deliberately (the handoff is otherwise the fidelity
  * source of truth, so this is written down rather than quietly done):
@@ -14,8 +14,12 @@
  *     sensible times are genuinely enough.
  *  3. "Watering schedule" is omitted — cadence is per plant and already lives on the
  *     plant's edit form. A global version would contradict it.
- *  4. "Export your journal" is now a real row — it writes the whole garden to JSON and
- *     hands it to the share sheet. It was held back until it did something.
+ *  4. "Export your journal" is a real row — it writes the whole garden to JSON and hands
+ *     it to the share sheet, with an import beside it.
+ *  5. The archetype is gone entirely. The handoff opened this screen with "YOU ARE / The
+ *     Plant Whisperer" and a paragraph of character description; it was decoration that
+ *     told you nothing about your plants. So is "plant-days", which was a number with no
+ *     interpretation. Both removed on user feedback.
  */
 
 import * as React from 'react';
@@ -33,9 +37,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radii, spacing, text } from '../../theme';
-import { ARCHETYPES } from '../../data/seed';
 import { useStore } from '../../lib/store';
-import { durationLabel, formatCount, gardenStats } from '../../lib/stats';
+import { durationLabel, gardenStats } from '../../lib/stats';
 import {
   DEFAULT_TIME,
   getReminderPref,
@@ -57,7 +60,7 @@ function prettyTime(hhmm: string): string {
 
 export default function You() {
   const insets = useSafeAreaInsets();
-  const { userName, archetype, plants, log, replaceGarden } = useStore();
+  const { userName, plants, log, replaceGarden } = useStore();
 
   const [enabled, setEnabled] = React.useState(false);
   const [time, setTime] = React.useState(DEFAULT_TIME);
@@ -85,7 +88,6 @@ export default function You() {
     };
   }, []);
 
-  const archetypeInfo = ARCHETYPES[archetype];
   const stats = React.useMemo(() => gardenStats(plants, new Date()), [plants]);
 
   const onToggle = async (next: boolean) => {
@@ -102,7 +104,7 @@ export default function You() {
   const onExport = async () => {
     setExporting(true);
     try {
-      const result = await exportBackup({ onboarded: true, userName, archetype, plants, log });
+      const result = await exportBackup({ onboarded: true, userName, plants, log });
       if (result.ok) return;
       Alert.alert(
         result.reason === 'empty' ? 'Nothing to back up yet' : 'Could not export',
@@ -198,9 +200,8 @@ export default function You() {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={styles.overline}>YOU ARE</Text>
-      <Text style={styles.title}>{archetypeInfo.name}</Text>
-      <Text style={styles.body}>{archetypeInfo.body}</Text>
+      <Text style={styles.overline}>YOUR GARDEN</Text>
+      <Text style={styles.title}>{userName ? `Hello, ${userName}.` : 'Hello.'}</Text>
 
       {/* ---------- Stats ---------- */}
       <View style={styles.card}>
@@ -214,8 +215,6 @@ export default function You() {
           value={stats.longest ? durationLabel(stats.longest.days) : '—'}
           caption={stats.longest?.name}
         />
-        <View style={styles.divider} />
-        <Stat label="PLANT-DAYS" value={formatCount(stats.plantDays)} />
       </View>
 
       {/* ---------- Reminders ---------- */}
@@ -284,8 +283,8 @@ export default function You() {
         </Text>
       )}
 
-      {/* ---------- Your garden ---------- */}
-      <Text style={[styles.overline, styles.sectionGap]}>YOUR GARDEN</Text>
+      {/* ---------- Data ---------- */}
+      <Text style={[styles.overline, styles.sectionGap]}>YOUR DATA</Text>
       <View style={styles.card}>
         <Pressable
           style={styles.row}
@@ -294,10 +293,10 @@ export default function You() {
           accessibilityRole="button"
         >
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Save a copy</Text>
+            <Text style={styles.rowLabel}>Export your data</Text>
             <Text style={styles.rowHint}>
-              Writes your plants, photos-list and journal to a file you can keep somewhere
-              safe. Juniper doesn&apos;t upload it — you choose where it goes.
+              Saves everything to a file you keep — a spreadsheet-friendly record, and a way
+              back if you change phones. Juniper doesn&apos;t upload it; you choose where it goes.
             </Text>
           </View>
           {exporting ? <ActivityIndicator color={colors.inkFaint} /> : <Text style={styles.chevron}>→</Text>}
@@ -312,10 +311,10 @@ export default function You() {
           accessibilityRole="button"
         >
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>Restore from a copy</Text>
+            <Text style={styles.rowLabel}>Import a previous export</Text>
             <Text style={styles.rowHint}>
-              Brings a saved file back. It replaces what&apos;s here rather than merging, so
-              you always know exactly what your garden is.
+              Takes a file Juniper exported and puts that garden back. It replaces what&apos;s
+              here rather than merging, so you always know exactly what you have.
             </Text>
           </View>
           {importing ? <ActivityIndicator color={colors.inkFaint} /> : <Text style={styles.chevron}>→</Text>}
@@ -336,8 +335,7 @@ export default function You() {
       </View>
 
       <Text style={styles.footer}>
-        — tending {stats.plantCount} plant{stats.plantCount === 1 ? '' : 's'} as{' '}
-        {userName || 'friend'} —
+        Tending {stats.plantCount} plant{stats.plantCount === 1 ? '' : 's'}.
       </Text>
     </ScrollView>
   );
@@ -358,7 +356,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: spacing.page, gap: spacing.md },
 
   overline: text.overline,
-  title: { ...text.archetypeTitle, fontSize: 32 },
+  title: { ...text.displayItalic, fontSize: 32 },
   body: { ...text.blurb, marginBottom: spacing.md },
   sectionGap: { marginTop: spacing.lg },
 

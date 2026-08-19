@@ -109,11 +109,13 @@ let store: any = null;
 });
 
 describe('AddEdit — search path', () => {
-  it('shows the key-missing hint when EXPO_PUBLIC_PERENUAL_KEY is absent', () => {
+  it('tells the user search is unavailable without naming an environment variable', () => {
     mockParams = { path: 'search' };
     render(withStore(<AddEdit />));
     expect(screen.getByText('BY NAME')).toBeTruthy();
-    expect(screen.getByText(/Add EXPO_PUBLIC_PERENUAL_KEY to \.env/)).toBeTruthy();
+    // Developer text must never reach a shipping screen.
+    expect(screen.getByText(/Species search isn't available yet/)).toBeTruthy();
+    expect(screen.queryByText(/EXPO_PUBLIC|\.env/)).toBeNull();
   });
 });
 
@@ -139,7 +141,6 @@ describe('AddEdit — edit path (id param)', () => {
     waterEvery: 7,
     lastWateredISO: new Date(Date.now() - 3 * 86_400_000).toISOString(),
     light: 'bright indirect',
-    temp: 'warm',
     addedISO: '2025-09-17',
     photos: [],
     journal: [],

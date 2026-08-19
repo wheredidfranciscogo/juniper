@@ -14,18 +14,17 @@ import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { plantsSeed } from '../data/seed';
-import type { ArchetypeKey, LogEntry, LogKind, Plant } from '../data/types';
+import type { LogEntry, LogKind, Plant } from '../data/types';
 
 export interface AppState {
   onboarded: boolean;
   userName: string;
-  archetype: ArchetypeKey;
   plants: Plant[];
   log: LogEntry[];
 }
 
 interface AppActions {
-  completeOnboarding: (input: { userName: string; archetype: ArchetypeKey; seed: boolean }) => void;
+  completeOnboarding: (input: { userName: string; seed: boolean }) => void;
   waterPlant: (plantId: string) => void;
   logAction: (plantId: string, kind: LogKind, text?: string) => void;
   addPlant: (plant: Plant) => void;
@@ -39,7 +38,7 @@ interface AppActions {
   replaceGarden: (input: {
     plants: Plant[];
     log: LogEntry[];
-    profile: { userName: string; archetype: ArchetypeKey };
+    profile: { userName: string };
   }) => void;
 }
 
@@ -92,7 +91,6 @@ function migrate(raw: unknown): AppState | null {
 const initialState: AppState = {
   onboarded: false,
   userName: '',
-  archetype: 'whisperer',
   plants: [],
   log: [],
 };
@@ -150,13 +148,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [state, hydrated]);
 
   const completeOnboarding = React.useCallback<AppActions['completeOnboarding']>(
-    ({ userName, archetype, seed }) => {
+    ({ userName, seed }) => {
       const garden = seed ? plantsSeed() : null;
       setState((s) => ({
         ...s,
         onboarded: true,
         userName,
-        archetype,
         plants: garden ?? s.plants,
         log: garden
           ? garden.map((p) => ({
@@ -232,7 +229,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         // the route guard bounces straight back to the questions with a full garden.
         onboarded: true,
         userName: profile.userName || s.userName,
-        archetype: profile.archetype,
         plants,
         log,
       }));

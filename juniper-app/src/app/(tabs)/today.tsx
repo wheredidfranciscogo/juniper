@@ -1,7 +1,7 @@
 /**
  * Today screen.
  * Greeting + date overline → horizontal scroll of thirsty cards (or empty state)
- * → upcoming list ("ALL CAUGHT UP LATER THIS WEEK") → archetype footer.
+ * → upcoming list ("ALL CAUGHT UP LATER THIS WEEK") → a plain footer.
  */
 
 import * as React from 'react';
@@ -17,7 +17,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, fonts, radii, spacing, text } from '../../theme';
-import { ARCHETYPES } from '../../data/seed';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
 import { greetingFor, lastWateredLabel } from '../../lib/today-utils';
@@ -27,11 +26,14 @@ import { Pill } from '../../components/Pill';
 import { WaterButton } from '../../components/WaterButton';
 import { IconCheck } from '../../components/icons';
 
+/** How long a just-watered card lingers so its animation can play out. */
+const SETTLE_MS = 1400;
+
 export default function Today() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { userName, archetype, plants, waterPlant } = useStore();
+  const { userName, plants, waterPlant } = useStore();
 
   /**
    * Plants watered during this visit to the screen.
@@ -47,11 +49,32 @@ export default function Today() {
    * belongs to Upcoming like anything else that isn't due.
    */
   const [justWatered, setJustWatered] = React.useState<ReadonlySet<string>>(() => new Set());
+  const timers = React.useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  React.useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+    },
+    [],
+  );
 
   const handleWater = React.useCallback(
     (plantId: string) => {
       waterPlant(plantId);
+      // Hold the card just long enough for the signature animation to finish, then let
+      // it drop into Upcoming where it now belongs. Without the hold the card unmounts
+      // mid-tap and the ripple is never seen; without the release it sits at the top
+      // looking urgent when it isn't.
       setJustWatered((prev) => new Set(prev).add(plantId));
+      timers.current.push(
+        setTimeout(() => {
+          setJustWatered((prev) => {
+            const next = new Set(prev);
+            next.delete(plantId);
+            return next;
+          });
+        }, SETTLE_MS),
+      );
     },
     [waterPlant],
   );
@@ -66,7 +89,7 @@ export default function Today() {
     .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
   const cardWidth = Math.round(width * 0.85);
-  const archetypeName = ARCHETYPES[archetype].name;
+  const sideGutter = Math.round((width - cardWidth) / 2);
   const dateLabel = new Date()
     .toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
     .toLowerCase();
@@ -97,7 +120,10 @@ export default function Today() {
           snapToInterval={cardWidth + spacing.md}
           snapToAlignment="start"
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: spacing.page, gap: spacing.md }}
+          // The side gutter is half the leftover width, so a snapped card sits dead
+          // centre. It used to be the page padding, which does not line up with the
+          // snap interval — every card came to rest slightly off to one side.
+          contentContainerStyle={{ paddingHorizontal: sideGutter, gap: spacing.md }}
           style={styles.thirstyRow}
         >
           {thirsty.map((p) => (
@@ -145,9 +171,11 @@ export default function Today() {
       )}
 
       {/* Footer */}
-      <Text style={styles.footer}>
-        — {archetypeName}, tending {plants.length} plant{plants.length === 1 ? '' : 's'} —
-      </Text>
+      {plants.length > 0 && (
+        <Text style={styles.footer}>
+          Tending {plants.length} plant{plants.length === 1 ? '' : 's'}.
+        </Text>
+      )}
     </ScrollView>
   );
 }

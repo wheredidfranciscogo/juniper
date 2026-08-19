@@ -35,7 +35,6 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
   waterEvery: 7,
   lastWateredISO: new Date(Date.now() - 3 * 86_400_000).toISOString(),
   light: 'bright indirect',
-  temp: 'warm',
   addedISO: new Date(Date.now() - 100 * 86_400_000).toISOString(),
   photos: [],
   journal: [],
@@ -49,7 +48,7 @@ function Seed({ plants }: { plants: Plant[] }) {
   React.useEffect(() => {
     if (!hydrated || done.current) return;
     done.current = true;
-    completeOnboarding({ userName: 'June', archetype: 'whisperer', seed: false });
+    completeOnboarding({ userName: 'June', seed: false });
     plants.forEach(addPlant);
   }, [hydrated, addPlant, completeOnboarding, plants]);
   return null;
@@ -62,7 +61,7 @@ const mount = async (plants: Plant[] = [plant()]) => {
       <You />
     </StoreProvider>,
   );
-  await waitFor(() => expect(screen.getByText('YOU ARE')).toBeTruthy());
+  await waitFor(() => expect(screen.getByText('YOUR GARDEN')).toBeTruthy());
   return view;
 };
 
@@ -87,12 +86,21 @@ beforeEach(() => {
 });
 
 describe('You — identity and stats', () => {
-  it('shows the archetype and the garden stats', async () => {
+  it('greets by name and shows the garden stats', async () => {
     await mount([plant()]);
-    expect(screen.getByText('The Plant Whisperer')).toBeTruthy();
+    // Seed sets the name in an effect, so the greeting arrives a tick after mount.
+    await waitFor(() => expect(screen.getByText('Hello, June.')).toBeTruthy());
     await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
     expect(screen.getByText('IN YOUR CARE')).toBeTruthy();
-    expect(screen.getByText('PLANT-DAYS')).toBeTruthy();
+    expect(screen.getByText('LONGEST TENDED')).toBeTruthy();
+  });
+
+  it('shows no archetype and no plant-days', async () => {
+    // Both were decoration: the archetype christened you "The Plant Whisperer", and
+    // plant-days was a number nobody could interpret.
+    await mount([plant()]);
+    expect(screen.queryByText(/Whisperer|Collector|Forager|Steady Hand/)).toBeNull();
+    expect(screen.queryByText('PLANT-DAYS')).toBeNull();
   });
 
   it('does not crash on an empty garden', async () => {
@@ -198,7 +206,7 @@ describe('You — backup', () => {
     await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Save a copy'));
+      fireEvent.press(screen.getByText('Export your data'));
     });
 
     await waitFor(() => expect(mockSharing.shareAsync).toHaveBeenCalled());
@@ -211,7 +219,7 @@ describe('You — backup', () => {
     await mount([]);
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Save a copy'));
+      fireEvent.press(screen.getByText('Export your data'));
     });
 
     await waitFor(() => expect(alert).toHaveBeenCalledWith('Nothing to back up yet', expect.any(String)));
@@ -250,7 +258,7 @@ describe('You — restore', () => {
 
   it('offers restore, and is explicit that it replaces rather than merges', async () => {
     await mount();
-    expect(screen.getByText('Restore from a copy')).toBeTruthy();
+    expect(screen.getByText('Import a previous export')).toBeTruthy();
     expect(screen.getByText(/replaces what's here rather than merging/)).toBeTruthy();
   });
 
@@ -261,7 +269,7 @@ describe('You — restore', () => {
     pickReturns(backupFile);
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Restore from a copy'));
+      fireEvent.press(screen.getByText('Import a previous export'));
     });
 
     await waitFor(() => expect(alert).toHaveBeenCalled());
@@ -280,7 +288,7 @@ describe('You — restore', () => {
     pickReturns(backupFile);
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Restore from a copy'));
+      fireEvent.press(screen.getByText('Import a previous export'));
     });
 
     await waitFor(() => expect(alert).toHaveBeenCalled());
@@ -303,7 +311,7 @@ describe('You — restore', () => {
     pickReturns(backupFile);
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Restore from a copy'));
+      fireEvent.press(screen.getByText('Import a previous export'));
     });
     await waitFor(() => expect(confirm).toBeDefined());
 
@@ -323,7 +331,7 @@ describe('You — restore', () => {
     pickReturns('{"app":"something-else"}');
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Restore from a copy'));
+      fireEvent.press(screen.getByText('Import a previous export'));
     });
 
     await waitFor(() => expect(alert).toHaveBeenCalledWith('Could not restore', expect.stringContaining('Juniper backup')));
@@ -336,7 +344,7 @@ describe('You — restore', () => {
     mockPicker.getDocumentAsync.mockResolvedValue({ canceled: true, assets: null } as never);
 
     await act(async () => {
-      fireEvent.press(screen.getByText('Restore from a copy'));
+      fireEvent.press(screen.getByText('Import a previous export'));
     });
 
     await waitFor(() => expect(mockPicker.getDocumentAsync).toHaveBeenCalled());

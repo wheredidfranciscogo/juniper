@@ -72,11 +72,7 @@ function renderScreen(component: React.ReactElement, opts: { seed?: boolean } = 
   );
   if (opts.seed) {
     act(() => {
-      storeRef.completeOnboarding({
-        userName: 'June',
-        archetype: 'whisperer',
-        seed: true,
-      });
+      storeRef.completeOnboarding({ userName: 'June', seed: true });
     });
   }
   return result;
@@ -131,10 +127,9 @@ describe('Log', () => {
 });
 
 describe('You', () => {
-  it('renders the default archetype copy', () => {
+  it('greets rather than assigning a personality', () => {
     renderScreen(<You />);
-    // Default archetype in initialState is 'whisperer'.
-    expect(screen.getByText('The Plant Whisperer')).toBeTruthy();
+    expect(screen.getByText('YOUR GARDEN')).toBeTruthy();
   });
 });
 

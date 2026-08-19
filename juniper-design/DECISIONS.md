@@ -8,6 +8,41 @@ contradicts PLAN.md or TASKS.md, this file wins and the other one gets fixed.
 
 ---
 
+## D11 — Ask nothing that doesn't configure something. No personality layer.
+**Date:** 2026-08-16 · **Status:** Decided (from user feedback on the first device build)
+
+**Context.** Onboarding was seven screens: five personality questions ("What draws you to
+plants?", "Where have you tended plants before?"), a name, and a reveal that christened
+you an archetype — The Plant Whisperer, The Quiet Collector. The archetype then reappeared
+on Today and headlined the You tab. None of it changed a single thing the app did.
+
+**Decision.** **The archetype is deleted**, and onboarding asks only what it configures:
+a name (for the greeting) and reminders (permission plus a time, so watering reminders
+work from the first day). Two screens.
+
+**The rule, generally:** if an answer does not set something up, do not ask it. The same
+test retires anything on screen that cannot be acted on or understood — "plant-days" was
+a number with no interpretation, "Temp: warm / any / cool" configured nothing, and
+"Pressing: moss / clay / deep" asked the user to name an illustration style.
+
+**Why.** From the first real look at the app on a phone: *"questions of, like, how was
+your childhood, and it doesn't have anything related with the app — then don't ask."* The
+handoff's personality layer read as the app performing rather than being useful, and every
+one of those screens sat between someone and the thing they came for.
+
+**Consequences.**
+- `Plant.temp` is gone. `Plant.location` ('indoor' | 'outdoor') replaces it, because that
+  one *does* drive something — the Garden filters, which previously could not work.
+- The pressing tone stays in the data (it is the card's colour) but is chosen for you.
+- Backups from before this still restore: an archetype in the file is ignored, not rejected.
+- A corollary that now has its own rule: **a control that cannot change what you see should
+  not be on screen.** Garden hides any filter matching nothing, rather than offering
+  Indoor/Outdoor chips that do nothing.
+- And developer text never ships: the species search said "Add EXPO_PUBLIC_PERENUAL_KEY to
+  .env", which is a note to me, not to the person holding the phone.
+
+---
+
 ## D10 — Restoring a backup replaces the garden. It does not merge.
 **Date:** 2026-08-16 · **Status:** Decided
 

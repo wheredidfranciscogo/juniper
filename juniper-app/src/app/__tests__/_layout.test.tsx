@@ -81,7 +81,7 @@ describe('RootStack — onboarding gate', () => {
     expect(screen.queryByText('SCREEN:(tabs)')).toBeNull();
 
     act(() => {
-      store.completeOnboarding({ userName: 'June', archetype: 'whisperer', seed: true });
+      store.completeOnboarding({ userName: 'June', seed: true });
     });
 
     for (const name of PRE_ONBOARDING) {
