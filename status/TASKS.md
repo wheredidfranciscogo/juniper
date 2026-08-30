@@ -22,7 +22,7 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 ### The loop (D7 — this is the product)
 
-- [~] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
+- [x] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
       config plugin and the EAS project are all in (`c3a4796`, `853c749`).
       **iOS preview build (2026-08-30) is the one to use** — standalone, JS embedded, no
       Metro and no laptop, so it can be lived with. Install by opening the build page ON
@@ -35,16 +35,6 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       Superseded: Android dev builds #1–#3 and the iOS *development* build. A development
       build is a shell that loads JS from Metro — useful for fast refresh, useless away
       from the desk.
-      **One step left, and it needs a human:**
-  - [ ] **Cut the iOS development build interactively.** EAS has to create the ad-hoc
-        provisioning profile and distribution certificate, and it refuses to do that in
-        `--non-interactive`. Your iPhone (UDID `00008150-…E9401C`) is already registered
-        under team `62NSMDCDAD` from the Alchemilla work, and the Apple session is cached,
-        so this should be a matter of confirming the prompts:
-        ```
-        cd juniper-app && npx eas build --profile development --platform ios
-        ```
-        Install the result, then run `npx expo start --dev-client --port 8082` and scan.
 - [x] **Fixed the model bug that made the whole loop impossible.** `Plant` stored
       `daysSinceWater: number`, a frozen counter nothing ever incremented — `waterPlant` set
       it to 0 and it stayed there, so a plant watered once could never become thirsty again.
