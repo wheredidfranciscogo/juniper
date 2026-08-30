@@ -13,6 +13,7 @@
 import * as React from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -37,7 +38,7 @@ import {
   type SpeciesResult,
 } from '../../lib/perenual';
 import { captureFromCamera, pickFromLibrary } from '../../lib/image-picker';
-import { savePhoto } from '../../lib/photos';
+import { savePhoto, deletePhoto } from '../../lib/photos';
 import { coverPhotoUri } from '../../lib/cover';
 
 type Path = 'photo' | 'search' | 'manual';
@@ -79,7 +80,7 @@ const todayISO = () => new Date().toISOString().slice(0, 10);
 export default function AddEdit() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { addPlant, updatePlant, plants } = useStore();
+  const { addPlant, updatePlant, removePlant, plants } = useStore();
   const params = useLocalSearchParams<{ path?: string; id?: string }>();
 
   const editingPlant = params.id ? plants.find((p) => p.id === params.id) : undefined;
@@ -161,6 +162,38 @@ export default function AddEdit() {
     setSaved(true);
   };
 
+  /**
+   * Remove the plant for good. Irreversible, with no undo and no server-side copy, so
+   * the confirmation names it and says what goes with it.
+   *
+   * Its photographs are files rather than state, so they are deleted separately — the
+   * store cannot do it. Best-effort: an orphaned image costs a few KB and is not worth
+   * blocking the removal over.
+   */
+  const handleDelete = () => {
+    if (!editingPlant) return;
+    const entries = plants.length;
+    Alert.alert(
+      `Remove ${editingPlant.name}?`,
+      `Its photographs and everything the log recorded about it go too. This can't be undone.${
+        entries === 1 ? '\n\nThis is the only plant in your garden.' : ''
+      }`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            const uris = editingPlant.photos.map((p) => p.uri).filter(Boolean) as string[];
+            removePlant(editingPlant.id);
+            uris.forEach((uri) => void deletePhoto(uri));
+            setSaved(true); // redirects to /garden
+          },
+        },
+      ],
+    );
+  };
+
   // If an id was provided but no plant matches, bounce — likely a stale link.
   if (params.id && !editingPlant) return <Redirect href="/garden" />;
   if (saved) return <Redirect href="/garden" />;
@@ -229,6 +262,12 @@ export default function AddEdit() {
         />
 
         <IconPicker value={icon} onChange={setIcon} />
+
+        {isEditing && (
+          <Pressable onPress={handleDelete} style={styles.removeBtn} accessibilityRole="button">
+            <Text style={styles.removeLabel}>Remove this plant</Text>
+          </Pressable>
+        )}
       </ScrollView>
     </View>
   );
@@ -520,6 +559,14 @@ function IconPicker({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
+
+  // Deliberately quiet and at the very bottom: findable when wanted, never in the way.
+  removeBtn: {
+    marginTop: spacing.section,
+    paddingVertical: spacing.base,
+    alignItems: 'center',
+  },
+  removeLabel: { ...text.hint, color: colors.clayDeep },
 
   topbar: {
     flexDirection: 'row',

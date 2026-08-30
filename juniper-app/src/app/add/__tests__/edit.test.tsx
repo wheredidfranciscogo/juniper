@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Alert } from 'react-native';
 import { render, screen, fireEvent, act } from '@testing-library/react-native';
 
 // Mutable params + router + redirect tracker so each test can drive the path variant.
@@ -260,5 +261,76 @@ describe('AddEdit — edit path (id param)', () => {
     // And the old one is kept: the timeline is a record, not a single slot.
     expect(updated.photos).toHaveLength(2);
     expect(updated.photos[1].uri).toBe('file:///documents/photos/p_old.jpg');
+  });
+
+  it('offers removal only while editing', () => {
+    mockParams = { path: 'manual' };
+    render(withStore(<AddEdit />));
+    expect(screen.queryByText('Remove this plant')).toBeNull();
+  });
+
+  it('confirms removal by name, saying what goes with it', () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockParams = { id: 'marcel' };
+    renderWithPlants([MARCEL]);
+
+    fireEvent.press(screen.getByText('Remove this plant'));
+
+    const [title, body] = alert.mock.calls[0];
+    expect(title).toBe('Remove Marcel?');
+    expect(body).toMatch(/photographs/);
+    expect(body).toMatch(/can't be undone/);
+    alert.mockRestore();
+  });
+
+  it('removes nothing until the destructive button is pressed', () => {
+    let confirm: (() => void) | undefined;
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _b, buttons) => {
+      confirm = (buttons as { text: string; onPress?: () => void }[])?.find(
+        (b) => b.text === 'Remove',
+      )?.onPress;
+    });
+
+    mockParams = { id: 'marcel' };
+
+    // NOT renderWithPlants: that helper re-adds any missing plant on every render, so it
+    // would put Marcel straight back and hide the removal entirely. Seed exactly once.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let store: any = null;
+    function SeedOnce() {
+      const s = useStore();
+      store = s;
+      const done = React.useRef(false);
+      if (!done.current) {
+        done.current = true;
+      }
+      React.useEffect(() => {
+        if (s.plants.length === 0 && !seededRef.current) {
+          seededRef.current = true;
+          s.addPlant(MARCEL);
+        }
+      }, [s]);
+      return s.plants.length > 0 ? <AddEdit /> : null;
+    }
+    const seededRef = { current: false };
+    render(
+      <StoreProvider>
+        <SeedOnce />
+      </StoreProvider>,
+    );
+    const getStore = () => store;
+
+    fireEvent.press(screen.getByText('Remove this plant'));
+    // The dialog is the gate — nothing has gone yet.
+    expect(getStore().plants).toHaveLength(1);
+
+    act(() => {
+      confirm?.();
+    });
+
+    expect(getStore().plants).toHaveLength(0);
+    // The redirect to /garden is covered by the save tests above; this harness unmounts
+    // the screen as soon as the garden empties, so it cannot observe it here.
+    alert.mockRestore();
   });
 });

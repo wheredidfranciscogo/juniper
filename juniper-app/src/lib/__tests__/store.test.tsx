@@ -167,6 +167,54 @@ describe('updatePlant', () => {
   });
 });
 
+describe('removePlant', () => {
+  it('removes the plant', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'a', name: 'Alpha' })));
+    act(() => result.current.addPlant(makePlant({ id: 'b', name: 'Beta' })));
+
+    act(() => result.current.removePlant('a'));
+
+    expect(result.current.plants.map((p) => p.id)).toEqual(['b']);
+  });
+
+  it('takes the plant\'s log entries with it', () => {
+    // An entry whose plant no longer exists renders as a row about nothing, and the
+    // backup importer treats such orphans as corrupt — so an export would not round-trip.
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'a', name: 'Alpha' })));
+    act(() => result.current.addPlant(makePlant({ id: 'b', name: 'Beta' })));
+    act(() => result.current.waterPlant('a'));
+    expect(result.current.log.some((e) => e.plantId === 'a')).toBe(true);
+
+    act(() => result.current.removePlant('a'));
+
+    expect(result.current.log.some((e) => e.plantId === 'a')).toBe(false);
+    // Other plants' history is untouched.
+    expect(result.current.log.some((e) => e.plantId === 'b')).toBe(true);
+  });
+
+  it('is a no-op for an unknown plant id', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'a', name: 'Alpha' })));
+    const before = result.current.plants;
+
+    act(() => result.current.removePlant('ghost'));
+
+    expect(result.current.plants).toBe(before);
+  });
+
+  it('leaves an empty garden rather than breaking when the last plant goes', () => {
+    const { result } = renderStore();
+    act(() => result.current.addPlant(makePlant({ id: 'only', name: 'Only' })));
+
+    act(() => result.current.removePlant('only'));
+
+    expect(result.current.plants).toEqual([]);
+    expect(result.current.log).toEqual([]);
+  });
+});
+
 describe('replaceGarden', () => {
   const restored = [makePlant({ id: 'a', name: 'Alpha' }), makePlant({ id: 'b', name: 'Beta' })];
   const profile = { userName: 'Restored' };

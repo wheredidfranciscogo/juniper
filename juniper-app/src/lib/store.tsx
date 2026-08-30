@@ -30,6 +30,17 @@ interface AppActions {
   addPlant: (plant: Plant) => void;
   updatePlant: (plantId: string, patch: Partial<Plant>) => void;
   /**
+   * Remove a plant and everything the log recorded about it.
+   *
+   * The log goes with it deliberately: an entry whose plant no longer exists renders as
+   * a row about nothing, and the backup importer already treats such orphans as corrupt
+   * and drops them. Leaving them behind would mean an export that cannot round-trip.
+   *
+   * Stored photographs are files, not state — the caller deletes those (see
+   * src/lib/photos.ts), because the store does not touch the filesystem.
+   */
+  removePlant: (plantId: string) => void;
+  /**
    * Replace the entire garden — used by backup restore. Not a merge: see
    * DECISIONS.md D10 for why blending two sets of `lastWateredISO` produces a garden
    * nobody chose. Reminders reschedule on their own, because useReminderSync watches
@@ -221,6 +232,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const removePlant = React.useCallback<AppActions['removePlant']>((plantId) => {
+    setState((s) => {
+      if (!s.plants.some((p) => p.id === plantId)) return s;
+      return {
+        ...s,
+        plants: s.plants.filter((p) => p.id !== plantId),
+        log: s.log.filter((e) => e.plantId !== plantId),
+      };
+    });
+  }, []);
+
   const replaceGarden = React.useCallback<AppActions['replaceGarden']>(
     ({ plants, log, profile }) => {
       setState((s) => ({
@@ -245,9 +267,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       logAction,
       addPlant,
       updatePlant,
+      removePlant,
       replaceGarden,
     }),
-    [state, hydrated, completeOnboarding, waterPlant, logAction, addPlant, updatePlant, replaceGarden],
+    [
+      state,
+      hydrated,
+      completeOnboarding,
+      waterPlant,
+      logAction,
+      addPlant,
+      updatePlant,
+      removePlant,
+      replaceGarden,
+    ],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
