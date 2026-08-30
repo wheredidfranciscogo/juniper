@@ -21,6 +21,7 @@ import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
 import { greetingFor, lastWateredLabel } from '../../lib/today-utils';
 import { daysSinceWatered, daysUntilWater, isThirsty } from '../../lib/watering';
+import { coverPhotoUri } from '../../lib/cover';
 import { Pressing } from '../../components/Pressing';
 import { Pill } from '../../components/Pill';
 import { WaterButton } from '../../components/WaterButton';
@@ -197,7 +198,7 @@ function ThirstyCard({
   return (
     <View style={[styles.card, { width }]}>
       <Pressable onPress={onOpen}>
-        <Pressing plant={plant} ratio={4 / 3} radius={radii.lg} />
+        <Pressing plant={plant} ratio={4 / 3} radius={radii.lg} uri={coverPhotoUri(plant)} />
       </Pressable>
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>

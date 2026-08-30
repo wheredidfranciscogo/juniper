@@ -38,6 +38,7 @@ import {
 } from '../../lib/perenual';
 import { captureFromCamera, pickFromLibrary } from '../../lib/image-picker';
 import { savePhoto } from '../../lib/photos';
+import { coverPhotoUri } from '../../lib/cover';
 
 type Path = 'photo' | 'search' | 'manual';
 
@@ -83,8 +84,9 @@ export default function AddEdit() {
 
   const editingPlant = params.id ? plants.find((p) => p.id === params.id) : undefined;
   const isEditing = Boolean(editingPlant);
-  // While editing, suppress the photo/search panes — those are entry-point
-  // affordances that don't make sense once the plant exists.
+  // Species search is an entry-point affordance and stays suppressed while editing.
+  // The PHOTO block does not — a plant's picture is exactly the sort of thing you come
+  // back to change, and there was previously no way to set one after creation at all.
   const path: Path = isEditing
     ? 'manual'
     : params.path === 'photo' || params.path === 'search'
@@ -106,7 +108,9 @@ export default function AddEdit() {
   // about. Existing plants keep theirs; new ones get one picked from the name so a
   // garden still looks varied.
   const pressing: PressingTone = editingPlant?.pressing ?? pickPressing(name);
-  const [photoUri, setPhotoUri] = React.useState<string | null>(null);
+  const [photoUri, setPhotoUri] = React.useState<string | null>(
+    () => coverPhotoUri(editingPlant ?? { photos: [] }) ?? null,
+  );
   const [saved, setSaved] = React.useState(false);
 
   const canSave = name.trim().length > 0 && species.trim().length > 0;
@@ -114,6 +118,14 @@ export default function AddEdit() {
   const handleSave = () => {
     if (!canSave) return;
     if (editingPlant) {
+      const previousCover = coverPhotoUri(editingPlant) ?? null;
+      // A newly chosen photo goes to the front of the timeline, which is what makes it
+      // the plant's picture — see src/lib/cover.ts. Unchanged photos are left alone.
+      const photos =
+        photoUri && photoUri !== previousCover
+          ? [{ date: todayISO(), uri: photoUri }, ...editingPlant.photos]
+          : editingPlant.photos;
+
       updatePlant(editingPlant.id, {
         name: name.trim(),
         species: species.trim(),
@@ -123,6 +135,7 @@ export default function AddEdit() {
         waterEvery,
         light,
         location,
+        photos,
       });
     } else {
       const date = todayISO();
@@ -179,7 +192,9 @@ export default function AddEdit() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {path === 'photo' && <PhotoBlock photoUri={photoUri} onCapture={setPhotoUri} />}
+        {(path === 'photo' || isEditing) && (
+          <PhotoBlock photoUri={photoUri} onCapture={setPhotoUri} editing={isEditing} />
+        )}
         {path === 'search' && <SearchBlock onPick={fillFromSearch} />}
 
         <Field label="Name" value={name} onChangeText={setName} placeholder="Marcel" />
@@ -224,9 +239,11 @@ export default function AddEdit() {
 function PhotoBlock({
   photoUri,
   onCapture,
+  editing = false,
 }: {
   photoUri: string | null;
   onCapture: (uri: string | null) => void;
+  editing?: boolean;
 }) {
   const [busy, setBusy] = React.useState(false);
 
@@ -246,12 +263,12 @@ function PhotoBlock({
 
   return (
     <View style={styles.block}>
-      <Text style={styles.blockOverline}>A LIKENESS</Text>
+      <Text style={styles.blockOverline}>{editing ? 'ITS PICTURE' : 'A LIKENESS'}</Text>
       {photoUri ? (
         <View style={styles.photoWrap}>
           <Image source={{ uri: photoUri }} style={styles.photo} />
           <Pressable onPress={() => onCapture(null)} style={styles.photoRetake} hitSlop={6}>
-            <Text style={styles.photoRetakeLabel}>Retake</Text>
+            <Text style={styles.photoRetakeLabel}>{editing ? 'Change' : 'Retake'}</Text>
           </Pressable>
         </View>
       ) : (
@@ -261,7 +278,9 @@ function PhotoBlock({
         </View>
       )}
       <Text style={styles.blockHint}>
-        Identification is a stub for now — fill in the details below.
+        {editing
+          ? 'This is how it appears on Today and in the Garden.'
+          : 'Identification is a stub for now — fill in the details below.'}
       </Text>
     </View>
   );

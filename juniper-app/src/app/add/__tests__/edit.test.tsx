@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, act } from '@testing-library/react-native';
 
 // Mutable params + router + redirect tracker so each test can drive the path variant.
 let mockParams: { path?: string; id?: string } = {};
@@ -208,12 +208,57 @@ describe('AddEdit — edit path (id param)', () => {
     expect(lastRedirectHref).toBe('/garden');
   });
 
-  it('does not show the photo or search blocks while editing, even with path=photo', () => {
-    mockParams = { id: 'marcel', path: 'photo' };
+  it('offers the photo block while editing, but not species search', () => {
+    // Search is an entry-point affordance. A plant's picture is not — it is exactly the
+    // sort of thing you come back to change, and there was previously no way to set one
+    // after the plant existed.
+    mockParams = { id: 'marcel' };
     renderWithPlants([MARCEL]);
 
-    expect(screen.queryByText('A LIKENESS')).toBeNull();
+    expect(screen.getByText('ITS PICTURE')).toBeTruthy();
     expect(screen.queryByText('FIND THEIR NAME')).toBeNull();
     expect(screen.getByText('EDITING')).toBeTruthy();
+  });
+
+  it('shows the plant\'s current picture, with a way to change it', () => {
+    mockParams = { id: 'marcel' };
+    renderWithPlants([
+      { ...MARCEL, photos: [{ date: '2026-08-01', uri: 'file:///documents/photos/p_a.jpg' }] },
+    ]);
+
+    expect(screen.getByText('Change')).toBeTruthy();
+  });
+
+  it('a newly chosen photo becomes the plant\'s picture', async () => {
+    const picker = jest.requireMock('expo-image-picker');
+    picker.launchImageLibraryAsync.mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ uri: 'file:///cache/new.jpg' }],
+    });
+    const { File } = jest.requireMock('expo-file-system');
+    (File as jest.Mock)
+      .mockImplementationOnce(() => ({ exists: true, copy: jest.fn(), uri: 'file:///cache/new.jpg' }))
+      .mockImplementationOnce(() => ({ exists: false, uri: 'file:///documents/photos/p_new.jpg' }));
+
+    mockParams = { id: 'marcel' };
+    const { getStore } = renderWithPlants([
+      { ...MARCEL, photos: [{ date: '2026-01-01', uri: 'file:///documents/photos/p_old.jpg' }] },
+    ]);
+
+    // The plant already has a picture, so the block shows it with a Change action;
+    // clearing reveals the capture buttons.
+    fireEvent.press(screen.getByText('Change'));
+    await act(async () => {
+      fireEvent.press(screen.getByText('From library'));
+    });
+    fireEvent.press(screen.getByText('Save'));
+
+    const updated = getStore().plants.find((p: Plant) => p.id === 'marcel');
+    // Prepended, so coverPhotoUri picks it up — that is what makes it the picture shown
+    // on Today, in the Garden and on the hero.
+    expect(updated.photos[0].uri).toBe('file:///documents/photos/p_new.jpg');
+    // And the old one is kept: the timeline is a record, not a single slot.
+    expect(updated.photos).toHaveLength(2);
+    expect(updated.photos[1].uri).toBe('file:///documents/photos/p_old.jpg');
   });
 });

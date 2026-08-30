@@ -13,6 +13,7 @@ import { colors, fonts, radii, spacing, text } from '../../theme';
 import { useStore } from '../../lib/store';
 import { daysSinceWatered } from '../../lib/watering';
 import { tendedDays } from '../../lib/stats';
+import { coverPhotoUri } from '../../lib/cover';
 import { savePhoto } from '../../lib/photos';
 import { captureFromCamera, pickFromLibrary } from '../../lib/image-picker';
 import type { LogKind } from '../../data/types';
@@ -100,7 +101,7 @@ export default function PlantDetail() {
       >
         {/* Hero pressing */}
         <View style={styles.hero}>
-          <Pressing plant={plant} ratio={4 / 5} radius={0} big />
+          <Pressing plant={plant} ratio={4 / 5} radius={0} big uri={coverPhotoUri(plant)} />
         </View>
 
         {/* Body */}

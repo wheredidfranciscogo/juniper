@@ -16,6 +16,7 @@ import { colors, radii, spacing, text } from '../../theme';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
 import { daysUntilWater, isThirsty } from '../../lib/watering';
+import { coverPhotoUri } from '../../lib/cover';
 import { Pressing } from '../../components/Pressing';
 
 type Filter = 'all' | 'thirsty' | 'indoor' | 'outdoor';
@@ -135,7 +136,7 @@ function Row({
       style={({ pressed }) => [styles.row, isFirst && styles.rowFirst, pressed && styles.rowPressed]}
     >
       <View style={styles.thumb}>
-        <Pressing plant={plant} ratio={1} radius={radii.pill} />
+        <Pressing plant={plant} ratio={1} radius={radii.pill} uri={coverPhotoUri(plant)} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowName}>{plant.name}</Text>

@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react';
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, StyleProp, ViewStyle, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { colors, fonts } from '../theme';
@@ -29,6 +29,16 @@ export interface PressingProps {
   big?: boolean;
   /** Corner radius. 0 for square, 9999 for circular thumb, theme radius for cards. */
   radius?: number;
+  /**
+   * The plant's photograph. When present it replaces the illustration entirely — this
+   * is what makes a photo become the plant's picture on Today, Garden and the hero,
+   * rather than living only on the detail timeline.
+   *
+   * Passed explicitly rather than read off `plant.photos`, because the timeline renders
+   * a Pressing as the fallback for entries that have no image of their own; deriving it
+   * inside would show the cover photo there instead of the intended illustration.
+   */
+  uri?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -71,6 +81,7 @@ export function Pressing({
   ratio = 3 / 4,
   big = false,
   radius,
+  uri,
   style,
 }: PressingProps) {
   const tone = plant.pressing ?? 'moss';
@@ -81,6 +92,27 @@ export function Pressing({
   const speciesSize = big ? 22 : 14;
   const iconSize = big ? 360 : 180;
   const r = radius ?? 0;
+
+  if (uri) {
+    // Wrapped in a View so callers can keep passing ViewStyle (they all do) and so the
+    // rounded corners clip the image rather than the image ignoring them.
+    return (
+      <View
+        style={[
+          { width: '100%', aspectRatio: ratio, borderRadius: r, overflow: 'hidden', backgroundColor: colors.surface2 },
+          style,
+        ]}
+      >
+        <Image
+          source={{ uri }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={plant.species}
+        />
+      </View>
+    );
+  }
 
   return (
     <View
