@@ -1,26 +1,21 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-08-16T14:00:00+10:00",
+    "timestamp": "2026-08-30T14:00:00+10:00",
     "mode": "manual-feature",
     "result": "success"
   },
   "state": "ready",
-  "progress_pct": 86,
+  "progress_pct": 90,
   "current_task": null,
-  "last_action": "BACKUP IMPORT shipped, closing the last open feature in Phase 1's queue. The merge question is settled as DECISIONS.md D10: restoring REPLACES the garden rather than merging. Every plant carries the lastWateredISO that drives thirst and the reminders, so a merge must answer 'which timestamp wins?' \u2014 backup wins makes a plant you watered yesterday look parched and fires a wrong reminder; current wins means the import did nothing for the plants you had; newest wins is a blend nobody chose and leaves you unable to state what your garden is. Replace is the only rule you can say in a sentence. parseBackup is pure and treats the file as untrusted: wrong app, future format, malformed or duplicate plants, orphan log entries, absurd cadences, unparseable dates (repaired to now, not 1970, which would fire a reminder on restore), and photo URIs from another device. The confirmation names real counts on both sides and is worded differently for an empty garden. Reminders reschedule for free because useReminderSync watches `plants`. 19 suites / 227 tests green.",
-  "next_action": "Phase 1 has no unbuilt features left. Remaining are all device-bound: (1) HUMAN \u2014 `cd juniper-app && npx eas build --profile development --platform ios`, EAS needs to create the provisioning profile interactively. (2) Run the Maestro flows on a real phone \u2014 `brew install maestro && maestro test juniper-app/.maestro/`; they have still never executed an assertion. (3) Verify Android fidelity. (4) TestFlight + Play internal. (5) Two weeks of real use, which is the actual definition of done.",
+  "last_action": "PERSONALITY LAYER STRIPPED on user feedback from the first real device build, recorded as DECISIONS.md D11: ask nothing that doesn't configure something. Onboarding went from seven screens to two (name, then reminders); the archetype is deleted everywhere including the backup format, which now ignores rather than rejects an archetype in older files. The same test retired plant-days (a number with no interpretation), temp (configured nothing \u2014 replaced by `location`, which makes the Garden indoor/outdoor filters work for the first time; nothing had ever set that value), and the pressing picker (asked the user to name an illustration style; now derived from the plant name). Filters that match nothing are no longer rendered, and the active filter falls back to All when it stops matching. Developer text \u2014 'Add EXPO_PUBLIC_PERENUAL_KEY to .env' \u2014 removed from the species search, with a test asserting no screen names an env var. Thirsty cards now settle centred (the side gutter was the page padding, which does not line up with the snap interval). A watered plant holds 1.4s so the ripple plays, then drops to Upcoming \u2014 correcting an overcorrection from the day before. First run seeds ONE lived-in example plant rather than six demos. 20 suites / 224 tests, CI green. iOS PREVIEW BUILD CUT AND FINISHED \u2014 standalone, installable, ready to be lived with.",
+  "next_action": "(1) Install the iOS preview build by opening its EAS build page on the phone, then USE IT. Everything left in Phase 1 is downstream of that. (2) The watering reminder has still never fired on real hardware \u2014 turn reminders on, pick the next slot ahead of the current hour, and leave the phone alone. (3) Two open items from the last feedback round, both needing eyes rather than code: whether 'Water Marcel' still looks off-centre (nothing wrong found in the code; may have been the card off-centre, now fixed), and whether the Today footer should report state ('you're caught up') rather than count plants. (4) Then: Maestro against the device, TestFlight, Play internal.",
   "fix_attempts": 0,
   "blockers": [
     {
-      "description": "iOS development build requires interactive EAS credential setup (ad-hoc provisioning profile + distribution certificate). The device and Apple session are already in place; it should be confirming prompts.",
+      "description": "The watering reminder \u2014 the feature the whole app exists for \u2014 has never fired on real hardware. Everything around it is tested; delivery itself is not. The preview build makes it observable for the first time.",
       "needs": "human",
-      "since": "2026-08-15"
-    },
-    {
-      "description": "The five Maestro flows have never executed a single assertion. Written, audited against the current screens, and correct as far as static review can establish \u2014 but unverified against a real device. Running them on the phone is the agreed path; CI execution was abandoned after seven attempts, all of which failed on infrastructure rather than on the app.",
-      "needs": "human",
-      "since": "2026-08-16"
+      "since": "2026-08-30"
     }
   ],
   "open_prs": []

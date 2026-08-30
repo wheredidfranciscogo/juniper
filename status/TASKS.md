@@ -24,10 +24,17 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 - [~] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
       config plugin and the EAS project are all in (`c3a4796`, `853c749`).
-      **Android development build #3** (2026-08-15) is the current one — it carries the
-      reminders, the You tab, backup export and photos:
-      [APK](https://expo.dev/artifacts/eas/UtsXgfznG1J-A_4vf3Q0uSjzcY2TaR-7ICP9kbVh4LI.apk).
-      Builds #1 and #2 are superseded.
+      **iOS preview build (2026-08-30) is the one to use** — standalone, JS embedded, no
+      Metro and no laptop, so it can be lived with. Install by opening the build page ON
+      THE PHONE:
+      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/ff9faed1-9c79-4745-a7d1-cba363fd06cc
+      (Ad-hoc internal distribution; the provisioning profile from the dev build already
+      covers the registered iPhone and is valid to June 2027, which is why this cut
+      without any interactive credential setup.)
+
+      Superseded: Android dev builds #1–#3 and the iOS *development* build. A development
+      build is a shell that loads JS from Metro — useful for fast refresh, useless away
+      from the desk.
       **One step left, and it needs a human:**
   - [ ] **Cut the iOS development build interactively.** EAS has to create the ad-hoc
         provisioning profile and distribution certificate, and it refuses to do that in
