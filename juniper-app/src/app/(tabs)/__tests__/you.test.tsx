@@ -117,6 +117,10 @@ describe('You — reminders', () => {
 
   it('turning it on persists the preference and schedules the queue', async () => {
     await mount();
+    // The seed adds Marcel in an effect, and syncReminders schedules nothing for an
+    // empty garden. Waiting on the stat — not just on the screen's static heading —
+    // is what makes "schedules the queue" a real assertion rather than a race.
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
     const toggle = await screen.findByRole('switch');
 
     await act(async () => {
