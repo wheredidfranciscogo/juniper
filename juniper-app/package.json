@@ -55,7 +55,25 @@
   },
   "//overrides": "Lift transitive build-time deps past their CVEs without bumping the whole SDK. See issue #11.",
   "overrides": {
-    "postcss": "^8.5.10",
-    "uuid": "^11.1.1"
+    "postcss": "^8.5.23",
+    "uuid": "^11.1.1",
+    "tar": "^7.5.21",
+    "shell-quote": "^1.9.0",
+    "undici": "^6.28.0",
+    "nanoid": "^3.3.18",
+    "fast-uri": "^3.1.6",
+    "form-data": "^4.0.6",
+    "@babel/core": "^7.29.6",
+    "ws@^6": "^6.2.4",
+    "ws@^7": "^7.5.11",
+    "ws@^8": "^8.21.0",
+    "js-yaml@^3": "^3.15.1",
+    "js-yaml@^4": "^4.3.1",
+    "brace-expansion@^1": "^1.1.18",
+    "brace-expansion@^2": "^2.1.4",
+    "brace-expansion@^5": "^5.0.9",
+    "@xmldom/xmldom@^0.8.0": "^0.8.15",
+    "@xmldom/xmldom@^0.9.0": "^0.9.12",
+    "browserslist": "^4.28.7"
   }
 }
