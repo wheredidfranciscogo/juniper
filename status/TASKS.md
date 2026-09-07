@@ -172,6 +172,29 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       release APK builds on a clean machine, and Juniper launches and renders its splash
       correctly on Android 34 (screenshot in the run artifacts). What was never proven: any
       flow assertion.
+- [~] **The 17 remaining audit findings are two upstream dead ends. Recheck on the SDK 55 bump.**
+      Nothing here is actionable today; both are recorded next to the overrides in
+      `juniper-app/package.json` so this is not re-derived from scratch each time.
+        1. **`image-size` — 9 highs.** Its advisories cover `<=2.0.2` and 2.0.2 is the latest
+           version published, so there is no release to move to. `metro` pins it, and `metro`,
+           `metro-config`, `metro-transform-worker`, `@expo/metro`, `@expo/metro-config`,
+           `@expo/cli`, `expo` and `@react-native/metro-config` are all flagged downstream of that
+           one package. Build-time only. npm proposes `expo@57`, which is a two-major jump against
+           D6 and would still resolve a vulnerable `image-size`.
+        2. **`decode-uri-component` — 8 moderates, and this one ships.** 0.5.0 is outside the
+           advisory range but is ESM-only with no `require` condition, and `query-string@7` is
+           CommonJS and calls `require()` on it — forcing it breaks deep-link parsing in the app to
+           close a local DoS. Every `@react-navigation/core` up to 7.21.13 still pins
+           `query-string@^7`, so the escape has to come from upstream.
+      The check to re-run is the one that produced this list: export with `--source-maps` and read
+      the module list, rather than reasoning about what "looks like" build tooling.
+- [ ] **`you.test.tsx` — "turning it on persists the preference and schedules the queue" is racy.**
+      Fails roughly 1 run in 6, on `main` as much as anywhere — measured at 1/8 on the unmodified
+      tree while checking the overrides had not caused it. The test `waitFor`s on the AsyncStorage
+      write and then asserts `scheduleNotificationAsync` synchronously, but scheduling settles on a
+      later tick; under full parallel load it loses. Fix is to move the assertion inside the
+      `waitFor`. Left alone here to keep the dependency change clean, but it makes the test gate
+      unreliable and will flap CI.
 - [ ] **TestFlight + Google Play internal track.**
 - [ ] **Two weeks of real use on your own plants** before calling Phase 1 done.
 
@@ -185,6 +208,30 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 ## Done
 
 <!-- Phase 1's completed [x] items live in PLAN.md. New completions get appended here. -->
+
+### 2026-09-07 — npm audit: 30 → 17, and one shipped HIGH that nobody knew was shipped
+
+- [x] **Established which advisories reach the IPA**, rather than assuming. `expo export
+      --platform ios --source-maps`, then read the 1,722-module source map. **`nanoid/non-secure`
+      ships** — a HIGH — reached from `@react-navigation/routers` and `expo-router` for route keys;
+      so do `decode-uri-component`, `query-string`, five `@react-navigation` packages and
+      `expo-router`. Everything else (`tar`, `shell-quote`, `undici`, `ws`, `metro*`, `image-size`,
+      `browserslist`, `js-yaml`, `fast-uri`, `form-data`, `brace-expansion`, `postcss`,
+      `@xmldom/xmldom`, `@babel/core`) is confirmed **absent** from the bundle — build-time only,
+      as expected, but now measured rather than assumed.
+- [x] **30 → 17 via targeted overrides**, no SDK move (D6). Both criticals cleared (`shell-quote`,
+      `tar`), and `nanoid` — the one shipped HIGH — taken 3.3.12 → 3.3.18 in-major. Written with
+      npm's `"pkg@range": "version"` key form where a package is installed at several majors at
+      once, because only an in-major bump is API-safe there: `brace-expansion@5` exports
+      `{expand}` where `@1` exports the function, so a blanket `^5` would have broken `minimatch@3`
+      across the build toolchain.
+- [x] **Verified green**: tsc clean, 21 suites / 239 tests, `expo export --platform ios` builds.
+      `expo start` smoke-tested as well, since `ws` sits under both Metro and the dev-client
+      inspector — both websocket endpoints complete a 101 handshake and the dev server serves a
+      1,073-module bundle.
+- [x] **Corrected the claim in STATUS.md** that all audit warnings were cleared. It was true in
+      2026-06 and had not been true for months; it was read as current on 2026-09-07 and sent
+      today's work down the wrong path before the numbers contradicted it.
 
 ### 2026-08-30 — The app becomes usable with a real garden
 

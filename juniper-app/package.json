@@ -53,9 +53,30 @@
     "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
-  "//overrides": "Lift transitive build-time deps past their CVEs without bumping the whole SDK. See issue #11.",
+  "//overrides": "Lift transitive deps past their CVEs without moving off Expo SDK 54 (D6). A key of the form pkg@range pins ONE major line: these packages are installed at several majors at once and only an in-major bump is API-safe — e.g. brace-expansion 5.x exports {expand} where 1.x exports the function itself, so a blanket ^5 would break minimatch@3 across the build toolchain.",
+  "//overrides-nanoid": "nanoid is the only override here that SHIPS in the app bundle (nanoid/non-secure, used by @react-navigation/routers and expo-router for route keys). 3.3.18 is the in-major fix; do not take nanoid to 4+, which is ESM-only.",
+  "//overrides-not-fixable": "Deliberately NOT overridden, because no fixed version exists: (1) image-size — GHSA-w3rx-r6r6-pgpr and GHSA-5p2g-fcmc-qvqq cover <=2.0.2 and 2.0.2 is the latest publish. metro pins it, so metro, metro-config, metro-transform-worker, @expo/metro, @expo/metro-config, @expo/cli, expo and @react-native/metro-config all stay flagged. Build-time only; nothing here is in the bundle. (2) decode-uri-component — GHSA-vcc3-ghjq-m6fr covers <=0.4.2; 0.5.0 is fixed but ESM-only with no require condition, and query-string@7 is CommonJS and does require(). Forcing it would break deep-link parsing at runtime. This one DOES ship, via query-string -> @react-navigation/core + expo-router; every @react-navigation/core release to date still pins query-string@^7. Recheck both on the SDK 55 bump.",
   "overrides": {
-    "postcss": "^8.5.10",
-    "uuid": "^11.1.1"
+    "@babel/core": "^7.29.7",
+    "@xmldom/xmldom": "^0.9.12",
+    "brace-expansion@^1.1.7": "^1.1.18",
+    "brace-expansion@^2.0.2": "^2.1.4",
+    "brace-expansion@^5.0.5": "^5.0.9",
+    "browserslist": "^4.28.9",
+    "fast-uri": "^3.1.7",
+    "form-data": "^4.0.6",
+    "js-yaml@^3.13.1": "^3.15.2",
+    "js-yaml@^4.1.0": "^4.3.2",
+    "nanoid": "^3.3.18",
+    "postcss": "^8.5.28",
+    "shell-quote": "^1.10.0",
+    "tar": "^7.5.22",
+    "undici": "^6.28.1",
+    "uuid": "^11.1.1",
+    "ws@^6.2.3": "^6.2.6",
+    "ws@^7": "^7.5.13",
+    "ws@^7.5.10": "^7.5.13",
+    "ws@^8.11.0": "^8.21.3",
+    "ws@^8.12.1": "^8.21.3"
   }
 }

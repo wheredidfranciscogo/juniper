@@ -31,6 +31,60 @@ Progress against the (much smaller) Phase 1: ~92%.
 
 ## ✅ Recently done
 
+### 2026-09-07 — The dependency audit, told accurately
+
+`npm audit` reported **30 vulnerabilities (2 critical, 18 high, 9 moderate, 1 low)**; GitHub
+reported 48 Dependabot alerts. Targeted `overrides` took that to **17 (0 critical, 9 high,
+8 moderate)**. Both criticals — `shell-quote` and `tar` — are gone.
+
+**The important correction is not the count.** The working assumption was that every one of these
+was build-time tooling that never reaches the IPA. That was checked rather than believed, by
+exporting the iOS bundle with source maps and reading the module list, and **it is not quite
+true**. Of 1,722 modules in the shipped bundle, these vulnerable packages are among them:
+
+| Ships | Advisory | Now |
+|---|---|---|
+| `nanoid/non-secure` | **HIGH** — generators can loop indefinitely on zero/negative size | **fixed**, 3.3.12 → 3.3.18 |
+| `decode-uri-component` | MODERATE — DoS on malformed percent-encoded input | **not fixable**, see below |
+| `query-string`, `@react-navigation/{core,native,elements,bottom-tabs,native-stack}`, `expo-router` | MODERATE, all derived from `decode-uri-component` | not fixable |
+
+`nanoid` is reached from `@react-navigation/routers` and `expo-router`, which use it to mint route
+keys; the exact file the advisory is about, `non-secure/index.js`, was in the bundle. Neither call
+site passes an attacker-controlled size, so this was not exploitable — but "not exploitable" and
+"not shipped" are different claims, and only the second one was being made.
+
+Everything else — `tar`, `shell-quote`, `undici`, `ws`, `metro*`, `image-size`, `browserslist`,
+`js-yaml`, `fast-uri`, `form-data`, `brace-expansion`, `postcss`, `@xmldom/xmldom`, `@babel/core`,
+`@react-native/metro-config` — was confirmed **absent from the bundle**. The original framing holds
+for those, and it holds because it was measured.
+
+**What the remaining 17 are, and why they stay.** Two upstream dead ends, nothing else:
+
+- **`image-size` (9 highs).** Its two advisories cover `<=2.0.2`, and 2.0.2 is the latest version
+  published — there is no fixed release to move to. `metro` pins it, so `metro`, `metro-config`,
+  `metro-transform-worker`, `@expo/metro`, `@expo/metro-config`, `@expo/cli`, `expo` and
+  `@react-native/metro-config` all stay flagged as consequences of that one package. npm offers
+  `expo@57` as the fix; that is a two-major SDK jump against D6, and it would still resolve a
+  vulnerable `image-size`.
+- **`decode-uri-component` (8 moderates).** 0.5.0 *is* outside the advisory range, but it is
+  ESM-only with no `require` condition, and `query-string@7` is CommonJS and calls `require()` on
+  it. Forcing it would break deep-link parsing in the shipped app to close a local DoS. Every
+  `@react-navigation/core` release to date, up to 7.21.13, still pins `query-string@^7`.
+
+Both are recorded in `package.json` next to the overrides so the next reader does not re-derive
+them. Recheck on the SDK 55 bump.
+
+**How the overrides are written.** Several of these packages are installed at three majors at once,
+and only an in-major bump is API-safe — `brace-expansion@5` exports `{expand}` where `@1` exports
+the function itself, so a blanket `^5` would have broken `minimatch@3` across the whole build
+toolchain. The fix is npm's `"pkg@range": "version"` key form, pinning one line at a time:
+`brace-expansion` at 1.1.18 / 2.1.4 / 5.0.9, `ws` at 6.2.6 / 7.5.13 / 8.21.3, `js-yaml` at
+3.15.2 / 4.3.2.
+
+Verified after: tsc clean, 21 suites / 239 tests, `expo export --platform ios` builds, and — because
+`ws` sits under both Metro and the dev-client inspector — `expo start` was smoke-tested too: both
+websocket endpoints complete a 101 handshake and the dev server serves a 1,073-module bundle.
+
 ### 2026-08-30 — The app stops performing and starts being usable
 
 **The personality layer is gone** (`afe7898`), on the first feedback from a real phone: it
@@ -104,7 +158,10 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 - AsyncStorage persistence — the app survives a reload
 - Log tab wired, Plant Detail edit affordance
 - Test pyramid: 12 suites / 105 tests, Maestro flows authored, CI on push and PR
-- All 16 npm audit warnings cleared via targeted overrides
+- The 16 npm audit warnings **as they stood in 2026-06** cleared via targeted overrides
+  (`postcss`, `uuid`). This was true on the day and stopped being true immediately: advisories
+  are published against versions you already have, so a clean audit is a reading, never a
+  state. By 2026-09-07 the same tree reported 30. See that date below.
 
 ### Phase 1 foundations (2026-05)
 - Expo SDK 54 scaffold; design tokens ported from the handoff; 28 line-art botanical icons
