@@ -24,17 +24,23 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 - [x] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
       config plugin and the EAS project are all in (`c3a4796`, `853c749`).
-      **iOS preview build (2026-08-30) is the one to use** — standalone, JS embedded, no
-      Metro and no laptop, so it can be lived with. Install by opening the build page ON
-      THE PHONE:
-      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/ff9faed1-9c79-4745-a7d1-cba363fd06cc
+      **iOS preview build `55b80f8a` is the one to use** — cut 2026-08-30 from `1c45840`,
+      standalone with the JS embedded, so no Metro and no laptop and it can be lived with.
+      It carries both photo-covers and plant deletion; the two earlier previews (`ff9faed1`,
+      `9fb83381`) are superseded. Install by opening the build page ON THE PHONE:
+      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/55b80f8a-09e1-4634-bee0-fdd93d673f5c
       (Ad-hoc internal distribution; the provisioning profile from the dev build already
       covers the registered iPhone and is valid to June 2027, which is why this cut
       without any interactive credential setup.)
 
+      **⏳ IT EXPIRES 2026-09-13.** Ad-hoc internal builds die on a 14-day clock. After that
+      there is no installable copy of Juniper on the phone until a new one is cut —
+      `eas build --platform ios --profile preview` from `juniper-app`.
+
       Superseded: Android dev builds #1–#3 and the iOS *development* build. A development
       build is a shell that loads JS from Metro — useful for fast refresh, useless away
       from the desk.
+
 - [x] **Fixed the model bug that made the whole loop impossible.** `Plant` stored
       `daysSinceWater: number`, a frozen counter nothing ever incremented — `waterPlant` set
       it to 0 and it stayed there, so a plant watered once could never become thirsty again.
@@ -58,9 +64,11 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 ### The screens that make the loop controllable
 
-- [x] **You tab** — archetype, stats card (in your care / longest tended / plant-days), and a
-      working reminder toggle + time picker. 9 component tests covering the states that matter
-      most: a toggle must never read "on" while the OS will never deliver anything.
+- [x] **You tab** — stats card (in your care / longest tended) and a working reminder toggle +
+      time picker. 9 component tests covering the states that matter most: a toggle must never
+      read "on" while the OS will never deliver anything. (The archetype header and the
+      "plant-days" stat described here originally were both retired in `afe7898` — the archetype
+      because it configured nothing, plant-days because it was a number with no interpretation.)
       **Four deliberate divergences from the handoff**, written up at the top of `you.tsx`:
       reminders are inline rather than a chevron row to a screen that doesn't exist; the time
       control is preset chips rather than a native wheel, which would have meant a native
@@ -94,6 +102,24 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       the `daysSinceWater` and `tendedDays` bugs: a field written but never actually consumed.
       The timeline now renders the real image when there is one and falls back to the pressing
       for the seeded history, which has dates but no images.
+- [x] **Fixed: a plant's photograph was never its picture.** Fourth instance of the same shape,
+      and the one that mattered most — photos were read *only* by the detail-screen timeline, so
+      the image captured while adding a plant showed up nowhere the plant itself appeared.
+      `src/lib/cover.ts` derives the cover (newest photo wins, since both add paths prepend) and
+      `Pressing` takes an optional `uri`, falling back to the herbarium illustration when there
+      is none. Passed explicitly rather than derived inside the component, because the timeline
+      uses `Pressing` as a *per-entry* fallback and would otherwise stamp the cover on every row.
+      The photo block now also shows while EDITING, not only while adding, so a picture can be
+      changed. 6 tests.
+- [x] **Remove a plant.** There was no delete anywhere — no store action, no UI — which blocked
+      the whole point of the preview build: moving a real garden in. `removePlant` drops the
+      plant **and its log entries**, deliberately: an entry whose plant is gone renders as a row
+      about nothing, and `parseBackup` already treats such orphans as corrupt and drops them, so
+      leaving them would mean an export that cannot round-trip. Photo files are deleted by the
+      screen, not the store, which never touches the filesystem. The affordance sits last and
+      quiet at the bottom of the edit form, behind a confirmation that names the plant, says the
+      photographs and the log go too, and says so explicitly when it is the only plant left.
+      7 tests.
 
 ### Ship
 
@@ -159,6 +185,19 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 ## Done
 
 <!-- Phase 1's completed [x] items live in PLAN.md. New completions get appended here. -->
+
+### 2026-08-30 — The app becomes usable with a real garden
+
+- [x] **Personality layer stripped** (`afe7898`), on the first feedback from a real phone.
+      Onboarding seven screens → two; the archetype deleted everywhere including the backup
+      format; "plant-days", "temp" and the pressing picker all retired for configuring nothing;
+      `location` added so the indoor/outdoor filters work for the first time; filters that match
+      nothing no longer rendered; developer text removed from the species search. Recorded as
+      **DECISIONS.md D11 — ask nothing that doesn't configure something.**
+- [x] **A plant's photograph became its picture** (`74a473d`) and **plants can be removed**
+      (`1c45840`) — the two things standing between the app and a real garden. Detail above.
+- [x] **Three iOS preview builds cut**, the last of which (`55b80f8a`) is the one to install.
+- [x] Verified green after each: tsc clean, **21 suites / 239 tests**, `expo export --platform ios`.
 
 ### 2026-08-15 — Phase 0 restructure
 

@@ -1,19 +1,29 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-08-30T14:00:00+10:00",
+    "timestamp": "2026-08-30T15:50:00+10:00",
     "mode": "manual-feature",
     "result": "success"
   },
   "state": "ready",
-  "progress_pct": 90,
+  "progress_pct": 92,
   "current_task": null,
-  "last_action": "PERSONALITY LAYER STRIPPED on user feedback from the first real device build, recorded as DECISIONS.md D11: ask nothing that doesn't configure something. Onboarding went from seven screens to two (name, then reminders); the archetype is deleted everywhere including the backup format, which now ignores rather than rejects an archetype in older files. The same test retired plant-days (a number with no interpretation), temp (configured nothing \u2014 replaced by `location`, which makes the Garden indoor/outdoor filters work for the first time; nothing had ever set that value), and the pressing picker (asked the user to name an illustration style; now derived from the plant name). Filters that match nothing are no longer rendered, and the active filter falls back to All when it stops matching. Developer text \u2014 'Add EXPO_PUBLIC_PERENUAL_KEY to .env' \u2014 removed from the species search, with a test asserting no screen names an env var. Thirsty cards now settle centred (the side gutter was the page padding, which does not line up with the snap interval). A watered plant holds 1.4s so the ripple plays, then drops to Upcoming \u2014 correcting an overcorrection from the day before. First run seeds ONE lived-in example plant rather than six demos. 20 suites / 224 tests, CI green. iOS PREVIEW BUILD CUT AND FINISHED \u2014 standalone, installable, ready to be lived with.",
-  "next_action": "(1) Install the iOS preview build by opening its EAS build page on the phone, then USE IT. Everything left in Phase 1 is downstream of that. (2) The watering reminder has still never fired on real hardware \u2014 turn reminders on, pick the next slot ahead of the current hour, and leave the phone alone. (3) Two open items from the last feedback round, both needing eyes rather than code: whether 'Water Marcel' still looks off-centre (nothing wrong found in the code; may have been the card off-centre, now fixed), and whether the Today footer should report state ('you're caught up') rather than count plants. (4) Then: Maestro against the device, TestFlight, Play internal.",
+  "last_action": "TWO FEATURES CLOSED THE LAST GAPS BETWEEN THE APP AND A REAL GARDEN. (1) A PLANT'S PHOTOGRAPH IS NOW ITS PICTURE. Photos were stored and shown only in the detail-screen timeline; nowhere else in the app ever read `photo.uri`, so the image captured while adding a plant never became the plant. `src/lib/cover.ts` derives the cover (newest photo wins, since both add paths prepend) and `Pressing` takes an optional `uri`, falling back to the herbarium illustration when there is none. The photo block also now appears while EDITING, not only while adding, so a picture can be changed. Fourth instance of the same shape as daysSinceWater, tendedDays and the photo timeline: a field written and never consumed, invisible because the seed data was hand-tuned to look right. (2) PLANTS CAN BE REMOVED. There was no delete anywhere — no store action, no UI — which blocked the actual goal of moving a real garden in. `removePlant` drops the plant AND its log entries (an orphan entry renders as a row about nothing, and parseBackup already treats orphans as corrupt, so leaving them would break export round-tripping); the screen deletes the photo files, because the store does not touch the filesystem. The affordance sits last and quiet at the bottom of the edit form, behind a confirmation that names the plant, says the photographs and log go too, and says so explicitly when it is the only plant left. 21 suites / 239 tests, tsc clean, expo export --platform ios builds. iOS PREVIEW BUILD 55b80f8a CUT AND FINISHED — it carries both features and is the one to install.",
+  "next_action": "(1) INSTALL BUILD 55b80f8a BEFORE 2026-09-13, WHEN IT EXPIRES — open the EAS build page ON THE PHONE, not the .ipa. Ad-hoc internal builds die on a 14-day clock; after that it must be re-cut. (2) Move the real garden in: remove the seeded example, add your own plants with photographs, then EXPORT THE DATA — on-device storage means an afternoon of typing has exactly one copy until you make a second. (3) The watering reminder has still never fired on real hardware — turn reminders on, pick the next slot ahead of the current hour, leave the phone alone. (4) Two items needing eyes rather than code: whether 'Water Marcel' still reads off-centre, and whether the Today footer should report state ('you're caught up') rather than count plants. (5) Then: Maestro against the device, TestFlight, Play internal.",
   "fix_attempts": 0,
   "blockers": [
     {
-      "description": "The watering reminder \u2014 the feature the whole app exists for \u2014 has never fired on real hardware. Everything around it is tested; delivery itself is not. The preview build makes it observable for the first time.",
+      "description": "The watering reminder — the feature the whole app exists for — has never fired on real hardware. Everything around it is tested; delivery itself is not. Build 55b80f8a makes it observable.",
+      "needs": "human",
+      "since": "2026-08-30"
+    },
+    {
+      "description": "iOS preview build 55b80f8a expires 2026-09-13. It is the only installable copy carrying photo-covers and plant deletion; after expiry a new build must be cut before the app can be used on the phone at all.",
+      "needs": "human",
+      "since": "2026-09-07"
+    },
+    {
+      "description": "GitHub Actions was last seen failing on account billing rather than on code — a job ran one second with no steps, annotated with failed payments or a spending limit. Not re-verified since. CI cannot be trusted green or red until Settings -> Billing & plans is checked.",
       "needs": "human",
       "since": "2026-08-30"
     }

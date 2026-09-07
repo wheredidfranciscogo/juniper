@@ -12,18 +12,56 @@ One repo, three folders:
 | [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
 
 **Read [`DECISIONS.md`](../juniper-design/DECISIONS.md) first.** It holds the load-bearing calls
-(D1–D9) and wins over anything written here.
+(D1–D11) and wins over anything written here.
 
 ## 📌 Current phase
 
-**Phase 1 — Useful.** The app is further along than it looks: all the screens exist, the store
-persists, 105 tests pass, and the bundle builds. What's missing is the thing the app is *for* —
-the watering reminder. That's next, and it's the only item that stands between here and an app
-worth keeping on a home screen.
+**Phase 1 — Useful. Code-complete; what remains needs a phone, not a keyboard.** Every feature
+Phase 1 asked for is built and tested — the watering loop, reminders, the You tab, backup export
+and import, real photographs, and as of 2026-08-30 the two things that were still blocking a real
+garden from moving in: a plant's photograph becoming its picture, and being able to remove a plant.
+21 suites / 239 tests, tsc clean, the iOS bundle builds.
 
-Progress against the (much smaller) Phase 1: ~70%.
+What is left is not code. **The watering reminder — the reason the app exists — has still never
+fired on real hardware.** Until it does, and until the app has carried a real garden for a fortnight,
+Phase 1 is not done. Everything downstream (Maestro on the device, TestFlight, Play internal) waits
+on that.
+
+Progress against the (much smaller) Phase 1: ~92%.
 
 ## ✅ Recently done
+
+### 2026-08-30 — The app stops performing and starts being usable
+
+**The personality layer is gone** (`afe7898`), on the first feedback from a real phone: it
+performed rather than being useful. Onboarding went from seven screens to two — your name, for the
+greeting, and reminders, so watering nudges work from day one. The archetype ("The Plant Whisperer")
+is deleted everywhere including the backup format, which now *ignores* rather than rejects an
+archetype in an older file. The same pass retired "plant-days" (a number with no interpretation),
+"temp: warm / any / cool" (configured nothing — replaced by `location`, which makes the Garden
+indoor/outdoor filters work for the first time; nothing had ever set that value), and the pressing
+picker (asked the user to name an illustration style; now derived from the plant's name). Filters
+that match nothing are no longer rendered. Developer text — "Add EXPO_PUBLIC_PERENUAL_KEY to .env" —
+removed from the species search, with a test asserting no screen names an env var. Recorded as
+**DECISIONS.md D11: ask nothing that doesn't configure something.**
+
+**A plant's photograph is now its picture** (`74a473d`). Photos were read *only* by the
+detail-screen timeline — nowhere the plant itself appeared ever touched `photo.uri` — so the image
+captured while adding a plant became visible nowhere. `src/lib/cover.ts` derives the cover, and
+`Pressing` takes an optional `uri` and falls back to the herbarium illustration. The photo block
+now also shows while *editing*, so a picture can be changed. This is the fourth instance of one
+recurring shape in this codebase — `daysSinceWater`, `tendedDays`, the photo timeline, and now the
+cover: **a field written and never consumed, invisible because the seed data was hand-tuned to look
+right.** Worth watching for a fifth.
+
+**Plants can be removed** (`1c45840`). There was no delete anywhere — no store action, no UI —
+which blocked the whole point of the preview build. `removePlant` drops the plant *and its log
+entries*, because an orphan entry renders as a row about nothing and `parseBackup` already treats
+orphans as corrupt, so leaving them would break export round-tripping. Photo files are deleted by
+the screen; the store never touches the filesystem.
+
+**Three iOS preview builds cut.** The last, `55b80f8a`, carries all of the above and is the one to
+install — **and it expires 2026-09-13.**
 
 ### 2026-08-15 — Replan + Phase 0 restructure
 
@@ -76,11 +114,26 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 
 ## 🚧 Blocked / needs attention
 
-- **Nothing is blocked.** Both stale `[!]` markers were cleared on 2026-08-15.
-- **The Maestro flows have never been executed.** They were authored from on-screen text and
-  are unverified against a real build. Their `appId` is now correct, so they're runnable.
-- **Notifications can't be trusted in Expo Go.** An EAS development build is a prerequisite for
-  the next task, not an afterthought — see D6.
+Nothing is blocked on code. Three things are blocked on you.
+
+- **⏳ The preview build expires 2026-09-13.** `55b80f8a` is the only installable copy carrying
+  photo-covers and plant deletion. Ad-hoc internal builds die on a 14-day clock; after that a new
+  one must be cut before Juniper can run on the phone at all. Open the build page **on the phone**,
+  not the `.ipa`.
+- **The watering reminder has never fired on real hardware.** Everything around it is tested;
+  delivery itself is not. Turn reminders on, pick the next slot ahead of the current hour, and
+  leave the phone alone.
+- **Export the data once real plants are in.** Storage is on-device and nowhere else (D2), so an
+  afternoon of typing has exactly one copy until you make a second.
+- **GitHub Actions was last seen failing on billing, not on code** — a job ran one second with no
+  steps, annotated with failed payments or a spending limit. Not re-verified since 2026-08-30, so
+  CI cannot currently be trusted green *or* red. Settings → Billing & plans.
+- **The Maestro flows have still never executed a single assertion.** Authored from on-screen text
+  and unverified against a real build. Decision (2026-08-16): run them against the phone rather
+  than fighting GitHub's emulator — `maestro test juniper-app/.maestro/`.
+- **Two feedback items need eyes rather than code**: whether "Water Marcel" still reads off-centre
+  (nothing found wrong in the code; may have been the card, since fixed), and whether the Today
+  footer should report state — "you're caught up" — rather than count plants.
 - **Website placeholders**: support address, legal entity and jurisdiction are flagged in-page
   and must be resolved before public release.
 
@@ -104,8 +157,10 @@ juniper-project/
 ├── juniper-app/
 │   └── src/
 │       ├── theme/tokens.ts     ← design tokens; the website copies these
-│       ├── data/seed.ts        ← demo garden for a fresh install
+│       ├── data/seed.ts        ← ONE lived-in example plant for a fresh install
 │       ├── lib/store.tsx       ← React Context + AsyncStorage. Permanent, not a stopgap.
+│       ├── lib/                ← pure, RN-free, node-testable: watering · notifications ·
+│       │                          stats · backup · photos · cover
 │       ├── components/         ← icons, Pressing, WaterButton, Pill, LogFeed
 │       └── app/                ← splash → (onboarding) → (tabs) + plant/[id] + add/
 ├── juniper-website/            ← four static files
@@ -116,4 +171,5 @@ juniper-project/
 ```
 
 ---
-*Last updated: 2026-08-15 — replan + Phase 0 restructure.*
+*Last updated: 2026-09-07 — caught the status files up to the 2026-08-30 work (photo-covers,
+plant deletion, the personality strip) and flagged the build expiry.*
