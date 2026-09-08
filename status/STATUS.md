@@ -31,6 +31,54 @@ Progress against the (much smaller) Phase 1: ~92%.
 
 ## ✅ Recently done
 
+### 2026-09-07 — A flaky test and the dependency backlog
+
+Housekeeping, but both items turned on the same lesson: **a green test suite was not evidence
+of what it looked like evidence of.**
+
+**The You-reminders test was racy and is now fixed** (`4f1cb49`, PR #2). It failed roughly one
+run in six under a full parallel `npx jest` and passed alone. The reported cause — that the
+`scheduleNotificationAsync` assertion ran a tick before the scheduling settled — was wrong, and
+worth recording as wrong: moving that assertion inside the `waitFor` made the flake *worse*
+(4 failures in 10), because `waitFor` polls for a second and still saw zero calls. In the failing
+runs the call genuinely never happened. The real cause sits upstream of the toggle: `syncReminders`
+returns early without scheduling when the garden is empty, and `mount()` only waited for the static
+`YOUR GARDEN` overline, which renders whether or not a plant exists. The seed adds Marcel in an
+effect, so under load the toggle was flipped against an empty store. One added line — wait for the
+`1 plant` stat, as the neighbouring tests already do — fixes it, and also restores what the test is
+*for*: as written it could have passed against an empty garden, which is exactly the case where
+scheduling nothing is correct.
+
+**The audit backlog is down from 30 findings to 17, both criticals gone** (`2e8685e`, PR #3), via
+targeted `overrides`. GitHub was reporting 48 alerts; that number overstates the exposure badly,
+because it reads the lockfile without knowing that this app's runtime is a bundled JS blob rather
+than a Node process. Nearly every finding is build tooling — `@expo/cli`, `metro`, `babel`, `jest`,
+`react-devtools-core` — that runs here and in CI and never reaches a phone. Both criticals were of
+that kind (`shell-quote` under `react-devtools-core`, `tar` under `@expo/cli`).
+
+**`npm audit fix` was tried first and had to be backed out**, which is the part worth remembering.
+It looked strictly better — 30 → 16 with `package.json` untouched — but it re-resolved whole
+subtrees and pulled **26 Expo 56/57 packages into this Expo 54 app**, including a second `expo`
+nested inside `expo` carrying `@expo/cli@57.0.22`. `tsc`, all 239 tests, and `expo export` for both
+platforms passed on that contaminated tree, because the hoisted 54 paths still won when Metro built
+the bundle. **Only `npm ci` caught it**, refusing the lockfile as out of sync — which is what CI
+runs and what local `npm install` had papered over. Overrides are surgical by comparison: npm can't
+re-resolve around them, and the result was a 286-line lockfile diff instead of 5,208, with zero
+56/57 `@expo` packages left in the tree. Where several major lines are live, each is pinned
+separately — `ws` 6/7/8, `js-yaml` 3/4, `brace-expansion` 1/2/5, `@xmldom/xmldom` 0.8/0.9.
+
+Two roots remain and are deliberately left: `image-size` (9 high) is pinned by `metro`, and
+`decode-uri-component` (8 moderate) **has no patched release in existence**. The latter is the only
+finding that reaches the app — `expo-router` parses deep links through `query-string@7` — and its
+worst case is the app hanging on a hostile `juniper://` link until it is force-quit, with nothing
+leaving the device (D2 holds). Both clear with Expo 57. Neither justifies a major SDK migration
+with the preview build expiring 2026-09-13; take them when SDK 57 is wanted for its own sake.
+
+**CI is alive, and the billing blocker is closed.** It had been unverifiable since 2026-08-30 —
+last seen failing in one second with no steps, annotated with failed payments. It has now run
+four times with real steps: passing at 1m32s and 1m48s, and *failing correctly* on the `npm ci`
+error above. That is the evidence the blocker was waiting for, from both directions.
+
 ### 2026-08-30 — The app stops performing and starts being usable
 
 **The personality layer is gone** (`afe7898`), on the first feedback from a real phone: it
@@ -114,7 +162,8 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 
 ## 🚧 Blocked / needs attention
 
-Nothing is blocked on code. Three things are blocked on you.
+Nothing is blocked on code. Six things wait on you — the seventh, CI billing, is now closed.
+(This line said "three" while listing seven for the last fortnight; corrected 2026-09-08.)
 
 - **⏳ The preview build expires 2026-09-13.** `55b80f8a` is the only installable copy carrying
   photo-covers and plant deletion. Ad-hoc internal builds die on a 14-day clock; after that a new
@@ -125,9 +174,9 @@ Nothing is blocked on code. Three things are blocked on you.
   leave the phone alone.
 - **Export the data once real plants are in.** Storage is on-device and nowhere else (D2), so an
   afternoon of typing has exactly one copy until you make a second.
-- **GitHub Actions was last seen failing on billing, not on code** — a job ran one second with no
-  steps, annotated with failed payments or a spending limit. Not re-verified since 2026-08-30, so
-  CI cannot currently be trusted green *or* red. Settings → Billing & plans.
+- ~~**GitHub Actions was last seen failing on billing, not on code.**~~ **Resolved 2026-09-07.**
+  CI has now run four times with real steps — green at 1m32s and 1m48s, and red for a genuine
+  `npm ci` failure. It can be trusted in both directions again.
 - **The Maestro flows have still never executed a single assertion.** Authored from on-screen text
   and unverified against a real build. Decision (2026-08-16): run them against the phone rather
   than fighting GitHub's emulator — `maestro test juniper-app/.maestro/`.
@@ -171,5 +220,6 @@ juniper-project/
 ```
 
 ---
-*Last updated: 2026-09-07 — caught the status files up to the 2026-08-30 work (photo-covers,
-plant deletion, the personality strip) and flagged the build expiry.*
+*Last updated: 2026-09-08 — recorded the 2026-09-07 housekeeping: the racy You-reminders test
+(PR #2) and the dependency audit pass (PR #3), and closed the CI-billing blocker now that CI has
+been observed both green and correctly red.*

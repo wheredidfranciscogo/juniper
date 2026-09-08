@@ -186,6 +186,42 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 <!-- Phase 1's completed [x] items live in PLAN.md. New completions get appended here. -->
 
+### 2026-09-07 — Housekeeping: a flaky test and the dependency backlog
+
+- [x] **The racy `You — reminders` test is fixed** (`4f1cb49`, PR #2). Failed ~1 run in 6 under a
+      full parallel `npx jest`, passed alone. **The reported cause was wrong**, which is worth
+      keeping: moving the `scheduleNotificationAsync` assertion inside the `waitFor` made it
+      *worse* (4 failures in 10), because `waitFor` polls for a second and still saw zero calls —
+      the call genuinely never happened. Real cause is upstream of the toggle: `syncReminders`
+      returns early without scheduling for an empty garden, and `mount()` only waited for the
+      static `YOUR GARDEN` overline, so under load the toggle was flipped before the seed effect
+      landed. One line — wait for the `1 plant` stat — fixes it, and restores what the test is
+      *for*: as written it could have passed against an empty garden, exactly the case where
+      scheduling nothing is correct.
+- [x] **Audit backlog: 30 findings → 17, both criticals cleared** (`2e8685e`, PR #3), via targeted
+      `overrides` in `package.json`. Each live major line pinned separately so nothing crosses a
+      boundary — `ws` 6/7/8, `js-yaml` 3/4, `brace-expansion` 1/2/5, `@xmldom/xmldom` 0.8/0.9.
+      GitHub's 48-alert headline overstates the exposure: it reads the lockfile without knowing
+      this app's runtime is a bundled JS blob, and nearly every finding is build tooling that
+      never reaches a phone.
+- [x] **`npm audit fix` tried, then backed out — read this before reaching for it again.** It
+      looked strictly better (30 → 16, `package.json` untouched) but re-resolved whole subtrees
+      and pulled **26 Expo 56/57 packages into this Expo 54 app**, including a second `expo`
+      nested inside `expo` carrying `@expo/cli@57.0.22`. `tsc`, all 239 tests, *and* `expo export`
+      for both platforms passed on that tree, because the hoisted 54 paths still won for the
+      bundle. **Only `npm ci` caught it.** Run `npm ci` — not `npm install` — before pushing any
+      lockfile change; it is what CI runs and the only check that sees this class of problem.
+- [x] **CI billing blocker closed.** Unverifiable since 2026-08-30 (a job that ran one second
+      with no steps, annotated with failed payments). Now observed four times with real steps:
+      green at 1m32s and 1m48s, and correctly red on the `npm ci` failure above.
+
+Left deliberately: `image-size` (9 high, pinned by `metro`) and `decode-uri-component`
+(8 moderate, **no patched release exists**). Both clear only with Expo 57.
+`decode-uri-component` is the one finding that reaches the app — `expo-router` parses deep links
+through `query-string@7` — and its worst case is the app hanging on a hostile `juniper://` link
+until force-quit, with nothing leaving the device. Not worth a major SDK migration before the
+build expiry; take them when SDK 57 is wanted for its own sake.
+
 ### 2026-08-30 — The app becomes usable with a real garden
 
 - [x] **Personality layer stripped** (`afe7898`), on the first feedback from a real phone.
