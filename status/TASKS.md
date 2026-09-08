@@ -188,13 +188,6 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
            `query-string@^7`, so the escape has to come from upstream.
       The check to re-run is the one that produced this list: export with `--source-maps` and read
       the module list, rather than reasoning about what "looks like" build tooling.
-- [ ] **`you.test.tsx` — "turning it on persists the preference and schedules the queue" is racy.**
-      Fails roughly 1 run in 6, on `main` as much as anywhere — measured at 1/8 on the unmodified
-      tree while checking the overrides had not caused it. The test `waitFor`s on the AsyncStorage
-      write and then asserts `scheduleNotificationAsync` synchronously, but scheduling settles on a
-      later tick; under full parallel load it loses. Fix is to move the assertion inside the
-      `waitFor`. Left alone here to keep the dependency change clean, but it makes the test gate
-      unreliable and will flap CI.
 - [ ] **TestFlight + Google Play internal track.**
 - [ ] **Two weeks of real use on your own plants** before calling Phase 1 done.
 
@@ -232,6 +225,16 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 - [x] **Corrected the claim in STATUS.md** that all audit warnings were cleared. It was true in
       2026-06 and had not been true for months; it was read as current on 2026-09-07 and sent
       today's work down the wrong path before the numbers contradicted it.
+- [x] **Fixed the flaky `you.test.tsx` reminder test** — it was failing about 1 run in 6, on the
+      unmodified tree as much as anywhere, and it was **not** the timing race it looked like.
+      `syncReminders` returns early on an empty garden, `Seed` adds the plant in an effect, and
+      `mount()` only waits on 'YOUR GARDEN', which renders either way — so when the toggle was
+      flipped before the plant landed, nothing was ever scheduled and the assertion was right to
+      fail. The fix is to wait for `'1 plant'` first, exactly as the backup tests in the same file
+      already do for the same reason. Confirmed by measurement, not by reading: the
+      move-the-assertion-into-`waitFor` fix that the shape suggested still failed 3 runs in 20;
+      with the guard, **0 in 25** (~1% likely by chance at the old rate). Both assertions were left
+      inside the `waitFor` anyway, since the write does land several awaits before the scheduling.
 
 ### 2026-08-30 — The app becomes usable with a real garden
 

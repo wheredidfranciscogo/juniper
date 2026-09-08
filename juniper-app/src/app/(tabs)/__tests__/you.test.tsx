@@ -117,19 +117,28 @@ describe('You — reminders', () => {
 
   it('turning it on persists the preference and schedules the queue', async () => {
     await mount();
+    // Seed adds the plant in an effect, and mount() only waits on 'YOUR GARDEN', which
+    // renders either way. syncReminders returns early on an empty garden, so flipping
+    // the toggle before the plant lands schedules NOTHING and the test fails claiming
+    // the queue was never built. Wait for the plant, exactly as the backup tests do.
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
+
     const toggle = await screen.findByRole('switch');
 
     await act(async () => {
       fireEvent(toggle, 'valueChange', true);
     });
 
+    // Both assertions sit inside the waitFor: setReminder writes the preference and only
+    // THEN calls syncReminders, so the write lands several awaits before the first
+    // scheduleNotificationAsync.
     await waitFor(() => {
       expect(mockStorage.setItem).toHaveBeenCalledWith(
         '@juniper/reminders',
         expect.stringContaining('"enabled":true'),
       );
+      expect(mockNotifications.scheduleNotificationAsync).toHaveBeenCalled();
     });
-    expect(mockNotifications.scheduleNotificationAsync).toHaveBeenCalled();
   });
 
   it('reverts the toggle and surfaces guidance when permission is refused', async () => {
