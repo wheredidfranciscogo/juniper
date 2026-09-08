@@ -179,8 +179,18 @@ describe('You — reminders', () => {
   });
 
   it('changing the time reschedules', async () => {
-    mockStorage.getItem.mockResolvedValue(JSON.stringify({ enabled: true, time: '09:00' }));
+    // Seed the preference THROUGH the stateful mock rather than stubbing getItem flat.
+    // syncReminders re-reads the pref to rebuild the queue, so a flat stub hands it the
+    // old 09:00 forever — which is why this test could only ever check the write.
+    await mockStorage.setItem(
+      '@juniper/reminders',
+      JSON.stringify({ enabled: true, time: '09:00' }),
+    );
+
     await mount();
+    // Same trap as the toggle test above: the seed adds Marcel in an effect, and
+    // syncReminders schedules nothing at all for an empty garden.
+    await waitFor(() => expect(screen.getByText('1 plant')).toBeTruthy());
 
     const chip = await screen.findByText('8pm');
     await act(async () => {
@@ -192,6 +202,13 @@ describe('You — reminders', () => {
         '@juniper/reminders',
         expect.stringContaining('"time":"20:00"'),
       );
+      // The point of the test, and what it was missing: the queue was actually rebuilt,
+      // at the new hour. Asserting the write alone passes even when nothing is scheduled
+      // — including against an empty garden, where scheduling nothing is correct.
+      const hours = mockNotifications.scheduleNotificationAsync.mock.calls
+        .map(([req]) => (req.trigger as { date?: Date } | null)?.date?.getHours())
+        .filter((h): h is number => h !== undefined);
+      expect(hours).toContain(20);
     });
   });
 
