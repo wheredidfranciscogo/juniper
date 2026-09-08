@@ -67,6 +67,29 @@ re-resolve around them, and the result was a 286-line lockfile diff instead of 5
 56/57 `@expo` packages left in the tree. Where several major lines are live, each is pinned
 separately — `ws` 6/7/8, `js-yaml` 3/4, `brace-expansion` 1/2/5, `@xmldom/xmldom` 0.8/0.9.
 
+**Which findings reach the phone is now measured rather than inferred.** "It's build tooling" was
+the right instinct and the wrong evidence — it reads package names, and package names are not a
+module graph. The check that settles it is `npx expo export --platform ios --source-maps`, then
+reading the `sources` array of the emitted `.hbc.map`: that is the shipped module list, 1,722
+entries, and a package is either in it or it is not. Against the current tree:
+
+| | Packages |
+|---|---|
+| **In the bundle** | `expo-router` · `@react-navigation/{core,elements,native,bottom-tabs,native-stack}` · `query-string` · `decode-uri-component` · `nanoid` |
+| **Not in the bundle** | `tar` · `shell-quote` · `undici` · `ws` · `metro` · `metro-config` · `metro-transform-worker` · `@expo/metro` · `@expo/metro-config` · `@react-native/metro-config` · `image-size` · `browserslist` · `js-yaml` · `fast-uri` · `form-data` · `brace-expansion` · `postcss` · `@xmldom/xmldom` · `@babel/core` |
+
+Two entries need their fine print. `@expo/cli` appears in the bundle as exactly one file —
+`build/metro-require/require.js`, the Metro require shim — which is not where any of its advisories
+live; the CVE surface of `@expo/cli` is build-time as assumed. And **`nanoid` shipped**: it is
+reached from `@react-navigation/routers` and `expo-router`, which mint route keys with it, and the
+file in the bundle is `non-secure/index.js` — the exact file its HIGH is about. Neither call site
+passes an attacker-controlled size, so it was never exploitable, and the `^3.3.18` override closes
+it regardless. It is recorded because *not exploitable* and *not shipped* are different claims, and
+the second one would have been wrong.
+
+The reusable part is the method, not the table: on the SDK 55 bump, re-run the export and re-read
+the list rather than re-reasoning about which packages look like tooling.
+
 Two roots remain and are deliberately left: `image-size` (9 high) is pinned by `metro`, and
 `decode-uri-component` (8 moderate) **has no patched release in existence**. The latter is the only
 finding that reaches the app — `expo-router` parses deep links through `query-string@7` — and its
