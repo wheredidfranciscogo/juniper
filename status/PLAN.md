@@ -35,30 +35,35 @@ no matter how many screens exist.
 
 ## 📋 Phase 1 — Useful
 
-The app you'd actually keep on your home screen. **Most of this is already built.**
+The app you'd actually keep on your home screen. **All of it is now built** — this section
+listed six unbuilt features until 2026-09-08, every one of which had shipped weeks earlier.
 
-**Done and on `master`:**
+**Done and on `main`:**
 - [x] Expo SDK 54 scaffold, design tokens, 28 line-art botanical icons, `Pressing` placeholder
 - [x] expo-router structure: splash → onboarding → tabs + plant detail + add
-- [x] 7-step onboarding with archetype reveal, `Stack.Protected` route gate
+- [x] ~~7-step onboarding with archetype reveal~~ → **two-step onboarding**, `Stack.Protected`
+      route gate. The archetype and five of the seven screens were deleted 2026-08-30 (D11);
+      they performed rather than configured anything.
 - [x] Today, Garden, Log, Plant Detail screens at design fidelity
 - [x] Signature `WaterButton` — ripple, clay→moss crossfade, haptic
 - [x] Add Plant flow, all three paths
 - [x] AsyncStorage persistence, versioned — **the app already survives a reload**
-- [x] 12 test suites / 91 tests, CI on push and PR
+- [x] ~~12 test suites / 91 tests~~ → **21 suites / 239 tests**, CI on push and PR
+- [x] **Watering reminders.** Per-plant local notifications on each plant's cadence, deep-linking
+      to the plant; watering reschedules. (D7) — *built and unit-tested; has still never fired on
+      real hardware, which is what Definition of Done actually turns on.*
+- [x] **You tab** — reminder time, notification toggle, stats.
+- [x] **Rename finished** (`2e230f0`) — bundle ID, scheme, Maestro `appId`, all copy. (D9)
+- [x] **EAS setup** (D6) — `eas.json`, dev-client, config plugin. iOS preview `55b80f8a` is the
+      installable copy, **expiring 2026-09-13**.
+- [x] **Real photos**, and as of 2026-08-30 a plant's photograph is its *picture* (`74a473d`).
+- [x] **Backup export** — and import/restore (`replaceGarden`), beyond what this line asked for.
+- [x] **Plants can be removed** (`1c45840`). Not on the original list; it turned out to block
+      moving a real garden in.
 
-**Remaining — in priority order:**
-- [ ] **Watering reminders.** Per-plant local notifications on each plant's cadence. Tapping
-      one deep-links to that plant. Watering reschedules it. (D7)
-- [ ] **You tab** — reminder time, notification toggle, stats, and the settings that make the
-      reminders controllable. Currently a stub.
-- [ ] **Finish the rename** — bundle ID, scheme, Maestro `appId`, all copy. Before any build. (D9)
-- [ ] **EAS setup** — `eas.json`, bundle identifiers, a development build to test notifications
-      on a real phone. (D6)
-- [ ] **Real photos** — capture to the document directory, store the URI, render on the plant
-      timeline. The seeded pressings are beautiful but they aren't *your* plants.
-- [ ] **Backup export** — one button that writes the garden to JSON and hands it to the share
-      sheet. Cheap insurance against D2's one real downside.
+**Remaining — none of it code.** The whole of what's left is in the Definition of Done below:
+a reminder firing on real hardware, and two weeks of real use. See `STATUS.md` for the current
+blockers and `TASKS.md` for the queue.
 
 ## 🏁 Definition of Done
 
