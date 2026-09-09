@@ -95,7 +95,7 @@ Two roots remain and are deliberately left: `image-size` (9 high) is pinned by `
 finding that reaches the app — `expo-router` parses deep links through `query-string@7` — and its
 worst case is the app hanging on a hostile `juniper://` link until it is force-quit, with nothing
 leaving the device (D2 holds). Both clear with Expo 57. Neither justifies a major SDK migration
-with the preview build expiring 2026-09-13; take them when SDK 57 is wanted for its own sake.
+with a preview build on a 14-day clock; take them when SDK 57 is wanted for its own sake.
 
 **CI is alive, and the billing blocker is closed.** It had been unverifiable since 2026-08-30 —
 last seen failing in one second with no steps, annotated with failed payments. It has now run
@@ -131,8 +131,8 @@ entries*, because an orphan entry renders as a row about nothing and `parseBacku
 orphans as corrupt, so leaving them would break export round-tripping. Photo files are deleted by
 the screen; the store never touches the filesystem.
 
-**Three iOS preview builds cut.** The last, `55b80f8a`, carries all of the above and is the one to
-install — **and it expires 2026-09-13.**
+**Three iOS preview builds cut.** The last, `55b80f8a`, carried all of the above. It expired
+2026-09-13 and is superseded by `4bc720fe` (2026-09-09), which is product-identical.
 
 ### 2026-08-15 — Replan + Phase 0 restructure
 
@@ -188,10 +188,10 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 Nothing is blocked on code. Six things wait on you — the seventh, CI billing, is now closed.
 (This line said "three" while listing seven for the last fortnight; corrected 2026-09-08.)
 
-- **⏳ The preview build expires 2026-09-13.** `55b80f8a` is the only installable copy carrying
-  photo-covers and plant deletion. Ad-hoc internal builds die on a 14-day clock; after that a new
-  one must be cut before Juniper can run on the phone at all. Open the build page **on the phone**,
-  not the `.ipa`.
+- **⏳ The preview build expires 2026-09-23.** `4bc720fe`, cut 2026-09-09 from `687ce5b`, is the
+  installable copy — it replaces `55b80f8a`, which would have died on the 13th. Ad-hoc internal
+  builds run on a 14-day clock, so this needs re-cutting again before the 23rd if the app still
+  has not been lived with. Open the build page **on the phone**, not the `.ipa`.
 - **The watering reminder has never fired on real hardware.** Everything around it is tested;
   delivery itself is not. Turn reminders on, pick the next slot ahead of the current hour, and
   leave the phone alone.

@@ -54,8 +54,8 @@ listed six unbuilt features until 2026-09-08, every one of which had shipped wee
       real hardware, which is what Definition of Done actually turns on.*
 - [x] **You tab** — reminder time, notification toggle, stats.
 - [x] **Rename finished** (`2e230f0`) — bundle ID, scheme, Maestro `appId`, all copy. (D9)
-- [x] **EAS setup** (D6) — `eas.json`, dev-client, config plugin. iOS preview `55b80f8a` is the
-      installable copy, **expiring 2026-09-13**.
+- [x] **EAS setup** (D6) — `eas.json`, dev-client, config plugin. iOS preview `4bc720fe` is the
+      installable copy, **expiring 2026-09-23**.
 - [x] **Real photos**, and as of 2026-08-30 a plant's photograph is its *picture* (`74a473d`).
 - [x] **Backup export** — and import/restore (`replaceGarden`), beyond what this line asked for.
 - [x] **Plants can be removed** (`1c45840`). Not on the original list; it turned out to block
