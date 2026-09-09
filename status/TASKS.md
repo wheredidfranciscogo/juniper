@@ -24,22 +24,27 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 - [x] **EAS setup** (D6). `eas.json`, `expo-dev-client`, `owner`, the expo-notifications
       config plugin and the EAS project are all in (`c3a4796`, `853c749`).
-      **iOS preview build `55b80f8a` is the one to use** — cut 2026-08-30 from `1c45840`,
-      standalone with the JS embedded, so no Metro and no laptop and it can be lived with.
-      It carries both photo-covers and plant deletion; the two earlier previews (`ff9faed1`,
-      `9fb83381`) are superseded. Install by opening the build page ON THE PHONE:
-      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/55b80f8a-09e1-4634-bee0-fdd93d673f5c
+      **iOS preview build `4bc720fe` is the one to use** — cut 2026-09-09 from `687ce5b`
+      (`main`), standalone with the JS embedded, so no Metro and no laptop and it can be
+      lived with. Install by opening the build page ON THE PHONE:
+      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/4bc720fe-fe92-43e4-be66-01299573ba12
       (Ad-hoc internal distribution; the provisioning profile from the dev build already
       covers the registered iPhone and is valid to June 2027, which is why this cut
       without any interactive credential setup.)
 
-      **⏳ IT EXPIRES 2026-09-13.** Ad-hoc internal builds die on a 14-day clock. After that
+      **⏳ IT EXPIRES 2026-09-23.** Ad-hoc internal builds die on a 14-day clock. After that
       there is no installable copy of Juniper on the phone until a new one is cut —
       `eas build --platform ios --profile preview` from `juniper-app`.
 
-      Superseded: Android dev builds #1–#3 and the iOS *development* build. A development
-      build is a shell that loads JS from Metro — useful for fast refresh, useless away
-      from the desk.
+      Earlier previews `55b80f8a` (2026-08-30, expired 2026-09-13), `9fb83381` and `ff9faed1`
+      are dead. Product-wise `4bc720fe` is the same app as `55b80f8a` — everything merged
+      since is dependency overrides, tests and docs, none of which reach the bundle. Its
+      fingerprint `3dccf87f` matches all three earlier previews, which is the check that the
+      native config did not drift.
+
+      Also superseded: Android dev builds #1–#3 and the iOS *development* build. A
+      development build is a shell that loads JS from Metro — useful for fast refresh,
+      useless away from the desk.
 
 - [x] **Fixed the model bug that made the whole loop impossible.** `Plant` stored
       `daysSinceWater: number`, a frozen counter nothing ever incremented — `waterPlant` set
@@ -186,6 +191,21 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 <!-- Phase 1's completed [x] items live in PLAN.md. New completions get appended here. -->
 
+### 2026-09-09 — A preview build that does not expire on Sunday
+
+- [x] **Cut iOS preview build `4bc720fe`** from `687ce5b` (`main`), replacing `55b80f8a` two days
+      before it expired. Ad-hoc internal distribution, 5 minutes, no interactive credential setup —
+      the provisioning profile from the dev build still covers the registered iPhone and runs to
+      June 2027. **Expires 2026-09-23**, so this is a recurring cost until the app is actually
+      lived with, not a task that closes.
+      https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/4bc720fe-fe92-43e4-be66-01299573ba12
+- [x] **Confirmed the native config had not drifted**: fingerprint `3dccf87f`, identical to all
+      three earlier previews. Product-wise this build is the same app as `55b80f8a` — everything
+      merged since (#2–#6) is dependency overrides, tests and docs, none of which reach the bundle.
+- [x] **Repointed the docs at it.** Twelve references across STATUS.md, TASKS.md, PLAN.md and
+      status.json still named the expiring build; leaving them would have recreated exactly the
+      stale-claim problem this run started with.
+
 ### 2026-09-07 — Housekeeping: a flaky test and the dependency backlog
 
 - [x] **The racy `You — reminders` test is fixed** (`4f1cb49`, PR #2). Failed ~1 run in 6 under a
@@ -232,7 +252,8 @@ build expiry; take them when SDK 57 is wanted for its own sake.
       **DECISIONS.md D11 — ask nothing that doesn't configure something.**
 - [x] **A plant's photograph became its picture** (`74a473d`) and **plants can be removed**
       (`1c45840`) — the two things standing between the app and a real garden. Detail above.
-- [x] **Three iOS preview builds cut**, the last of which (`55b80f8a`) is the one to install.
+- [x] **Three iOS preview builds cut**, the last of which (`55b80f8a`) was the one to install
+      until it expired on 2026-09-13. Superseded by `4bc720fe`.
 - [x] Verified green after each: tsc clean, **21 suites / 239 tests**, `expo export --platform ios`.
 
 ### 2026-08-15 — Phase 0 restructure
