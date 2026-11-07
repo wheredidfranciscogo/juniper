@@ -1,4 +1,4 @@
-# E2E: the You tab — archetype, garden stats, and the reminder controls.
+# E2E: the You tab — garden stats, the reminder controls, and the data section.
 #
 # SCOPE NOTE: this flow deliberately stops at the edge of the OS.
 #
@@ -23,15 +23,17 @@ tags:
 - tapOn:
     id: "tab-you"
 
-# Archetype, from the onboarding answers in the base flow.
-- assertVisible: "YOU ARE"
-- assertVisible: "The Plant Whisperer"
-
-# Stats card, derived from the seeded garden.
+# Stats card, derived from the seeded garden — one lived-in example plant.
+#
+# UPDATED 2026-11-07. This block used to assert "YOU ARE" / "The Plant Whisperer" and
+# "PLANT-DAYS", all three of which were deleted in afe7898 back in August (D11), and
+# "6 plants", which stopped being true when the seed was cut to one. The flow had been
+# asserting on an app that no longer existed for months, because the Maestro suite has
+# still never been executed.
+- assertVisible: "YOUR GARDEN"
 - assertVisible: "IN YOUR CARE"
-- assertVisible: "6 plants"
+- assertVisible: "1 plant"
 - assertVisible: "LONGEST TENDED"
-- assertVisible: "PLANT-DAYS"
 
 # Reminders start off, and the copy says so rather than implying they are running.
 - assertVisible: "REMINDERS"
@@ -39,8 +41,10 @@ tags:
 - assertVisible: "Off. Juniper will keep the record, but stay silent."
 
 # Backup is reachable, and is explicit that Juniper is not the one uploading anything.
-- assertVisible: "YOUR GARDEN"
-- assertVisible: "Save a copy"
+# "Save a copy" / "Restore from a copy" were renamed to say what they do (afe7898).
+- assertVisible: "YOUR DATA"
+- assertVisible: "Export your data"
+- assertVisible: "Import a previous export"
 - assertVisible: "you choose where it goes"
 
 # The privacy claim is on the screen itself, not only on the website.

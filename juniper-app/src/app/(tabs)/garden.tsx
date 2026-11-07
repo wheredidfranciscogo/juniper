@@ -1,151 +1,205 @@
 /**
- * Garden screen.
- * Overline + heading → filter chips → list.
+ * The Garden — the app's home, and a grid rather than a list.
  *
- * A filter that would match nothing is not shown at all. Indoor/Outdoor used to render
- * unconditionally and do nothing, because no plant carried a location — four chips, two
- * of them inert. A control that cannot change what you see should not be on screen.
+ * Every plant is one square. The square's mount drifts moss → dried as the plant goes
+ * from watered to due, so a single glance reports the whole garden without a word being
+ * read; the drop in a square's corner waters it without leaving the screen; tapping a
+ * square expands it in place. This replaced both the Today card carousel and the
+ * filtered Garden list — see DECISIONS.md D12.
+ *
+ * THERE ARE NO FILTERS, deliberately. A list needs sorting and filtering because its
+ * rows all look alike; a grid does not, because colour carries the state and position
+ * makes each plant recognisable. "Thirsty" was the only filter anyone wanted and the
+ * grid answers it before you could tap a chip.
+ *
+ * Order is thirstiest-first, computed once per render from a single `now` so every tile
+ * agrees, and tie-broken on name so the layout cannot shuffle under your thumb.
  */
 
 import * as React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, radii, spacing, text } from '../../theme';
+import { colors, spacing, text } from '../../theme';
 import type { Plant } from '../../data/types';
 import { useStore } from '../../lib/store';
-import { daysUntilWater, isThirsty } from '../../lib/watering';
-import { coverPhotoUri } from '../../lib/cover';
-import { Pressing } from '../../components/Pressing';
+import { byThirst, dryness, drynessLabel } from '../../lib/dryness';
+import { daysSinceWatered } from '../../lib/watering';
+import { greetingFor } from '../../lib/today-utils';
+import { focusTap } from '../../lib/haptics';
+import { PlantTile } from '../../components/PlantTile';
+import { PlantPeek, type TileRect } from '../../components/PlantPeek';
 
-type Filter = 'all' | 'thirsty' | 'indoor' | 'outdoor';
-
-const ALL_FILTERS: { v: Filter; label: string }[] = [
-  { v: 'all', label: 'All' },
-  { v: 'thirsty', label: 'Thirsty' },
-  { v: 'indoor', label: 'Indoor' },
-  { v: 'outdoor', label: 'Outdoor' },
-];
-
-/** Would this filter show anything at all, given the current garden? */
-function matchesAny(filter: Filter, plants: Plant[], now: Date): boolean {
-  switch (filter) {
-    case 'all': return true;
-    case 'thirsty': return plants.some((p) => isThirsty(p, now));
-    default: return plants.some((p) => p.location === filter);
-  }
-}
+const COLUMNS = 3;
+const GAP = 12;
 
 export default function Garden() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { plants } = useStore();
-  const [filter, setFilter] = React.useState<Filter>('all');
+  const { width } = useWindowDimensions();
+  const { plants, userName, waterPlant } = useStore();
 
+  const [openId, setOpenId] = React.useState<string | null>(null);
+  const [openFrom, setOpenFrom] = React.useState<TileRect | null>(null);
+  // Bumped when the grid settles after a scroll, so each tile re-caches its window rect.
+  const [measureToken, setMeasureToken] = React.useState(0);
+  const restAfterScroll = () => setMeasureToken((n) => n + 1);
+
+  // One clock for the whole render. Tiles sorted by one `now` and coloured by another
+  // would disagree about which plant is thirstiest.
   const now = new Date();
 
-  const filters = React.useMemo(
-    // 'All' always stays, even for an empty garden — otherwise the row vanishes
-    // entirely and the screen looks broken rather than empty.
-    () => ALL_FILTERS.filter((f) => f.v === 'all' || matchesAny(f.v, plants, now)),
+  const tileSize = Math.floor((width - spacing.page * 2 - GAP * (COLUMNS - 1)) / COLUMNS);
+
+  const ordered = React.useMemo(
+    () => [...plants].sort((a, b) => byThirst(a, b, now)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [plants],
   );
 
-  // If the active filter stops matching anything — the last thirsty plant was just
-  // watered, say — fall back to All rather than showing an empty list under a chip
-  // that is no longer offered.
-  React.useEffect(() => {
-    if (!filters.some((f) => f.v === filter)) setFilter('all');
-  }, [filters, filter]);
+  const open = plants.find((p) => p.id === openId) ?? null;
 
-  const filtered = React.useMemo(() => {
-    if (filter === 'thirsty') return plants.filter((p) => isThirsty(p, new Date()));
-    if (filter === 'indoor' || filter === 'outdoor') {
-      return plants.filter((p) => p.location === filter);
-    }
-    return plants;
-  }, [plants, filter]);
+  const handleOpen = (plant: Plant, rect: TileRect | null) => {
+    focusTap();
+    setOpenFrom(rect);
+    setOpenId(plant.id);
+  };
+
+  const thirstyCount = ordered.filter((p) => dryness(p, now) >= 1).length;
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[
-        styles.scroll,
-        { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 120 },
-      ]}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.overline}>
-          {plants.length} plant{plants.length === 1 ? '' : 's'} in your care
-        </Text>
-        <Text style={styles.title}>The Garden</Text>
-      </View>
-
+    <View style={styles.root}>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsContainer}
+        onMomentumScrollEnd={restAfterScroll}
+        onScrollEndDrag={restAfterScroll}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 28, paddingBottom: insets.bottom + 120 },
+        ]}
+        showsVerticalScrollIndicator={false}
       >
-        {filters.map(({ v, label }) => (
-          <Pressable
-            key={v}
-            onPress={() => setFilter(v)}
-            style={[styles.chip, filter === v && styles.chipActive]}
-          >
-            <Text style={[styles.chipLabel, filter === v && styles.chipLabelActive]}>{label}</Text>
-          </Pressable>
-        ))}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>
+            {greetingFor(now)}
+            {userName ? `, ${userName}` : ''}
+          </Text>
+          <Text style={styles.overline}>{subtitle(plants.length, thirstyCount)}</Text>
+        </View>
+
+        {plants.length === 0 ? (
+          <Text style={styles.empty}>
+            No plants yet. Add your first with the button below.
+          </Text>
+        ) : (
+          <View style={styles.grid}>
+            {ordered.map((plant) => (
+              <MeasuredTile
+                key={plant.id}
+                plant={plant}
+                size={tileSize}
+                dryness={dryness(plant, now)}
+                label={drynessLabel(plant, now)}
+                wateredToday={daysSinceWatered(plant, now) === 0}
+                measureToken={measureToken}
+                onOpen={(rect) => handleOpen(plant, rect)}
+                onWater={() => waterPlant(plant.id)}
+              />
+            ))}
+          </View>
+        )}
       </ScrollView>
 
-      <View style={styles.list}>
-        {filtered.length === 0 ? (
-          <Text style={styles.empty}>Nothing here yet.</Text>
-        ) : (
-          filtered.map((p, i) => (
-            <Row
-              key={p.id}
-              plant={p}
-              isFirst={i === 0}
-              onPress={() => router.push({ pathname: '/plant/[id]', params: { id: p.id } })}
-            />
-          ))
-        )}
-      </View>
-    </ScrollView>
+      {open && (
+        <PlantPeek
+          plant={open}
+          from={openFrom}
+          now={now}
+          onClose={() => setOpenId(null)}
+          onWater={() => waterPlant(open.id)}
+          onOpenRecord={() => {
+            setOpenId(null);
+            router.push({ pathname: '/plant/[id]', params: { id: open.id } });
+          }}
+        />
+      )}
+    </View>
   );
 }
 
-function Row({
+/** "6 plants in your care · 2 ready for water" — a count, not a verdict. */
+function subtitle(total: number, thirsty: number): string {
+  const plants = `${total} plant${total === 1 ? '' : 's'} in your care`;
+  if (thirsty === 0) return plants;
+  return `${plants} · ${thirsty} ready for water`;
+}
+
+/**
+ * Wraps a tile so its on-screen rect can be handed to the peek, which animates out of
+ * it.
+ *
+ * THE RECT IS CACHED, NOT MEASURED ON PRESS. `measureInWindow` answers through a bridge
+ * round-trip, so waiting for it before opening would put a frame or two of nothing
+ * between the tap and the response — and under Jest the callback never fires at all, so
+ * a press-time measurement meant the peek could not be tested. Opening is synchronous
+ * and uses whatever the cache holds; a null cache is a supported input to the peek,
+ * which then scales up from the centre instead.
+ *
+ * The cache is filled on layout and refreshed whenever the grid settles after a scroll,
+ * since window coordinates go stale the moment the list moves.
+ *
+ * `collapsable={false}` is load-bearing on Android: a plain View with no background is
+ * collapsed out of the native hierarchy there and cannot be measured at all.
+ */
+function MeasuredTile({
   plant,
-  isFirst,
-  onPress,
+  size,
+  dryness: d,
+  label,
+  wateredToday,
+  measureToken,
+  onOpen,
+  onWater,
 }: {
   plant: Plant;
-  isFirst: boolean;
-  onPress: () => void;
+  size: number;
+  dryness: number;
+  label: string;
+  wateredToday: boolean;
+  /** Bumped by the grid when positions may have changed, to re-fill the cache. */
+  measureToken: number;
+  onOpen: (rect: TileRect | null) => void;
+  onWater: () => void;
 }) {
-  const now = new Date();
-  const thirsty = isThirsty(plant, now);
-  const daysRemaining = daysUntilWater(plant, now);
+  const ref = React.useRef<View | null>(null);
+  const rect = React.useRef<TileRect | null>(null);
+
+  const measure = React.useCallback(() => {
+    const node = ref.current;
+    if (!node?.measureInWindow) return;
+    node.measureInWindow((x, y, width, height) => {
+      rect.current = [x, y, width, height].every(
+        (n) => typeof n === 'number' && Number.isFinite(n),
+      )
+        ? { x, y, width, height }
+        : null;
+    });
+  }, []);
+
+  React.useEffect(measure, [measure, measureToken]);
+
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.row, isFirst && styles.rowFirst, pressed && styles.rowPressed]}
-    >
-      <View style={styles.thumb}>
-        <Pressing plant={plant} ratio={1} radius={radii.pill} uri={coverPhotoUri(plant)} />
-      </View>
-      <View style={styles.rowText}>
-        <Text style={styles.rowName}>{plant.name}</Text>
-        <Text style={styles.rowSpecies}>{plant.species}</Text>
-      </View>
-      <Text style={[styles.rowDays, thirsty && styles.rowDaysThirsty]}>
-        {thirsty ? 'thirsty' : `in ${daysRemaining}d`}
-      </Text>
-    </Pressable>
+    <View ref={ref} collapsable={false} onLayout={measure}>
+      <PlantTile
+        plant={plant}
+        size={size}
+        dryness={d}
+        label={label}
+        wateredToday={wateredToday}
+        onOpen={() => onOpen(rect.current)}
+        onWater={onWater}
+      />
+    </View>
   );
 }
 
@@ -154,54 +208,20 @@ const styles = StyleSheet.create({
   scroll: { gap: spacing.lg },
 
   header: { paddingHorizontal: spacing.page, gap: 6 },
+  greeting: text.greeting,
   overline: text.overline,
-  title: text.sectionTitle,
 
-  chipsContainer: {
+  grid: {
     paddingHorizontal: spacing.page,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 13,
-    paddingVertical: 7,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: colors.hairlineStrong,
-    backgroundColor: 'transparent',
-  },
-  chipActive: { borderColor: colors.ink, backgroundColor: colors.paper },
-  chipLabel: {
-    fontSize: 13,
-    color: colors.inkMuted,
-    letterSpacing: 0.13,
-    fontFamily: 'PublicSans_400Regular',
-  },
-  chipLabelActive: { color: colors.ink },
-
-  list: { paddingHorizontal: spacing.page },
-  empty: { ...text.bodyMuted, textAlign: 'center', paddingVertical: spacing.section },
-
-  row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.hairline,
+    flexWrap: 'wrap',
+    gap: GAP,
   },
-  rowFirst: { borderTopWidth: 1, borderTopColor: colors.hairline },
-  rowPressed: { backgroundColor: colors.surface },
-  thumb: {
-    width: 60,
-    height: 60,
-    borderRadius: radii.pill,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.hairline,
+
+  empty: {
+    ...text.bodyMuted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.page,
+    paddingVertical: spacing.section,
   },
-  rowText: { flex: 1, gap: 2 },
-  rowName: text.rowName,
-  rowSpecies: { ...text.species, fontSize: 13 },
-  rowDays: { ...text.monoTimestamp, textTransform: 'lowercase' },
-  rowDaysThirsty: { color: colors.clay },
 });

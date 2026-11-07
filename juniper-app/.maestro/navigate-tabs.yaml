@@ -1,19 +1,17 @@
-# E2E: the four bottom tabs route to their screens.
+# E2E: the three bottom tabs route to their screens, and the centre FAB opens Add Plant.
 #
 # Tabs are tapped by testID, not by their visible label. The labels are lowercase words
-# that also occur in body copy — "today" appears inside "Last watered today." on the
-# Today screen — so a text tap can land on the wrong element and pass for the wrong
-# reason. See onboarding.yaml for how to run these.
+# that also occur in body copy, so a text tap can land on the wrong element and pass for
+# the wrong reason. See onboarding.yaml for how to run these.
+#
+# Garden is asserted on its count line rather than a title: the grid replaced the old
+# "The Garden" heading, and its other header line is a time-of-day greeting that would
+# make this flow pass or fail depending on the hour.
 appId: com.wheredidfranciscogo.juniper
 tags:
   - navigation
 ---
 - runFlow: onboarding.yaml
-
-- tapOn:
-    id: "tab-garden"
-- assertVisible: "The Garden"
-- assertVisible: "Thirsty"
 
 - tapOn:
     id: "tab-log"
@@ -24,12 +22,12 @@ tags:
 - assertVisible: "YOU ARE"
 
 - tapOn:
-    id: "tab-today"
-- assertVisible: "Water Marcel"
+    id: "tab-garden"
+- assertVisible: "1 plant in your care"
 
 # The centre FAB opens the add-plant modal, and Cancel returns without adding anything.
 - tapOn:
     id: "tab-add"
 - assertVisible: "Cancel"
 - tapOn: "Cancel"
-- assertVisible: "Water Marcel"
+- assertVisible: "1 plant in your care"

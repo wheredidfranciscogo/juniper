@@ -1,7 +1,12 @@
 /**
  * Bottom tab layout with custom tab bar.
- * 4 nav tabs (Today / Garden / Log / You) + a central clay FAB that pushes /add.
+ * 3 nav tabs (Garden / Log / You) + a central clay FAB that pushes /add.
  * Per the handoff: 5 visual slots, the middle one is not a tab destination.
+ *
+ * Today is gone — the Garden grid replaced it (DECISIONS.md D12). That leaves an odd
+ * number of tabs, so the right-hand side carries an invisible spacer: without it the
+ * two sides weigh 2:1 and the FAB, which is fixed-width, stops being centred. The
+ * handoff's five-slot rhythm is kept; one slot is simply empty.
  */
 
 import * as React from 'react';
@@ -13,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, spacing, text } from '../../theme';
 import { handleTabPress } from '../../lib/tab-press';
 import {
-  IconHome,
   IconGarden,
   IconJournal,
   IconLeaf,
@@ -22,13 +26,12 @@ import {
 } from '../../components/icons';
 
 interface TabConfig {
-  name: 'today' | 'garden' | 'log' | 'you';
+  name: 'garden' | 'log' | 'you';
   label: string;
   Icon: React.FC<IconProps>;
 }
 
 const TABS: TabConfig[] = [
-  { name: 'today', label: 'today', Icon: IconHome },
   { name: 'garden', label: 'garden', Icon: IconGarden },
   { name: 'log', label: 'log', Icon: IconJournal },
   { name: 'you', label: 'you', Icon: IconLeaf },
@@ -39,7 +42,7 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const activeRoute = state.routes[state.index]?.name;
 
-  // Render order: [today, garden, FAB, log, you]
+  // Render order: [garden, log, FAB, you, spacer]
   const left = TABS.slice(0, 2);
   const right = TABS.slice(2);
 
@@ -64,6 +67,9 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
       {right.map((t) => (
         <TabButton key={t.name} {...t} active={activeRoute === t.name} onPress={() => handlePress(t.name)} />
       ))}
+
+      {/* Balances the bar so the fixed-width FAB sits on the centre line. */}
+      <View style={styles.spacer} pointerEvents="none" />
     </View>
   );
 }
@@ -103,9 +109,8 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.paper },
       }}
     >
-      {/* index just redirects to /today — hide it from the tab bar. */}
+      {/* index just redirects to /garden — hide it from the tab bar. */}
       <Tabs.Screen name="index" options={{ href: null }} />
-      <Tabs.Screen name="today" />
       <Tabs.Screen name="garden" />
       <Tabs.Screen name="log" />
       <Tabs.Screen name="you" />
@@ -131,6 +136,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   tabLabel: { ...text.tabLabel, textTransform: 'lowercase', letterSpacing: 0.5 },
+  spacer: { flex: 1 },
   fab: {
     width: 56,
     height: 56,

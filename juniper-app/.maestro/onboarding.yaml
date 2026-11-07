@@ -1,17 +1,22 @@
-# E2E: first-run splash -> 5 onboarding questions -> name -> reveal -> Today.
+# E2E: first-run splash -> name -> reminders -> the Garden grid.
 #
 # This is the base flow; the others start with `runFlow: onboarding.yaml` to reach a
-# seeded Today screen. It begins with `clearState`, so every flow starts from a genuine
-# first install rather than inheriting whatever the previous one left behind.
+# seeded garden. It begins with `clearState`, so every flow starts from a genuine first
+# install rather than inheriting whatever the previous one left behind.
+#
+# REWRITTEN 2026-11-07. The previous version drove SEVEN screens — five personality
+# questions and an archetype reveal that christened you "The Plant Whisperer" — all of
+# which were deleted in afe7898 (DECISIONS.md D11) back in August. Because every other
+# flow runs this one first, the entire suite had been failing at its second step for
+# months without anyone learning it: the flows have still never been executed. Treat
+# every assertion here as unverified until `maestro test .maestro/` has actually run.
 #
 # HOW TO RUN
-#   CI:    the "E2E (Maestro)" workflow (workflow_dispatch) builds a debug APK, boots an
-#          emulator, and runs everything in this folder. That is the supported path.
-#   Local: needs a booted simulator/emulator and a real build — Maestro drives an
-#          installed binary, so it cannot run under jest.
-#            brew install maestro
-#            npx expo run:android          (or run:ios)
-#            maestro test .maestro/
+#   Local, against a real build on a booted simulator/emulator — Maestro drives an
+#   installed binary, so it cannot run under jest:
+#     brew install maestro
+#     npx expo run:ios            (or run:android)
+#     maestro test .maestro/
 #
 # Testing inside Expo Go instead of a dev build? Use appId: host.exp.Exponent.
 appId: com.wheredidfranciscogo.juniper
@@ -24,30 +29,21 @@ tags:
 - assertVisible: "tap anywhere to begin"
 - tapOn: "tap anywhere to begin"
 
-- assertVisible: "What kind of plants do you tend to?"
-- tapOn: "Houseplants"
-
-- assertVisible: "How does your home receive light?"
-- tapOn: "Bright most of the day"
-
-- assertVisible: "How much time can you give them?"
-- tapOn: "Twenty minutes a week"
-
-- assertVisible: "What draws you to plants?"
-- tapOn: "The calm of caring"
-
-- assertVisible: "Where have you tended plants before?"
-- tapOn: "Always"
-
-- assertVisible: "And what should we call you?"
+# Screen 1 of 2 — the only thing asked before the app is usable.
+- assertVisible: "What should we call you?"
+- tapOn: "your name"          # the field's placeholder
 - inputText: "June"
 - hideKeyboard
 - tapOn: "Continue"
 
-# Archetype reveal. The answers above map to The Plant Whisperer via pickArchetype().
-- assertVisible: "Begin"
-- tapOn: "Begin"
+# Screen 2 of 2 — reminders. "Not now" is taken deliberately: accepting raises the OS
+# notification permission prompt, and driving OS chrome is what makes a suite flaky.
+# Permission-denied and revoked-after-the-fact are simulated in notifications.test.ts.
+- assertVisible: "Shall we remind you when to water?"
+- assertVisible: "At what time?"
+- tapOn: "Not now"
 
-# Landed on Today with the seeded garden. Marcel is seeded 8 days since water on a
-# 7-day cadence, so he is thirsty the moment onboarding finishes.
-- assertVisible: "Water Marcel"
+# Landed on the Garden grid with the seeded garden: one lived-in example plant, Marcel,
+# seeded 8 days since water on a 7-day cadence, so he is due the moment onboarding ends.
+- assertVisible: "1 plant in your care"
+- assertVisible: "Marcel"

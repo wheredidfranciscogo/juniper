@@ -1,26 +1,41 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-09-09T10:14:00+10:00",
-    "mode": "manual-maintenance",
+    "timestamp": "2026-11-07T20:30:00+11:00",
+    "mode": "manual-feature",
     "result": "success"
   },
   "state": "ready",
-  "progress_pct": 92,
+  "progress_pct": 94,
   "current_task": null,
-  "last_action": "CUT iOS PREVIEW BUILD 4bc720fe FROM 687ce5b (main), REPLACING 55b80f8a TWO DAYS BEFORE IT EXPIRED. Ad-hoc internal distribution, 5 minutes, no interactive credential setup — the provisioning profile from the dev build still covers the registered iPhone and runs to June 2027. Install by opening the build page ON THE PHONE, not the .ipa: https://expo.dev/accounts/wheredidfranciscogo/projects/juniper/builds/4bc720fe-fe92-43e4-be66-01299573ba12 Fingerprint 3dccf87f is identical to all three earlier previews, which is the check that the native config did not drift. Product-wise this is the same app as 55b80f8a — everything merged since (PRs #2-#6) is dependency overrides, tests and docs, none of which reach the bundle. ALSO REPOINTED THE DOCS: twelve references across STATUS.md, TASKS.md, PLAN.md and this file still named the expiring build, which would have recreated exactly the stale-claim problem this run started with. EARLIER IN THE SAME RUN: PR #6 opened — the \"changing the time reschedules\" test asserted only that the preference was written, never that anything was rescheduled, so it did not test its own name. The blocker was a flat getItem stub: syncReminders re-reads the pref to rebuild the queue, so the stub handed it the old 09:00 forever and the new time was unobservable no matter what was asserted. Seeded through the stateful mock instead, added the 1-plant guard, and asserted a trigger at the new hour. Verified by mutation rather than by watching it pass: removing the syncReminders call and rebuilding at a hardcoded stale 09:00 both fail the new test, and the SECOND ONE PASSED the old test — the app could have rescheduled every reminder to the wrong time of day and the suite stayed green.",
-  "next_action": "THE BUILD IS NO LONGER THE BLOCKER; USING IT IS. (1) INSTALL 4bc720fe ON THE PHONE — it expires 2026-09-23 and re-cutting it is a recurring cost until the app is actually lived with, not a task that closes. (2) Move the real garden in: remove the seeded example, add your own plants with photographs, then EXPORT THE DATA — on-device storage means an afternoon of typing has exactly one copy until you make a second. (3) THE WATERING REMINDER HAS STILL NEVER FIRED ON REAL HARDWARE — turn reminders on, pick the next slot ahead of the current hour, leave the phone alone. This is the one thing standing between Phase 1 and done. (4) Two items needing eyes rather than code: whether \"Water Marcel\" still reads off-centre, and whether the Today footer should report state (\"you’re caught up\") rather than count plants. (5) Then: Maestro against the device, TestFlight, Play internal. (6) Merge PR #6 when convenient — test-only, does not affect the build.",
+  "last_action": "THE GARDEN IS NOW A GRID, AND IT REPLACED BOTH TODAY AND THE GARDEN LIST. Recorded as DECISIONS.md D12. Every plant is one square: its photograph matted on a coloured mount that drifts mossSoft -> dried as the plant goes from watered to due, so one glance reports the whole garden with nothing to read. Watering happens from the square's own drop without leaving the screen; tapping a square expands it in place over the grid, with the full record one tap further in. THE RAMP HOLDS AT 1 — a plant three days late looks identical to one due today; no streaks, no badges, no counting how late you are, enforced by tests. Filters are gone (colour answers 'thirsty' before you could tap a chip). Three tabs now, not four, with an invisible spacer keeping the FAB centred. Every square also states itself in words, because a grid encoding its only information as hue is no interface to a colourblind or screen-reader user. New pure module src/lib/dryness.ts (15 tests) and src/lib/haptics.ts, which takes the Android-native performAndroidHapticsAsync path the SDK 54 docs recommend over the simulated Vibrator one. WHY THIS WAS BUILT: the project sat untouched from 2026-09-09 to 2026-11-07, the preview build expired unused, and the reminder still never fired. The app had solved the problem on paper and did not pull anyone back. SEPARATE FINDING, NOW FIXED: EVERY MAESTRO FLOW WAS DEAD. onboarding.yaml still drove the five personality questions and the archetype reveal deleted in afe7898 back in AUGUST, and every other flow starts with runFlow: onboarding.yaml, so the whole suite had been failing at its second step for roughly three months. you-tab.yaml asserted 'YOU ARE', 'The Plant Whisperer', 'PLANT-DAYS' and '6 plants', none of which exist. Nobody learned any of this because the flows have still never been executed. All five rewritten against strings read out of the current source — still unverified until maestro actually runs. Verified: tsc clean, 22 suites / 261 tests (was 21/239), expo export --platform ios.",
+  "next_action": "(1) CUT A FRESH iOS PREVIEW BUILD — there has been no installable copy since 4bc720fe expired 2026-09-23, and the grid is the whole reason to install one: `eas build --platform ios --profile preview` from juniper-app. (2) USE IT, and judge the grid on a real garden: is the colour drift legible at a glance, is the mat the right weight, does watering from a square feel good enough to do daily? That is the question this build exists to answer and it cannot be answered from here. (3) THE WATERING REMINDER HAS STILL NEVER FIRED ON REAL HARDWARE — turn reminders on, pick the next slot ahead of the current hour, leave the phone alone. (4) Run the rewritten Maestro flows for the first time in the project's life: brew install maestro && maestro test juniper-app/.maestro/ — expect failures, they have never once been executed. (5) Export the data once real plants are in. (6) Then: TestFlight, Play internal.",
   "fix_attempts": 0,
   "blockers": [
     {
-      "description": "The watering reminder — the feature the whole app exists for — has never fired on real hardware. Everything around it is tested; delivery itself is not. Build 4bc720fe makes it observable.",
+      "description": "There is no installable copy of Juniper. The last preview build (4bc720fe) expired 2026-09-23 and nothing has been cut since, so the grid exists only in the repository. A new preview build is the gate on every remaining item.",
+      "needs": "human",
+      "since": "2026-09-23"
+    },
+    {
+      "description": "The watering reminder — the feature the whole app exists for — has never fired on real hardware. Everything around it is tested; delivery itself is not.",
       "needs": "human",
       "since": "2026-08-30"
     },
     {
-      "description": "iOS preview build 4bc720fe expires 2026-09-23. Ad-hoc internal builds run on a 14-day clock, so an installable copy of Juniper exists only while someone keeps re-cutting one. This stops being a recurring chore only when the app has been lived with and the reminder has been seen to fire.",
+      "description": "The grid is unvalidated by use. Whether the colour drift reads at a glance, whether the mat is the right weight, and whether watering from a square feels worth doing daily are all questions only a real garden on a real phone can answer.",
       "needs": "human",
-      "since": "2026-09-09"
+      "since": "2026-11-07"
+    },
+    {
+      "description": "The Maestro suite has still never executed a single assertion. All five flows were found dead on 2026-11-07 (asserting against the pre-August app) and have been rewritten against current source, but a rewrite is not a run.",
+      "needs": "human",
+      "since": "2026-08-16"
+    },
+    {
+      "description": "GitHub Actions was last seen failing on account billing rather than on code. Not re-verified since 2026-08-30, so CI cannot be trusted green or red until Settings -> Billing & plans is checked.",
+      "needs": "human",
+      "since": "2026-08-30"
     }
   ],
   "open_prs": []

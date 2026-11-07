@@ -12,22 +12,26 @@ One repo, three folders:
 | [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
 
 **Read [`DECISIONS.md`](../juniper-design/DECISIONS.md) first.** It holds the load-bearing calls
-(D1–D11) and wins over anything written here.
+(D1–D12) and wins over anything written here.
 
 ## 📌 Current phase
 
-**Phase 1 — Useful. Code-complete; what remains needs a phone, not a keyboard.** Every feature
-Phase 1 asked for is built and tested — the watering loop, reminders, the You tab, backup export
-and import, real photographs, and as of 2026-08-30 the two things that were still blocking a real
-garden from moving in: a plant's photograph becoming its picture, and being able to remove a plant.
-21 suites / 239 tests, tsc clean, the iOS bundle builds.
+**Phase 1 — Useful. The app is built; it has never been lived with.** Every feature Phase 1
+asked for exists and is tested: the watering loop, reminders, the You tab, backup export and
+import, real photographs, plant deletion. 22 suites / 261 tests, tsc clean, the iOS bundle
+builds.
 
-What is left is not code. **The watering reminder — the reason the app exists — has still never
-fired on real hardware.** Until it does, and until the app has carried a real garden for a fortnight,
-Phase 1 is not done. Everything downstream (Maestro on the device, TestFlight, Play internal) waits
-on that.
+**And it sat untouched for two months.** Nothing was committed between 2026-09-09 and
+2026-11-07; the preview build expired unused on 2026-09-23 and the watering reminder still
+has never fired on real hardware. The app had solved the problem on paper and did not pull
+anyone back — which is the finding that produced **D12**: the Garden is now a grid of squares
+that drift from watered to dry, replacing both Today and the Garden list. A list has to be
+read; a grid is just *seen*.
 
-Progress against the (much smaller) Phase 1: ~92%.
+What is left is not code. There is no installable copy of Juniper right now, and the grid is
+entirely unvalidated by use.
+
+Progress against the (much smaller) Phase 1: ~94%.
 
 ## ✅ Recently done
 
@@ -101,6 +105,42 @@ with a preview build on a 14-day clock; take them when SDK 57 is wanted for its 
 last seen failing in one second with no steps, annotated with failed payments. It has now run
 four times with real steps: passing at 1m32s and 1m48s, and *failing correctly* on the `npm ci`
 error above. That is the evidence the blocker was waiting for, from both directions.
+
+### 2026-11-07 — The garden becomes a grid
+
+**Why this happened at all.** Two months of silence in the git log. The user's read of it:
+*"at the end of the day people stay in the webapps because is fun and resolved a problem,
+otherwise people would use pen and paper for it."* Correct, and the gap is the evidence.
+
+**The Garden is now a grid** (**D12**). Every plant is one square — its photograph matted on
+a coloured mount that drifts `mossSoft → dried` across the plant's own cadence. One glance
+reports every plant with nothing to read. The drop in a square's corner waters it without
+leaving the screen; tapping a square expands it in place, and the full record (photo
+timeline, per-plant log, editing) stays one tap further in. **Today and the filtered Garden
+list are deleted**; three tabs now, not four.
+
+**The ramp holds at 1.** A plant three days late looks identical to one due today — the
+colour saturates at `dried` and stops. No streaks, no badges, no counting how late you are;
+a streak would punish a weekend away, and the plant does not care. Enforced by
+`dryness.test.ts`, not just intended. **This is not a reversal of D11:** D11 cut decoration
+that configured nothing, this adds reward for the thing you actually do.
+
+**Colour is never the only signal.** Every square speaks its state — "Marcel, 3 days to go" —
+because a grid encoding its only information as hue is no interface at all to a colourblind
+or screen-reader user.
+
+New pure modules: `src/lib/dryness.ts` (15 tests) and `src/lib/haptics.ts`, which takes the
+Android-native `performAndroidHapticsAsync` path the SDK 54 docs recommend over the simulated
+Vibrator one.
+
+**Separate finding: every Maestro flow was dead, and had been since August.**
+`onboarding.yaml` still drove the five personality questions and the archetype reveal deleted
+in `afe7898` — and since every other flow begins `runFlow: onboarding.yaml`, the whole suite
+had been failing at its second step for about three months. `you-tab.yaml` asserted "YOU ARE",
+"The Plant Whisperer", "PLANT-DAYS" and "6 plants", none of which exist. **Nobody learned any
+of this because the flows have still never been executed** — which is precisely the cost of
+an unrun test suite: it rots into fiction and still looks like coverage. All five rewritten
+against strings read out of the current source. A rewrite is not a run; they remain unverified.
 
 ### 2026-08-30 — The app stops performing and starts being usable
 
@@ -185,27 +225,22 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 
 ## 🚧 Blocked / needs attention
 
-Nothing is blocked on code. Six things wait on you — the seventh, CI billing, is now closed.
-(This line said "three" while listing seven for the last fortnight; corrected 2026-09-08.)
+Nothing is blocked on code. Everything is blocked on a phone.
 
-- **⏳ The preview build expires 2026-09-23.** `4bc720fe`, cut 2026-09-09 from `687ce5b`, is the
-  installable copy — it replaces `55b80f8a`, which would have died on the 13th. Ad-hoc internal
-  builds run on a 14-day clock, so this needs re-cutting again before the 23rd if the app still
-  has not been lived with. Open the build page **on the phone**, not the `.ipa`.
+- **There is no installable copy of Juniper.** The last preview build expired 2026-09-23 and
+  nothing has been cut since, so the grid exists only in this repository. This is the gate on
+  every item below: `eas build --platform ios --profile preview` from `juniper-app`.
+- **The grid is unvalidated by use.** Whether the drift reads at a glance, whether the mat is
+  the right weight, and whether watering from a square is satisfying enough to do daily are
+  questions only a real garden on a real phone can answer. They cannot be reasoned out.
 - **The watering reminder has never fired on real hardware.** Everything around it is tested;
-  delivery itself is not. Turn reminders on, pick the next slot ahead of the current hour, and
-  leave the phone alone.
-- **Export the data once real plants are in.** Storage is on-device and nowhere else (D2), so an
-  afternoon of typing has exactly one copy until you make a second.
-- ~~**GitHub Actions was last seen failing on billing, not on code.**~~ **Resolved 2026-09-07.**
-  CI has now run four times with real steps — green at 1m32s and 1m48s, and red for a genuine
-  `npm ci` failure. It can be trusted in both directions again.
-- **The Maestro flows have still never executed a single assertion.** Authored from on-screen text
-  and unverified against a real build. Decision (2026-08-16): run them against the phone rather
-  than fighting GitHub's emulator — `maestro test juniper-app/.maestro/`.
-- **Two feedback items need eyes rather than code**: whether "Water Marcel" still reads off-centre
-  (nothing found wrong in the code; may have been the card, since fixed), and whether the Today
-  footer should report state — "you're caught up" — rather than count plants.
+  delivery itself is not.
+- **The Maestro suite has still never executed a single assertion.** All five flows were found
+  dead and rewritten on 2026-11-07, which fixes the fiction but proves nothing:
+  `brew install maestro && maestro test juniper-app/.maestro/`. Expect failures.
+- **Export the data once real plants are in.** Storage is on-device and nowhere else (D2).
+- **GitHub Actions was last seen failing on billing, not code** — not re-verified since
+  2026-08-30, so CI cannot be trusted green *or* red. Settings → Billing & plans.
 - **Website placeholders**: support address, legal entity and jurisdiction are flagged in-page
   and must be resolved before public release.
 
@@ -231,8 +266,8 @@ juniper-project/
 │       ├── theme/tokens.ts     ← design tokens; the website copies these
 │       ├── data/seed.ts        ← ONE lived-in example plant for a fresh install
 │       ├── lib/store.tsx       ← React Context + AsyncStorage. Permanent, not a stopgap.
-│       ├── lib/                ← pure, RN-free, node-testable: watering · notifications ·
-│       │                          stats · backup · photos · cover
+│       ├── lib/                ← pure, RN-free, node-testable: watering · dryness ·
+│       │                          notifications · stats · backup · photos · cover
 │       ├── components/         ← icons, Pressing, WaterButton, Pill, LogFeed
 │       └── app/                ← splash → (onboarding) → (tabs) + plant/[id] + add/
 ├── juniper-website/            ← four static files
@@ -243,6 +278,5 @@ juniper-project/
 ```
 
 ---
-*Last updated: 2026-09-08 — recorded the 2026-09-07 housekeeping: the racy You-reminders test
-(PR #2) and the dependency audit pass (PR #3), and closed the CI-billing blocker now that CI has
-been observed both green and correctly red.*
+*Last updated: 2026-11-07 — the Garden became a grid (D12), and every Maestro flow was
+found dead and rewritten.*

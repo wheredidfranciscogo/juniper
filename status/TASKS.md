@@ -32,9 +32,14 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       covers the registered iPhone and is valid to June 2027, which is why this cut
       without any interactive credential setup.)
 
-      **⏳ IT EXPIRES 2026-09-23.** Ad-hoc internal builds die on a 14-day clock. After that
-      there is no installable copy of Juniper on the phone until a new one is cut —
-      `eas build --platform ios --profile preview` from `juniper-app`.
+      **☠️ `4bc720fe` EXPIRED 2026-09-23 AND WAS NEVER REPLACED.** As of 2026-11-07 there is
+      **no installable copy of Juniper at all**, and no build has ever contained the grid.
+      Ad-hoc internal builds die on a 14-day clock, so this stops being a recurring chore
+      only once the app is genuinely being lived with. Cutting one is the gate on every
+      remaining item:
+      ```
+      cd juniper-app && eas build --platform ios --profile preview
+      ```
 
       Earlier previews `55b80f8a` (2026-08-30, expired 2026-09-13), `9fb83381` and `ff9faed1`
       are dead. Product-wise `4bc720fe` is the same app as `55b80f8a` — everything merged
@@ -126,6 +131,47 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       photographs and the log go too, and says so explicitly when it is the only plant left.
       7 tests.
 
+
+### The grid (D12 — the garden you can read at a glance)
+
+- [x] **The Garden is a grid of squares.** Each plant is one square: its photograph matted on
+      a coloured mount that drifts `mossSoft → dried` across the plant's own cadence, so one
+      glance reports every plant with nothing to read. **Replaced both Today and the filtered
+      Garden list**, which are deleted; three tabs now, not four, with an invisible spacer in
+      the tab bar keeping the fixed-width FAB on the centre line.
+      Built because the project sat untouched 2026-09-09 → 2026-11-07 while the build expired
+      unused. The app had solved the problem on paper and did not pull anyone back.
+- [x] **`src/lib/dryness.ts`** — pure, RN-free, node-testable. `dryness` (0 = watered today,
+      1 = due), `drynessStage`, `drynessLabel`, `byThirst`. Derived from `daysSinceWatered`, so
+      it inherits that module's calendar-day arithmetic and cannot be shifted by daylight
+      saving. **The ramp holds at 1**: a plant three days late is indistinguishable from one
+      due today. Guards a zero and a negative cadence, and treats an unparseable timestamp as
+      *watered* rather than due — better to under-report than to claim a plant needs water on
+      no evidence. 15 tests.
+- [x] **Watering from the square**, without opening the plant — the point of an ambient view.
+      Turns to a tick and refuses further taps once watered today, so a day cannot collect two
+      waterings. The colour is the feedback.
+- [x] **The peek** — tapping a square expands it in place, animating out of the tile's own
+      measured rect. **The rect is cached, not measured on press**: `measureInWindow` answers
+      through a bridge round-trip, so waiting on it would put a frame of nothing between the
+      tap and the response. A null cache is a supported input and falls back to a centre
+      scale-up. Re-cached on layout and whenever the grid settles after a scroll.
+- [x] **`src/lib/haptics.ts`** — one place, because the right call differs by platform. The
+      SDK 54 docs are explicit that `impactAsync` is *simulated* on Android via the Vibrator
+      service and recommend `performAndroidHapticsAsync` instead, which has no iOS equivalent.
+- [x] **No filters, and colour is never the only signal.** "Thirsty" was the only filter
+      anyone wanted and the grid answers it before you could tap a chip. Every square speaks
+      its state ("Marcel, 3 days to go"), because a grid encoding its only information as hue
+      is no interface to a colourblind or screen-reader user. 13 screen tests.
+- [x] **Every Maestro flow was dead, and had been since August.** `onboarding.yaml` still drove
+      the five personality questions and the archetype reveal deleted in `afe7898`; since every
+      other flow begins `runFlow: onboarding.yaml`, **the whole suite had been failing at its
+      second step for about three months.** `you-tab.yaml` asserted "YOU ARE", "The Plant
+      Whisperer", "PLANT-DAYS" and "6 plants" — none of which exist. Nobody learned any of it
+      because the flows have never been executed: an unrun suite rots into fiction and still
+      looks like coverage. All five rewritten against strings read out of the current source.
+      **A rewrite is not a run — they remain unverified.**
+
 ### Ship
 
 - [~] **Both platforms at fidelity.** Static Android pass done 2026-08-16 — four issues that
@@ -145,12 +191,19 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
       Two token guards added, because all of this is invisible on iOS and would regress
       unnoticed. **Still needs a real device** for what static analysis cannot see: touch
       targets, the tab bar against gesture navigation, elevation, and whether the cards feel
-      flat in the hand.
-- [~] **Run the Maestro flows against a real build.** Flows are written, audited against the
-      current screens, and extended to five (`onboarding`, `navigate-tabs`, `water-plant`,
-      `you-tab`, `add-plant`). **Still never executed a single assertion.** Decision on
-      2026-08-16: stop trying to make GitHub's emulator cooperate and run them on the phone
-      instead — `maestro test .maestro/` against a real device takes about a minute.
+      flat in the hand. **The grid (D12) adds a whole screen of unvalidated surface**: whether
+      the colour drift reads at a glance, whether the mat is the right weight, whether a 26pt
+      drop inside a ~100pt square is a comfortable target, and whether watering from a square
+      is satisfying enough to want to do daily.
+- [~] **Run the Maestro flows against a real build.** Five flows (`onboarding`,
+      `navigate-tabs`, `water-plant`, `you-tab`, `add-plant`). **Still never executed a single
+      assertion**, and on 2026-11-07 all five were found to have been **dead since August** —
+      this file previously claimed they were "audited against the current screens", which was
+      not true: `onboarding.yaml` still drove the five personality questions deleted in
+      `afe7898`, and every other flow runs it first, so the suite failed at its second step.
+      Rewritten against strings read out of the current source, but **a rewrite is not a run.**
+      Decision from 2026-08-16 stands: stop trying to make GitHub's emulator cooperate and run
+      them on the phone — `maestro test .maestro/` against a real device takes about a minute.
       ```
       brew install maestro
       maestro test juniper-app/.maestro/

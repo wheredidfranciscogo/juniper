@@ -94,12 +94,18 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 // Haptics talks to a native module that doesn't exist under Jest.
+// `performAndroidHapticsAsync` / `AndroidHaptics` are the Android-native path that
+// src/lib/haptics.ts takes on that platform — the SDK 54 docs recommend them over
+// impactAsync there, which Android only simulates via the Vibrator service. They are
+// stubbed unconditionally so the mock does not depend on which platform Jest runs as.
 jest.mock('expo-haptics', () => ({
   selectionAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),
   impactAsync: jest.fn(() => Promise.resolve()),
+  performAndroidHapticsAsync: jest.fn(() => Promise.resolve()),
   NotificationFeedbackType: { Success: 'success', Warning: 'warning', Error: 'error' },
-  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy' },
+  ImpactFeedbackStyle: { Light: 'light', Medium: 'medium', Heavy: 'heavy', Rigid: 'rigid', Soft: 'soft' },
+  AndroidHaptics: { Confirm: 'confirm', Context_Click: 'context-click', Reject: 'reject' },
 }));
 
 // expo-notifications registers device-push listeners as an import side effect, which

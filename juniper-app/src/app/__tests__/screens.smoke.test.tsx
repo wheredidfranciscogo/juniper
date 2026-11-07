@@ -41,7 +41,6 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 import Splash from '../index';
-import Today from '../(tabs)/today';
 import Garden from '../(tabs)/garden';
 import Log from '../(tabs)/log';
 import You from '../(tabs)/you';
@@ -85,29 +84,18 @@ describe('Splash', () => {
   });
 });
 
-describe('Today', () => {
-  it('renders the empty state when no plants are tended', () => {
-    renderScreen(<Today />);
-    expect(screen.getByText('Nothing to water today.')).toBeTruthy();
-  });
-
-  it('renders the thirsty card for a seeded plant', () => {
-    renderScreen(<Today />, { seed: true });
-    // Marcel is seeded with daysSinceWater: 8, waterEvery: 7 -> thirsty.
-    expect(screen.getByText('Water Marcel')).toBeTruthy();
-  });
-});
-
 describe('Garden', () => {
   it('renders the empty state with no plants', () => {
     renderScreen(<Garden />);
-    expect(screen.getByText('Nothing here yet.')).toBeTruthy();
+    expect(screen.getByText('No plants yet. Add your first with the button below.')).toBeTruthy();
   });
 
-  it('renders the title and a seeded plant', () => {
+  it('renders a tile for a seeded plant', () => {
     renderScreen(<Garden />, { seed: true });
-    expect(screen.getByText('The Garden')).toBeTruthy();
     expect(screen.getByText('Marcel')).toBeTruthy();
+    // The count line is the screen's stable identity now that the grid replaced the
+    // "The Garden" title; the other header line is a time-of-day greeting.
+    expect(screen.getByText(/plant(s)? in your care/)).toBeTruthy();
   });
 });
 

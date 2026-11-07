@@ -8,6 +8,55 @@ contradicts PLAN.md or TASKS.md, this file wins and the other one gets fixed.
 
 ---
 
+## D12 — The garden is a grid of squares that drift from watered to dry.
+**Date:** 2026-11-07 · **Status:** Decided (from user feedback after two months of not using the app)
+
+**The call.** The app's home is a grid. Every plant is one square: its photograph matted
+on a coloured mount that drifts `mossSoft → dried` as the plant goes from watered to due.
+Watering happens from the square itself. Tapping a square expands it in place. This
+**replaced both the Today card carousel and the filtered Garden list**, which are deleted.
+
+**Why.** The project sat untouched from 2026-09-09 to 2026-11-07 — the preview build
+expired unused and the watering reminder still never fired on hardware. The app had solved
+the problem on paper and did not pull anyone back. The user's framing: *"at the end of the
+day people stay in the webapps because is fun and resolved a problem, otherwise people
+would use pen and paper for it."*
+
+Pen and paper can hold a date. What it cannot do is **show you the state of everything at
+once**. A list has to be read, sorted and filtered because its rows all look alike; a grid
+does not, because colour carries the state and stable position makes each plant
+recognisable. Watering then produces a visible change you caused, and the slow drift back
+is a countdown that never nags.
+
+**This is not a reversal of D11.** D11 cut *decoration* — questions and labels that
+performed at you and configured nothing. This adds *reward*: the app giving something back
+for the thing you actually do. D11 forbids theatre, not pleasure.
+
+**Consequences and caveats.**
+- **The ramp holds at 1.** A plant three days late looks identical to one due today. The
+  colour saturates at `dried` and stops; nothing escalates, nothing reddens, nothing counts
+  how late you are. Same rule the reminder copy is held to by a test, now enforced for the
+  grid by `dryness.test.ts`. **No streaks, no badges, no scores** — a streak punishes you
+  for a weekend away, and the plant does not care.
+- **No filters.** "Thirsty" was the only one anyone wanted and the grid answers it before
+  you could tap a chip. Indoor/Outdoor goes with it. `location` stays on the model; it is
+  no longer surfaced.
+- **Colour is never the only signal.** Every square carries a spoken label ("Marcel, 3 days
+  to go"), because a grid encoding its only information as hue is no interface at all to a
+  colourblind or screen-reader user.
+- **The peek is a look, not a replacement.** Plant Detail keeps everything that
+  accumulates — the photo timeline, the per-plant log, editing — one tap further in.
+- **Three tabs, not four.** Garden · Log · You. The tab bar carries an invisible spacer so
+  the fixed-width FAB stays on the centre line.
+- **Photographs now have a job on the main screen**, which retroactively earns the cover
+  work from 2026-08-30. Plants without a photo fall back to their herbarium pressing, so
+  the grid is complete from a cold install.
+- **Build it for one real garden first, then generalise.** The user's sequencing: *"I wanna
+  make it work for my first, and then make it something like a product."* That order has
+  been right every time on this project.
+
+---
+
 ## D11 — Ask nothing that doesn't configure something. No personality layer.
 **Date:** 2026-08-16 · **Status:** Decided (from user feedback on the first device build)
 

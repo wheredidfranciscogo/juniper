@@ -1,11 +1,13 @@
-# E2E: adding a plant by hand, and finding it in the garden afterwards.
+# E2E: adding a plant by hand, and finding its square in the garden afterwards.
 #
 # Only the manual path is driven here. The photo path opens the camera and the search
 # path needs a Perenual API key and a network round-trip — neither belongs in a flow
 # that has to pass deterministically on a cold emulator. Both are covered by unit tests
 # (edit.test.tsx, perenual.test.ts).
 #
-# See onboarding.yaml for how to run these.
+# REWRITTEN 2026-11-07 for the grid (DECISIONS.md D12): saving still redirects to
+# /garden, but the garden is now squares with no title and no Thirsty filter, so the
+# assertions moved to the count line and the tile's spoken label.
 appId: com.wheredidfranciscogo.juniper
 tags:
   - add
@@ -17,7 +19,6 @@ tags:
 - assertVisible: "WELCOME THE NEW ONE"
 - tapOn: "Add manually"
 
-# Save is gated on name + species, so it must not be possible yet.
 - assertVisible: "Name"
 - tapOn: "Marcel"          # the Name field's placeholder
 - inputText: "Fernando"
@@ -29,19 +30,17 @@ tags:
 
 - tapOn: "Save"
 
-# Saving redirects to the Garden, where the new plant should be listed.
-- assertVisible: "The Garden"
+# Saving redirects to the Garden, where the new plant gets its own square.
+- assertVisible: "2 plants in your care · 1 ready for water"
 - assertVisible: "Fernando"
 
-# A plant added today counts as watered today, so its first reminder is a full cadence
-# away and it must NOT show up under the Thirsty filter.
-- tapOn: "Thirsty"
-- assertNotVisible: "Fernando"
-- tapOn: "All"
-- assertVisible: "Fernando"
+# A plant added today counts as watered today, so its first watering is a full cadence
+# away: its square shows a tick rather than a drop, and it is not what the count line
+# is referring to — Marcel is, and he is still the only one due.
+- assertVisible: "Fernando was watered today"
+- assertVisible: "Marcel, due for water"
 
 # It persists across a relaunch — the store is the only copy there is.
 - launchApp
-- tapOn:
-    id: "tab-garden"
 - assertVisible: "Fernando"
+- assertVisible: "2 plants in your care"
