@@ -657,21 +657,31 @@
  *
  * Anything interactive added to the back needs the same treatment.
  */
+/*
+ * LEGIBLE AT REST, because on a phone there is no other state.
+ *
+ * This was 9px at 52% opacity inside a 16%-opacity outline, and it had been since the
+ * first version. The hit area was fixed once; what was never fixed is that you cannot
+ * press what you cannot find. A pointer gets a :hover that brightens it to full white —
+ * a finger gets nothing, so a touch user only ever sees the dimmest state this button
+ * has. Resting now sits close to where hover used to, and hover and focus go all the
+ * way, so the affordance still answers when a pointer asks.
+ */
 .back__edit {
   position: relative;
   z-index: 4;
   flex: none;
   border: 0;
-  padding: 7px 12px;
+  padding: 8px 13px;
   border-radius: 999px;
   cursor: pointer;
-  background: transparent;
-  color: var(--dim);
+  background: rgba(243, 241, 232, 0.07);
+  color: rgba(243, 241, 232, 0.86);
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 1px var(--faint);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.28);
   transition: color 0.15s, box-shadow 0.15s;
 }
 
@@ -682,9 +692,11 @@
   inset: -11px -8px;
 }
 
-.back__edit:not(:disabled):hover {
+.back__edit:not(:disabled):hover,
+.back__edit:not(:disabled):focus-visible {
   color: var(--lit);
-  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.32);
+  background: rgba(243, 241, 232, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.45);
 }
 
 .deck__done-acts { display: flex; gap: 10px; margin-top: 26px; }
