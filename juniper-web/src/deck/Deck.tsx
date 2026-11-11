@@ -45,6 +45,15 @@ gsap.registerPlugin(Flip);
 type View = 'deck' | 'grid';
 
 /**
+ * Properties Flip records as well as geometry.
+ *
+ * It can only animate what it measured, so this has to be passed to getState — naming
+ * it on Flip.from alone records nothing and silently changes nothing, which is exactly
+ * what the first attempt at this did.
+ */
+const FLIP_PROPS = { props: 'opacity' } as const;
+
+/**
  * Scrolling the deck.
  *
  * Three things make a wheel handler feel right, and the first cut had none of them:
@@ -574,12 +583,55 @@ export function Deck() {
    * absolutely positioned cards become grid children — and Flip exists precisely to
    * animate that: measure before, let the DOM change, animate the difference.
    */
+  /**
+   * The cards in the order they are STACKED, which is not the order they are in the DOM.
+   *
+   * Every plant is rendered once, in a stable garden order, and `depth` decides where it
+   * sits — so after three scrolls the DOM read Agnes, Marcel, Plum while the stack read
+   * Bruno, Soot, Hazel (measured). Flip staggers across its targets in the order it was
+   * given them, so handing it `els.current.values()` staggered the cards in an order
+   * with no relation to anything on screen. It did not look like a deal; it looked like
+   * nothing.
+   */
+  const cardsByDepth = React.useCallback((order: string[]) => {
+    const seen = new Set<string>();
+    const out: HTMLElement[] = [];
+    order.forEach((id) => {
+      const el = els.current.get(id);
+      if (el) {
+        out.push(el);
+        seen.add(id);
+      }
+    });
+    // A card outside the pass still has to be flipped, or it is left behind mid-screen.
+    els.current.forEach((el, id) => {
+      if (!seen.has(id)) out.push(el);
+    });
+    return out;
+  }, []);
+
+  /**
+   * Which end of the stack moves first.
+   *
+   * UNFOLDING, the front card goes first: it is the one you were looking at, so it is
+   * the one your eye follows out to its tile. GATHERING, the front card lands LAST,
+   * because it lands on top — a deck builds from the bottom up, and staggering it the
+   * other way has the top card arrive and then get buried.
+   */
+  const flipOrder = React.useCallback(
+    (order: string[], toGrid: boolean) => {
+      const cards = cardsByDepth(order);
+      return toGrid ? cards : cards.reverse();
+    },
+    [cardsByDepth],
+  );
+
   const toggleView = React.useCallback(() => {
     if (busy || flipping) return;
-    flipFrom.current = Flip.getState([...els.current.values()]);
+    flipFrom.current = Flip.getState(flipOrder(queue, view === 'deck'), FLIP_PROPS);
     setTurnedId(null);
     setView((v) => (v === 'deck' ? 'grid' : 'deck'));
-  }, [busy, flipping]);
+  }, [busy, flipOrder, flipping, queue, view]);
 
   React.useLayoutEffect(() => {
     const from = flipFrom.current;
@@ -628,7 +680,22 @@ export function Deck() {
       duration: 0.62,
       ease: 'power3.inOut',
       absolute: true,
-      stagger: 0.025,
+      stagger: 0.03,
+      /**
+       * OPACITY HAS TO TRAVEL WITH THE CARD. Without this it teleported.
+       *
+       * A buried card is transparent in the deck and solid in the grid, and that value
+       * lives in the same inline style as the stack transform — so React swapped the
+       * whole style in one commit, and `.deck__stack--flipping` has already switched the
+       * CSS transition off so Flip and the browser do not fight. Measured in Chrome at
+       * 71fps: opacities went [1, .9, .8, .7, .6, 0, 0, 0] to all-ones IN A SINGLE
+       * FRAME, then the geometry took 620ms to catch up. Three cards popped out of
+       * nothing at the stack before anything moved, and going back they blinked out
+       * where they stood and never made the trip.
+       *
+       * Naming it as a Flip prop puts it on the same timeline as the movement.
+       */
+      props: 'opacity',
       onComplete: land,
     });
     // Flip is an animation, so it is on the unreliable side of the line: if the ticker
@@ -640,13 +707,15 @@ export function Deck() {
   const deal = React.useCallback(
     (id: string) => {
       if (busy || flipping) return;
-      const cards = [...els.current.values()];
-      flipFrom.current = Flip.getState(cards);
-      setQueue((q) => [id, ...q.filter((x) => x !== id)]);
+      // Dealt cards gather into a deck, so they fly in the gathering order — and the
+      // one being dealt is the one that must land on top, hence last.
+      const next = [id, ...queue.filter((x) => x !== id)];
+      flipFrom.current = Flip.getState(flipOrder(next, false), FLIP_PROPS);
+      setQueue(next);
       setTurnedId(null);
       setView('deck');
     },
-    [busy, flipping],
+    [busy, flipOrder, flipping, queue],
   );
 
   /* ---- tilt ---------------------------------------------------------------- */
