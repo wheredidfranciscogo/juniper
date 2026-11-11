@@ -745,7 +745,19 @@ export function Deck() {
        * card a proportional type scale instead of a separate tile one.
        */
       scale: true,
-      stagger: 0.03,
+      /**
+       * A TOTAL spread, not a per-card delay.
+       *
+       * `stagger: 0.03` is 0.03s BETWEEN each card, so the transition got longer every
+       * time a plant was added — measured with 24 plants, the flight ran 1.31s and
+       * land() did not fire until 1445ms. Two things break at that size: the deal stops
+       * reading as one gesture, and the watchdog below is a fixed 1200ms, so it would
+       * start firing BEFORE the animation it is supposed to be insuring finished.
+       *
+       * `amount` distributes a fixed total across however many cards there are, so a
+       * garden of eight and a garden of eighty take the same time.
+       */
+      stagger: { amount: 0.2 },
       /**
        * OPACITY HAS TO TRAVEL WITH THE CARD. Without this it teleported.
        *

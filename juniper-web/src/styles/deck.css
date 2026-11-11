@@ -489,9 +489,25 @@
   transition: none;
 }
 
-.deck__stack--flipping .card__tilt {
-  animation: none;
-}
+/*
+ * NOTHING SUPPRESSES THE DEAL ANIMATION ANY MORE, and it must stay that way.
+ *
+ * There was a `.deck__stack--flipping .card__tilt { animation: none }` here. It looked
+ * harmless — the entrance has long finished by the time anyone toggles a view — but
+ * `animation: none` CANCELS an animation, so taking the class off at the end of a flip
+ * STARTED IT AGAIN. Measured at the exact frame the class dropped: animation-name went
+ * none -> deal, the tilt layer jumped to translateY(120px) scale(0.94), opacity went
+ * 1 -> 0, and every card then re-dealt itself over 0.72s. That was the "it lands and
+ * then refreshes" that survived three fixes aimed at the cards, because it happens on
+ * an INNER layer — `.card`'s own box never moves, so every measurement of it came back
+ * clean.
+ *
+ * It was also guarding against a conflict that does not exist. `deal` animates
+ * `.card__tilt`; Flip animates `.card`. Different elements, different properties. The
+ * only overlap is a view toggle during the first second of the app's life, when `deal`
+ * would briefly outrank GSAP's inline tilt on that layer — transient, and on the
+ * flourish side of the line where a lost frame costs nothing.
+ */
 
 /* A tile is a sixth of the size, so its furniture has to shrink with it. */
 .card--tile .card__face { border-radius: 13px; }
