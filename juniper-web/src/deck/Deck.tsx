@@ -656,7 +656,22 @@ export function Deck() {
      * an abandoned animation cannot leave the deck looking broken.
      */
     const land = () => {
-      stack?.classList.remove('deck__stack--flipping');
+      /**
+       * THE ORDER OF THESE THREE STEPS IS THE WHOLE FIX.
+       *
+       * Removing the class turns the cards' 0.55s CSS transform transition back on. It
+       * used to be removed FIRST, and the handover then played as a visible second
+       * animation: Flip tears down `absolute: true` at the end, every card drops out of
+       * absolute positioning into its grid slot, and the leftover transform was
+       * TRANSITIONED to identity instead of simply being gone. Recorded per frame on
+       * the real thing — movement went quiet at 752ms, the cards jumped 2574px in total
+       * at 839ms, and then slid for another 540ms, which is exactly the transition
+       * duration. It read as the grid arriving and then refreshing into place.
+       *
+       * So: write the final values while transitions are still OFF, force the browser to
+       * commit them, and only then hand the cards back to CSS. The handover becomes a
+       * single frame that changes nothing visible.
+       */
       queue.forEach((id, depth) => {
         const el = els.current.get(id);
         if (!el) return;
@@ -669,6 +684,10 @@ export function Deck() {
           Object.assign(el.style, restingStyle(depth, queue.length, false));
         }
       });
+      // Reading a layout property flushes the pending style changes, so the transition
+      // that comes back on the next line has nothing left to animate.
+      void (stack as HTMLElement | null | undefined)?.offsetHeight;
+      stack?.classList.remove('deck__stack--flipping');
       setFlipping(false);
     };
 
