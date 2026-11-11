@@ -41,9 +41,11 @@ import { band, dried, shade } from './border';
  *
  * TWO DENSITIES, ONE APPARENT SIZE. A single grid would give 5px cells on a full card
  * and under 2px on a grid tile, which stops being pixels and becomes a blurred line.
- * Scaling with the card keeps every cell about 5px wherever it is drawn. Four rows
- * deep on a card is 20px — the same as the fan's step, so a buried card shows its
- * whole band and no more.
+ * Scaling with the card keeps every cell about 5px wherever it is drawn.
+ *
+ * The band's HEIGHT is set in CSS as the same percentage as the fan's step, so a buried
+ * card shows its whole band and no more — at any card size. The two numbers have to
+ * move together; see FAN_Y below and `.face__band` in deck.css.
  */
 const BAND = {
   deck: { cols: 68, rows: 4 },
@@ -97,8 +99,36 @@ const day = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month
  * shows a clean horizontal strip of its top edge — which is where the water state is
  * printed.
  */
-const FAN_X = 5;
-const FAN_Y = 20;
+/*
+ * THE FAN IS A PERCENTAGE OF THE CARD, NOT A NUMBER OF PIXELS.
+ *
+ * It used to be a flat 20px per step. The card, though, is sized by the space available
+ * — 480px tall on a desktop, 264px on a phone once the browser's own bars have taken
+ * their share — so a fixed step meant the stack climbed just as high over a small card
+ * as a large one. Measured at 390x540: a 176x264 card with 80px of fan stacked above
+ * it, nearly a third of the card's height, where the same fan is a sixth of a desktop
+ * card. That is why the deck ran up into the header on a phone and not on a laptop.
+ *
+ * BUT IT NEEDS A FLOOR, because the two things in tension do not share a unit.
+ * Whether the band can be READ depends on absolute pixels — four rows of cells need
+ * somewhere around 14 of them before the pattern stops being a smudge, which is what
+ * the fan was widened for in the first place. Whether the deck looks CROWDED depends on
+ * the ratio to the card. A pure percentage fixed the crowding and broke the reading:
+ * measured at 390x540 it left 16px of fan above the card, about 4px of each buried
+ * card, less than the 1px disaster this all started from but not by much.
+ *
+ * So the step is `max(floor, percentage)`, written into the transform with calc(). A
+ * percentage inside translate3d resolves against the element's own box — x against its
+ * width, y against its height — so the proportional half needs nothing measured. The
+ * percentages are the old pixel values over the card they were drawn for: 5/320 across,
+ * 20/480 down.
+ */
+const FAN_X = '1.5625%';
+const FAN_Y = '4.1667%';
+const FAN_X_MIN = '4px';
+const FAN_Y_MIN = '14px';
+const STEP_X = `max(${FAN_X_MIN}, ${FAN_X})`;
+const STEP_Y = `max(${FAN_Y_MIN}, ${FAN_Y})`;
 const FAN_SHRINK = 0.016;
 const FAN_TURN = 0.8;
 
@@ -118,7 +148,7 @@ export function restingStyle(depth: number, count: number, turned: boolean): Rea
   // it is not there.
   if (depth < 0) {
     return {
-      transform: `translate3d(${(spread * FAN_X) / 2}px, ${-(spread * FAN_Y) / 2}px, 0px) scale(0.9)`,
+      transform: `translate3d(calc(${spread / 2} * ${STEP_X}), calc(${-spread / 2} * ${STEP_Y}), 0px) scale(0.9)`,
       opacity: 0,
       zIndex: 0,
       pointerEvents: 'none',
@@ -133,10 +163,10 @@ export function restingStyle(depth: number, count: number, turned: boolean): Rea
       transitionDelay: '0ms',
     };
   }
-  const x = depth * FAN_X - (spread * FAN_X) / 2;
-  const y = (spread * FAN_Y) / 2 - depth * FAN_Y;
+  const xSteps = depth - spread / 2;
+  const ySteps = spread / 2 - depth;
   return {
-    transform: `translate3d(${x}px, ${y}px, 0px) rotate(${
+    transform: `translate3d(calc(${xSteps} * ${STEP_X}), calc(${ySteps} * ${STEP_Y}), 0px) rotate(${
       (depth - spread / 2) * FAN_TURN
     }deg) scale(${(1 - depth * FAN_SHRINK).toFixed(4)})`,
     opacity: depth > DEPTH_VISIBLE ? 0 : 1 - depth * 0.1,
