@@ -74,18 +74,97 @@ export function exportFilename(now = new Date()): string {
   return `juniper-garden-${d}.json`;
 }
 
+/** The one place that decides how a garden is written out. */
+function gardenText(file: GardenFile): string {
+  return JSON.stringify(file, null, 2);
+}
+
+/**
+ * The garden as one File, ready for either the share sheet or the downloads.
+ *
+ * SEPARATE FROM SAVING IT, because of iOS. `navigator.share` has to be CALLED while the
+ * tap that asked for it is still the current user activation, and building this file
+ * reads every photograph back out of IndexedDB and base64s it — far too slow to sit
+ * between the tap and the share. So a caller builds the file ahead of the tap and
+ * spends the gesture itself on `saveGardenFile` and nothing else.
+ */
+export function gardenAsFile(file: GardenFile, now = new Date()): File {
+  return new File([gardenText(file)], exportFilename(now), { type: 'application/json' });
+}
+
 /** Hand the file to the browser's downloads. */
 export function downloadGarden(file: GardenFile, now = new Date()): void {
-  const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+  toDownloads(gardenAsFile(file, now));
+}
+
+function toDownloads(payload: File): void {
+  const url = URL.createObjectURL(payload);
   const a = document.createElement('a');
   a.href = url;
-  a.download = exportFilename(now);
+  a.download = payload.name;
+  // Some browsers, iOS among them, refuse to fire `download` on a detached element.
   document.body.append(a);
   a.click();
   a.remove();
   // Revoking immediately can cancel the download in some browsers; a tick is enough.
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** 'cancelled' is the share sheet dismissed — the user said no, and nothing went wrong. */
+export type SaveOutcome = 'shared' | 'downloaded' | 'cancelled';
+
+/**
+ * Whether this browser will take a garden through the share sheet.
+ *
+ * Both members are typed as present but neither is: `navigator.share` is absent on
+ * desktop Firefox and in any insecure context, so this is a runtime question however
+ * confident the types are.
+ */
+export function canShareGarden(payload: File): boolean {
+  try {
+    return (
+      typeof navigator.share === 'function' &&
+      typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: [payload] })
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Save a built garden file by whichever route this browser actually honours.
+ *
+ * WHY THIS IS NOT SIMPLY A DOWNLOAD. Added to the home screen Juniper runs standalone
+ * in WKWebView, and there the `download` attribute is not dependable: WebKit has
+ * carried a bug for `download` on blob: URLs for years, and in standalone mode the
+ * attribute is reported to be ignored outright. Standalone is the exact case this
+ * export exists for — it is the mode that stops iOS evicting the garden in the first
+ * place — so a download-only button would do nothing on the one platform it is for.
+ *
+ * The share sheet works in standalone and offers Files, Mail and AirDrop, so it goes
+ * first, and the anchor click stays as the fallback for desktop where it is the better
+ * of the two. CALL THIS STRAIGHT FROM THE EVENT HANDLER, with no await before it, or
+ * the share loses the gesture and Safari refuses it.
+ */
+export function saveGardenFile(payload: File): Promise<SaveOutcome> {
+  if (canShareGarden(payload)) {
+    return navigator
+      .share({ files: [payload], title: 'Juniper garden' })
+      .then<SaveOutcome, SaveOutcome>(
+        () => 'shared',
+        (err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') return 'cancelled';
+          // A refused share target, or a gesture lost on the way here. Neither is
+          // something the user can act on, and the download might still work.
+          toDownloads(payload);
+          return 'downloaded';
+        },
+      );
+  }
+
+  toDownloads(payload);
+  return Promise.resolve('downloaded');
 }
 
 /* ------------------------------------------------------------------ import ------- */

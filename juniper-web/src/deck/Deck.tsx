@@ -36,6 +36,7 @@ import { useNow } from '../lib/use-now';
 import { useStore } from '../lib/store';
 import type { Plant, PlantIconName } from '../data/types';
 
+import { BackupSheet } from './BackupSheet';
 import { DeckCard, restingStyle } from './DeckCard';
 import { PlantForm } from './PlantForm';
 import { demoPlants } from './demo';
@@ -174,6 +175,7 @@ export function Deck() {
 
   /** null = closed, 'new' = adding, otherwise the id being edited. */
   const [editing, setEditing] = React.useState<string | 'new' | null>(null);
+  const [backing, setBacking] = React.useState(false);
   /** Set when a photograph could not be written to IndexedDB. */
   const [photoError, setPhotoError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -900,7 +902,21 @@ export function Deck() {
   return (
     <div className="deck" ref={stage}>
       <header className="deck__top">
-        <span className="deck__mark">Juniper</span>
+        {/*
+          THE WORDMARK OPENS THE BACKUP SHEET, and it is the wordmark because at 320px
+          the right-hand group already spends its last pixels on the count, the view
+          toggle and the plus. A fourth control there pushes one of them off the edge,
+          and backing up is a rare deliberate act that does not deserve equal footing
+          with adding a plant. The empty state offers restoring in words as well, which
+          is where someone arriving on a new phone will actually look.
+        */}
+        <button
+          className="deck__mark deck__mark--act"
+          onClick={() => setBacking(true)}
+          title="Back up or restore your garden"
+        >
+          Juniper
+        </button>
         <div className="deck__top-right">
           {/*
             The count doubles as the re-deal. Scrolling shuffles the pass, and after a
@@ -1012,6 +1028,9 @@ export function Deck() {
               <button className="deck__again" onClick={plantDemo}>
                 try a demo garden
               </button>
+              <button className="deck__again" onClick={() => setBacking(true)}>
+                restore a backup
+              </button>
             </div>
           </div>
         )}
@@ -1066,6 +1085,8 @@ export function Deck() {
               ? 'tap the card to turn it back'
               : 'scroll or swipe through the deck'}
       </p>
+
+      {backing && <BackupSheet onClose={() => setBacking(false)} />}
 
       {editing && (
         <PlantForm
