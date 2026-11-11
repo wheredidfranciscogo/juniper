@@ -6,6 +6,20 @@
     <meta name="theme-color" content="#FAF9F5" />
     <meta name="description" content="A quiet record of the plants in your care." />
     <title>Juniper</title>
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!--
+      ADDED TO THE HOME SCREEN THIS IS A STANDALONE APP, and that is not decoration.
+      iOS clears a site's localStorage and IndexedDB after seven days without a visit,
+      and a watering app is exactly the thing you might not open for ten. WebKit exempts
+      the first-party domain of a home screen web app from that sweep, so installing it
+      is what keeps a garden from quietly emptying itself.
+    -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Juniper" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
