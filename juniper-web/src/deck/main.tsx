@@ -1,17 +1,27 @@
 /**
  * Entry point for the deck prototype, served at /deck.html.
  *
- * Separate from src/main.tsx on purpose: the grid app keeps its route, its store and
- * its tests, and this page cannot affect any of them. No StrictMode — its double
- * effect invocation in dev would start two of every GSAP timeline.
+ * Separate from src/main.tsx on purpose: the grid app keeps its route and its tests,
+ * and this page cannot affect them. No StrictMode — its double effect invocation in dev
+ * would start two of every GSAP timeline.
+ *
+ * IT IS THE SAME GARDEN, THOUGH. Both entry points mount the same StoreProvider over the
+ * same localStorage key, so a plant added here is a plant the grid has, and a watering
+ * here writes the same log entry. That is the whole point of this file changing: the
+ * deck used to run on eight in-memory demo plants and forget everything on reload.
  */
 
 import { createRoot } from 'react-dom/client';
 
 import '../styles/deck.css';
+import { StoreProvider } from '../lib/store';
 import { Deck } from './Deck';
 
 const host = document.getElementById('root');
 if (!host) throw new Error('#root is missing from deck.html');
 
-createRoot(host).render(<Deck />);
+createRoot(host).render(
+  <StoreProvider>
+    <Deck />
+  </StoreProvider>,
+);

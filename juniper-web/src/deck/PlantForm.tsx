@@ -35,8 +35,17 @@ export interface PlantFormProps {
     waterEvery: number;
     light: string;
     icon: PlantIconName;
-    /** An object URL, or '' to clear, or undefined to leave the photo alone. */
+    /** The existing uri, an object URL for a new pick, or '' to clear. */
     photo?: string;
+    /**
+     * The picked file itself, present only when the photograph changed.
+     *
+     * THE OBJECT URL ABOVE IS A PREVIEW AND NOTHING MORE. It dies with the document, so
+     * a form that handed back only the url produced a plant whose photograph vanished on
+     * reload. The caller needs the Blob to put in IndexedDB; this form does not do
+     * storage, so it passes the file up and lets the caller persist it.
+     */
+    photoFile?: File;
   }) => void;
   onRemove?: () => void;
   onClose: () => void;
@@ -51,6 +60,7 @@ export function PlantForm({ plant, onSave, onRemove, onClose }: PlantFormProps) 
   const [icon, setIcon] = React.useState<PlantIconName>(plant?.icon ?? 'seedling');
   const [confirming, setConfirming] = React.useState(false);
   const [photo, setPhoto] = React.useState<string | undefined>(plant?.photos[0]?.uri);
+  const [file, setFile] = React.useState<File | undefined>(undefined);
   const made = React.useRef<string[]>([]);
 
   // Object URLs pin their blob in memory until revoked. The one that is saved is
@@ -68,6 +78,7 @@ export function PlantForm({ plant, onSave, onRemove, onClose }: PlantFormProps) 
     const url = URL.createObjectURL(file);
     made.current.push(url);
     setPhoto(url);
+    setFile(file);
   };
 
   React.useEffect(() => {
@@ -91,6 +102,7 @@ export function PlantForm({ plant, onSave, onRemove, onClose }: PlantFormProps) 
       light,
       icon,
       photo: photo ?? '',
+      photoFile: file,
     });
   };
 
@@ -168,7 +180,14 @@ export function PlantForm({ plant, onSave, onRemove, onClose }: PlantFormProps) 
                 <input type="file" accept="image/*" onChange={pick} hidden />
               </label>
               {photo && (
-                <button type="button" className="shot__btn" onClick={() => setPhoto(undefined)}>
+                <button
+                  type="button"
+                  className="shot__btn"
+                  onClick={() => {
+                    setPhoto(undefined);
+                    setFile(undefined);
+                  }}
+                >
                   clear
                 </button>
               )}

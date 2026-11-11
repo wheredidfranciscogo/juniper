@@ -31,7 +31,9 @@ import * as React from 'react';
 
 import { byThirst, dryness as drynessOf } from '../lib/dryness';
 import { cardColor } from './palette';
+import { deletePhotos, savePhoto } from '../lib/photos';
 import { useNow } from '../lib/use-now';
+import { useStore } from '../lib/store';
 import type { Plant, PlantIconName } from '../data/types';
 
 import { DeckCard, restingStyle } from './DeckCard';
@@ -90,22 +92,66 @@ export function Deck() {
   const now = useNow();
   const reduce = React.useMemo(prefersReduced, []);
 
-  // ONE seed, read by both pieces of state below. Two calls to demoPlants() would be
-  // two different arrays agreeing only by luck.
-  const seed = React.useMemo(() => {
-    const at = new Date();
-    return demoPlants(at).sort((a, b) => byThirst(a, b, at));
-  }, []);
-
-  // STATE, not a memo: the garden gains and loses plants now. Still seeded once at
-  // mount rather than derived from the clock, which would re-water everything a minute.
-  const [plants, setPlants] = React.useState<Plant[]>(seed);
+  /**
+   * THE GARDEN COMES FROM THE STORE, NOT FROM THIS COMPONENT.
+   *
+   * It used to be local state seeded from eight demo plants, which meant every watering,
+   * every edit and every plant added was forgotten on reload — the deck was a drawing of
+   * an app. `plants` is now the same persisted garden the grid app reads, and every
+   * change goes back through the store's actions so it is written to localStorage and
+   * logged. Hydration is synchronous, so the first render already has the real garden
+   * and there is no empty frame to design around.
+   */
+  const {
+    plants,
+    onboarded,
+    completeOnboarding,
+    waterPlant,
+    addPlant,
+    updatePlant,
+    removePlant,
+    storageError,
+  } = useStore();
   const byId = React.useMemo(() => new Map(plants.map((p) => [p.id, p] as const)), [plants]);
-  const [queue, setQueue] = React.useState<string[]>(() => seed.map((p) => p.id));
+
+  /**
+   * The pass order. LOCAL, and deliberately not in the store.
+   *
+   * Which card you are looking at is not a fact about your garden — it should not be
+   * saved, and it must not be the same on two open tabs. The garden is the set; this is
+   * the order you are walking it in, seeded by thirst so the first card is the one that
+   * needs you most.
+   */
+  const [queue, setQueue] = React.useState<string[]>(() => {
+    const at = new Date();
+    return [...plants].sort((a, b) => byThirst(a, b, at)).map((p) => p.id);
+  });
+
+  /**
+   * Keep the pass in step with a garden that can change underneath it.
+   *
+   * Adding, editing and removing all go through the store now, so `plants` can change
+   * for reasons this component did not initiate — another tab, an import, the grid app.
+   * Membership is reconciled; ORDER IS NOT, because re-sorting mid-pass would shuffle the
+   * deck in your hands. New plants join at the back unless whoever added them already
+   * put them somewhere (the form deals them to the front in the same batch, so they are
+   * already known by the time this runs).
+   */
+  React.useEffect(() => {
+    setQueue((q) => {
+      const live = new Set(plants.map((p) => p.id));
+      const kept = q.filter((id) => live.has(id));
+      const known = new Set(kept);
+      const fresh = plants.filter((p) => !known.has(p.id)).map((p) => p.id);
+      if (fresh.length === 0 && kept.length === q.length) return q;
+      return [...kept, ...fresh];
+    });
+  }, [plants]);
 
   /** null = closed, 'new' = adding, otherwise the id being edited. */
   const [editing, setEditing] = React.useState<string | 'new' | null>(null);
-  const [done, setDone] = React.useState<{ id: string; verdict: Verdict }[]>([]);
+  /** Set when a photograph could not be written to IndexedDB. */
+  const [photoError, setPhotoError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [turnedId, setTurnedId] = React.useState<string | null>(null);
   const [view, setView] = React.useState<View>('deck');
@@ -203,16 +249,14 @@ export function Deck() {
   const settle = React.useCallback(
     (id: string, verdict: Verdict) => {
       clearFlourish(id);
-      if (verdict === 'watered') {
-        const at = new Date().toISOString();
-        setPlants((ps) => ps.map((p) => (p.id === id ? { ...p, lastWateredISO: at } : p)));
-      }
-      setDone((d) => [...d, { id, verdict }]);
+      // The store stamps the time AND writes the log entry, so a watering done here
+      // shows up in the grid app's history exactly like one done there.
+      if (verdict === 'watered') waterPlant(id);
       setQueue((q) => (q.length < 2 ? q : [...q.slice(1), id]));
       setTurnedId(null);
       setBusy(false);
     },
-    [clearFlourish],
+    [clearFlourish, waterPlant],
   );
 
   /* ---- adding, editing, removing ------------------------------------------ */
@@ -224,16 +268,75 @@ export function Deck() {
     light: string;
     icon: PlantIconName;
     photo?: string;
+    photoFile?: File;
   };
 
+  /**
+   * Claim an un-onboarded garden the moment this page puts a plant in it.
+   *
+   * THIS PREVENTS THE TWO PAGES FROM DESTROYING EACH OTHER. They share one store, but
+   * the grid app gates on `onboarded` and shows its welcome screen until it is set — and
+   * one of that screen's two buttons is "start with an example", which REPLACES the
+   * plant list. Someone who started here, built a garden, then opened the grid would be
+   * offered a button that silently threw it away.
+   *
+   * Adding your first plant IS the onboarding, so the deck records it as such. The name
+   * is left empty because this page never asks for one; the grid already renders a
+   * nameless greeting correctly, and `seed: false` keeps the plants that are there.
+   */
+  const claim = React.useCallback(() => {
+    if (!onboarded) completeOnboarding({ userName: '', seed: false });
+  }, [completeOnboarding, onboarded]);
+
+  /**
+   * Work out the plant's photo list, moving blobs in and out of IndexedDB as needed.
+   *
+   * PHOTOGRAPHS CANNOT GO IN THE BLOB. localStorage has a ~5MB ceiling that two phone
+   * pictures would blow straight through, so the garden record holds only an `idb:`
+   * reference and the bytes live in IndexedDB (see lib/photos.ts). The form hands up the
+   * File; putting it away is this layer's job.
+   *
+   * A write that fails returns null rather than throwing, and a plant with no picture is
+   * a working plant — the pressing illustration takes over. So the save still goes
+   * through and the failure is reported instead of being swallowed.
+   */
+  const persistPhoto = React.useCallback(
+    async (draft: Draft, previous: Plant | undefined): Promise<Plant['photos']> => {
+      const existing = previous?.photos ?? [];
+      const old = existing[0]?.uri;
+
+      if (draft.photoFile) {
+        const uri = await savePhoto(draft.photoFile);
+        if (!uri) {
+          setPhotoError('That photograph could not be saved, so the plant was kept without it.');
+          return existing;
+        }
+        if (old) await deletePhotos([old]);
+        return [{ date: new Date().toISOString().slice(0, 10), uri }];
+      }
+
+      // '' means the photograph was cleared; anything else means it was left alone.
+      if (draft.photo === '') {
+        if (old) await deletePhotos([old]);
+        return [];
+      }
+      return existing;
+    },
+    [],
+  );
+
   const save = React.useCallback(
-    (draft: Draft) => {
+    async (draft: Draft) => {
+      setPhotoError(null);
       const at = new Date();
-      const { photo, ...fields } = draft;
-      const shot = photo ? [{ date: at.toISOString().slice(0, 10), uri: photo }] : [];
+      const { photo: _photo, photoFile: _file, ...fields } = draft;
+
       if (editing === 'new') {
-        const plant: Plant = {
-          id: `p${at.getTime().toString(36)}`,
+        const id = `p${at.getTime().toString(36)}`;
+        const photos = await persistPhoto(draft, undefined);
+        claim();
+        addPlant({
+          id,
           ...fields,
           pressing: 'default',
           // A plant you are adding today is a plant you have just dealt with, so it
@@ -241,33 +344,51 @@ export function Deck() {
           lastWateredISO: at.toISOString(),
           location: 'indoor',
           addedISO: at.toISOString(),
-          photos: shot,
+          photos,
           journal: [],
-        };
-        setPlants((ps) => [...ps, plant]);
-        // Dealt to the front, so the thing you just made is the thing you are looking at.
-        setQueue((q) => [plant.id, ...q]);
+        });
+        // Dealt to the front, so the thing you just made is the thing you are looking
+        // at. Set in the same batch as the add, so the reconciler above sees the id
+        // already placed and does not append it to the back as well.
+        setQueue((q) => [id, ...q]);
         setView('deck');
       } else if (editing) {
-        setPlants((ps) =>
-          ps.map((p) => (p.id === editing ? { ...p, ...fields, photos: shot } : p)),
-        );
+        const photos = await persistPhoto(draft, byId.get(editing));
+        updatePlant(editing, { ...fields, photos });
       }
       setEditing(null);
     },
-    [editing],
+    [addPlant, byId, claim, editing, persistPhoto, updatePlant],
   );
+
+  /**
+   * Fill an empty garden with the eight demo plants.
+   *
+   * These go in as REAL plants — written, logged, editable, removable — because a fake
+   * garden that cannot be edited teaches you nothing about the app. It is offered only
+   * when there is nothing to lose, so it can never overwrite a garden you have tended.
+   */
+  const plantDemo = React.useCallback(() => {
+    claim();
+    demoPlants(new Date())
+      .sort((a, b) => byThirst(a, b, new Date()))
+      .forEach(addPlant);
+    setView('deck');
+  }, [addPlant, claim]);
 
   const remove = React.useCallback(() => {
     if (!editing || editing === 'new') return;
     const id = editing;
-    setPlants((ps) => ps.filter((p) => p.id !== id));
+    // The store drops the plant and its log; the blobs are ours to clean up, because the
+    // store never touches storage itself. A failed delete wastes space and nothing more,
+    // so it is not awaited and not surfaced.
+    void deletePhotos((byId.get(id)?.photos ?? []).map((ph) => ph.uri));
+    removePlant(id);
     setQueue((q) => q.filter((x) => x !== id));
-    setDone((d) => d.filter((x) => x.id !== id));
     els.current.delete(id);
     setTurnedId(null);
     setEditing(null);
-  }, [editing]);
+  }, [byId, editing, removePlant]);
 
   /** A handful of droplets, thrown and discarded. */
   const splash = React.useCallback(
@@ -584,19 +705,26 @@ export function Deck() {
     return () => window.removeEventListener('keydown', onKey);
   }, [isTurned, next, prev, toggleView, turn, water]);
 
-  const reset = () => {
+  /**
+   * Deal the pass again, in thirst order.
+   *
+   * This used to be "deal again" on a finished deck, back when watering took the card
+   * away and the deck could run out. It cannot any more — a watered card stays and
+   * rotates to the back — so the only way the deck empties is an empty garden. What the
+   * button is actually good for now is re-sorting a pass you have shuffled by scrolling.
+   */
+  const reset = React.useCallback(() => {
     timers.current.forEach(window.clearTimeout);
     timers.current = [];
     queue.forEach(clearFlourish);
-    done.forEach((d) => clearFlourish(d.id));
-    setDone([]);
     setBusy(false);
     setTurnedId(null);
-    setQueue(plants.map((p) => p.id));
-  };
+    const at = new Date();
+    setQueue([...plants].sort((a, b) => byThirst(a, b, at)).map((p) => p.id));
+  }, [clearFlourish, plants, queue]);
 
-  const wateredCount = done.filter((d) => d.verdict === 'watered').length;
-  const empty = queue.length === 0;
+  /** A garden with nothing in it — the first run, not a finished pass. */
+  const empty = plants.length === 0;
   const thirsty = plants.filter((p) => drynessOf(p, now) >= 1).length;
 
   return (
@@ -604,13 +732,32 @@ export function Deck() {
       <header className="deck__top">
         <span className="deck__mark">Juniper</span>
         <div className="deck__top-right">
-          <span className="deck__count">
-            {view === 'grid'
-              ? `${plants.length} ${plants.length === 1 ? 'plant' : 'plants'}`
-              : thirsty === 0
-                ? 'all watered'
-                : `${thirsty} thirsty`}
-          </span>
+          {/*
+            The count doubles as the re-deal. Scrolling shuffles the pass, and after a
+            few minutes of it the card in front is wherever you stopped rather than the
+            one that needs you — tapping the thing that says how many are thirsty to put
+            the thirstiest back on top is the one gesture that needs no label.
+          */}
+          {view === 'deck' && plants.length > 1 ? (
+            <button
+              className="deck__count deck__count--act"
+              onClick={reset}
+              disabled={busy || flipping}
+              title="Deal again, thirstiest first"
+            >
+              {thirsty === 0 ? 'all watered' : `${thirsty} thirsty`}
+            </button>
+          ) : (
+            <span className="deck__count">
+              {empty
+                ? 'no plants'
+                : view === 'grid'
+                  ? `${plants.length} ${plants.length === 1 ? 'plant' : 'plants'}`
+                  : thirsty === 0
+                    ? 'all watered'
+                    : `${thirsty} thirsty`}
+            </span>
+          )}
           <button className="deck__view" onClick={toggleView} disabled={busy || flipping}>
             {view === 'deck' ? 'grid' : 'deck'}
           </button>
@@ -676,19 +823,24 @@ export function Deck() {
           )}
         </div>
 
+        {/*
+          THE FIRST RUN, which the prototype never had to show: it started with eight
+          demo plants baked in. A real garden starts at nothing, and a deck of nothing
+          is a blank screen — so this is the one place the app has to say what it is for
+          and give you a way in.
+        */}
         {empty && (
           <div className="deck__done">
-            <p className="deck__done-k">done</p>
-            <p className="deck__done-n">{wateredCount}</p>
-            <p className="deck__done-t">
-              {wateredCount === 1 ? 'plant watered' : 'plants watered'}
+            <p className="deck__done-k">your garden</p>
+            <p className="deck__done-t deck__done-t--lead">
+              Nothing in it yet. Add a plant and it becomes the first card.
             </p>
             <div className="deck__done-acts">
-              <button className="deck__again" onClick={reset}>
-                deal again
-              </button>
               <button className="deck__again" onClick={() => setEditing('new')}>
                 add a plant
+              </button>
+              <button className="deck__again" onClick={plantDemo}>
+                try a demo garden
               </button>
             </div>
           </div>
@@ -723,12 +875,26 @@ export function Deck() {
         </button>
       </div>
 
+      {/*
+        A FAILED WRITE IS NOT SILENT (DECISIONS.md D13). In a browser the stored blob is
+        the only copy of the garden — there is no phone behind it — so someone tending a
+        garden all month that was never being saved has to be told on the spot.
+      */}
+      {(storageError || photoError) && (
+        <p className="deck__alarm" role="status">
+          {storageError ?? photoError}
+        </p>
+      )}
+
       <p className="deck__hint">
-        {view === 'grid'
-          ? 'tap a plant to deal it to the front'
-          : isTurned
-            ? 'tap the card to turn it back'
-            : 'scroll or swipe through the deck'}
+        {/* An empty garden has no gesture to teach. */}
+        {empty
+          ? ''
+          : view === 'grid'
+            ? 'tap a plant to deal it to the front'
+            : isTurned
+              ? 'tap the card to turn it back'
+              : 'scroll or swipe through the deck'}
       </p>
 
       {editing && (

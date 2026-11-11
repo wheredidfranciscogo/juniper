@@ -1,12 +1,18 @@
 /**
- * A demo garden, for the deck prototype only.
+ * A demo garden, offered on an empty one.
  *
- * DELIBERATELY NOT THE REAL STORE. This page waters plants, and a design prototype
- * must not be able to write a watering into the garden you actually keep. Nothing here
- * touches localStorage or IndexedDB; reload and it is back to the start.
+ * THIS USED TO BE THE DECK'S ONLY SOURCE OF PLANTS, held in memory so a design
+ * prototype could not write into the garden you actually keep. The deck reads the real
+ * store now, so that reason is gone and this has one job left: a garden with nothing in
+ * it is a blank screen, and a blank screen teaches you nothing about a deck.
+ *
+ * These are handed to `addPlant` like any other plant — written, logged, editable,
+ * removable. Nothing here is special-cased downstream, which is the point: a demo you
+ * cannot edit tells you nothing either. The button is offered only when the garden is
+ * empty, so it can never overwrite one you have tended.
  *
  * Eight plants rather than the seed's one, spread evenly along the dryness ramp, because
- * the thing being tested is a STACK and a stack of one proves nothing.
+ * the thing being shown is a STACK and a stack of one proves nothing.
  */
 
 import type { Plant } from '../data/types';
