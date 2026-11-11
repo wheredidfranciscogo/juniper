@@ -721,6 +721,30 @@ export function Deck() {
     Flip.from(from, {
       duration: 0.62,
       ease: 'power3.inOut',
+      /**
+       * SCALE, NOT WIDTH AND HEIGHT — this is a paint budget, not a style choice.
+       *
+       * By default Flip animates the box itself, which relayouts and repaints eight
+       * cards every frame, and each card carries a `0 30px 70px` blurred shadow that has
+       * to be re-rasterised each time. A Firefox profile of the deployed app put Paint at
+       * 40% of the whole recording (266ms, 98% Graphics) with Layout at another 26%.
+       * Measured in Chrome, the worst frames in four runs were 52.7, 33.1, 170.2 and
+       * 71.5ms — a 170ms frame is a plainly visible stall.
+       *
+       * With `scale` the cards are laid out at their FINAL size from the first frame and
+       * a transform does the rest, so the layout is settled before the animation starts
+       * and the compositor can carry it. Same four measurements, six runs: worst frame
+       * 37.2ms, p95 down from 19-31ms to 14-17ms.
+       *
+       * THE COST, so nobody mistakes it for free: the content scales too, and a tile is
+       * not a scaled-down card — its type is deliberately larger so it stays readable at
+       * 120px. So the type reconciles in the first frame of the flight: the name's drawn
+       * height steps 36.9px to 46.1px. That is a real snap, it is just a much smaller
+       * one than before (the old arrangement dropped it to 15px, a 59% collapse, and
+       * held it there on a full-size card). Making it vanish entirely means giving the
+       * card a proportional type scale instead of a separate tile one.
+       */
+      scale: true,
       stagger: 0.03,
       /**
        * OPACITY HAS TO TRAVEL WITH THE CARD. Without this it teleported.
