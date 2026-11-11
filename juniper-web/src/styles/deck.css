@@ -139,13 +139,29 @@
 
 /* Height-driven, not width-driven: on a short screen (iPhone SE is 667px tall) a
    width-sized card either overflows the stage or leaves it half empty. */
+/*
+ * THE CARDS MUST NOT SHARE A 3D SPACE WITH EACH OTHER.
+ *
+ * This was `transform-style: preserve-3d`, which put every card in one 3D rendering
+ * context. A card turning over sweeps its plane through the planes of the cards behind
+ * it, and intersecting planes are resolved per pixel — so mid-turn the GPU drew half of
+ * the turning card and half of its neighbour, split down the rotation axis. Reproduced
+ * by slowing the flip to 6s: a hard vertical seam with a different plant on each side.
+ *
+ * It was always latent and the fan used to hide it. With 80px between neighbours the
+ * intersection fell outside what you were looking at; at 22px it lands in the middle of
+ * the card.
+ *
+ * Flat here means each card is composited as its own flattened layer and ordered by
+ * z-index, which is what the stack wanted all along. The flip still turns in 3D — that
+ * happens INSIDE a card, and the card carries its own perspective now.
+ */
 .deck__stack {
   position: relative;
   height: min(100%, 480px);
   aspect-ratio: 2 / 3;
   width: auto;
   max-width: 80vw;
-  transform-style: preserve-3d;
 }
 
 /* ---- the card ----------------------------------------------------------- */
@@ -171,6 +187,10 @@
   position: absolute;
   inset: 0;
   will-change: transform, opacity;
+  /* Its own, now that the stack is flat and the stage's no longer reaches in. Per-card
+     is also truer: a card turns about its own centre rather than being skewed by how
+     far it sits from the middle of the stage. */
+  perspective: 1400px;
   transform-style: preserve-3d;
   transition:
     transform 0.55s cubic-bezier(0.22, 0.8, 0.25, 1),
