@@ -83,11 +83,22 @@
   cursor: grabbing;
 }
 
-/* Room for the fan AND for the idle drift. Centring the spread pushes the front card
-   half the spread (30px) down, and the slow breathing animation adds another 7 — at
-   36px of padding the front card was landing exactly on the rail. */
+/*
+ * ROOM FOR THE FAN, THE DRIFT, AND SOME AIR — and the air is the point.
+ *
+ * The fan is centred, so it reaches half the visible spread above and below the stack:
+ * DEPTH_VISIBLE (4) steps of FAN_Y (20px), halved, is 40px each way. The idle breathing
+ * adds about 7 more. A padding of 47px therefore *fits* and nothing else, which is what
+ * 50px was — measured on an iPhone SE it left 20px above the fan and SIX below it, and
+ * the drift closes six pixels on every breath, so the front card kept touching the rail.
+ *
+ * This is a budget, not a margin: the stack is `height: min(100%, …)`, so raising the
+ * padding makes the CARD smaller on a short screen rather than pushing the deck into the
+ * chrome. On a tall window the 480px cap is already doing the limiting and the card does
+ * not change at all.
+ */
 .deck__stage--deck {
-  padding: 50px 0;
+  padding: 68px 0;
 }
 
 /* Height-driven, not width-driven: on a short screen (iPhone SE is 667px tall) a
