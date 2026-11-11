@@ -97,6 +97,8 @@ const WHEEL_MIN_GAP_MS = 170;
 const COAST_RATIO = 0.85;
 /** Vertical travel, in px, that commits a touch swipe. */
 const SWIPE_PX = 58;
+/** Past this a gesture is a drag, not a tap — roughly a thumb's wobble while pressing. */
+const TAP_SLOP = 8;
 
 function wheelPx(e: React.WheelEvent): number {
   if (e.deltaMode === 1) return e.deltaY * LINE_PX;
@@ -186,6 +188,8 @@ export function Deck() {
   const flipFrom = React.useRef<Flip.FlipState | null>(null);
   const wheel = React.useRef({ acc: 0, at: 0, peak: 0, firedAt: 0 });
   const swipe = React.useRef<{ y0: number; dy: number; active: boolean } | null>(null);
+  /** The last gesture moved far enough to be a drag, so the click that follows is not a tap. */
+  const dragged = React.useRef(false);
 
   const register = React.useCallback((id: string, el: HTMLElement | null) => {
     if (el) els.current.set(id, el);
@@ -248,6 +252,11 @@ export function Deck() {
   const turn = React.useCallback(
     (to: boolean) => {
       if (busy || !frontId) return;
+      // Swallow the click that closes a drag, once.
+      if (dragged.current) {
+        dragged.current = false;
+        return;
+      }
       // One state change. CSS resolves the rest; nothing here can half-apply.
       setTurnedId(to ? frontId : null);
       const tilt = tiltOf(frontEl());
@@ -555,9 +564,20 @@ export function Deck() {
    * Vertical only. Horizontal throws were tried and rejected: a swipe commits before
    * you have read anything, and nothing about a direction means "water".
    */
+  /**
+   * THE WHOLE FRONT OF A CARD IS A BUTTON, which this used to forget.
+   *
+   * `.card__turn` is a <button> at `inset: 0, z-index: 3` covering the entire card, so
+   * refusing to start a swipe on any button refused it on the card itself. A thumb
+   * landing where a thumb naturally lands did nothing, and the deck could only be moved
+   * from the bare stage down the sides. The guard is still right for real controls —
+   * water, edit — you just have to say so.
+   */
   const onSwipeStart = (e: React.PointerEvent) => {
     if (e.pointerType === 'mouse' || !cycling()) return;
-    if ((e.target as HTMLElement).closest('button')) return;
+    const hit = (e.target as HTMLElement).closest('button');
+    if (hit && !hit.classList.contains('card__turn')) return;
+    dragged.current = false;
     swipe.current = { y0: e.clientY, dy: 0, active: true };
   };
 
@@ -575,6 +595,10 @@ export function Deck() {
     const sw = swipe.current;
     if (!sw?.active) return;
     swipe.current = null;
+    // A swipe that started on the card ends with a click on `.card__turn`, because the
+    // browser still considers it a tap on that button. Anything past a thumb's wobble
+    // was a drag, and a drag must not also flip the card over.
+    dragged.current = Math.abs(sw.dy) > TAP_SLOP;
     const tilt = tiltOf(frontEl());
     const committed = Math.abs(sw.dy) >= SWIPE_PX;
     if (tilt) {
