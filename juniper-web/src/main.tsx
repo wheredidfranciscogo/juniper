@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 
 const host = document.getElementById('root');
-if (!host) throw new Error('#root is missing from index.html');
+if (!host) throw new Error('#root is missing from grid.html');
 
 createRoot(host).render(
   <StrictMode>

@@ -1,8 +1,8 @@
 /**
- * Entry point for the deck prototype, served at /deck.html.
+ * Entry point for the deck — the app, served at /.
  *
- * Separate from src/main.tsx on purpose: the grid app keeps its route and its tests,
- * and this page cannot affect them. No StrictMode — its double effect invocation in dev
+ * Separate from src/main.tsx on purpose: the grid app keeps its route (/grid) and its
+ * tests, and this page cannot affect them. No StrictMode — its double effect invocation in dev
  * would start two of every GSAP timeline.
  *
  * IT IS THE SAME GARDEN, THOUGH. Both entry points mount the same StoreProvider over the
@@ -18,7 +18,7 @@ import { StoreProvider } from '../lib/store';
 import { Deck } from './Deck';
 
 const host = document.getElementById('root');
-if (!host) throw new Error('#root is missing from deck.html');
+if (!host) throw new Error('#root is missing from index.html');
 
 createRoot(host).render(
   <StoreProvider>

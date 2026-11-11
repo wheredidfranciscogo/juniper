@@ -4,12 +4,19 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   /*
-   * BOTH PAGES ARE BUILT, not just index.html.
+   * BOTH PAGES ARE BUILT, and the DECK is index.html.
    *
-   * Vite's dev server happily serves any .html in the project root, so /deck.html worked
-   * for months in dev — but `vite build` takes ONLY index.html unless told otherwise, and
-   * the deck was silently absent from every production bundle. Nothing fails: you deploy,
-   * open /deck.html and get a 404 on a page that works perfectly at home.
+   * Two things were wrong before. First, `vite build` takes only index.html unless told
+   * otherwise — the dev server serves any root .html, so /deck.html worked for months
+   * while being absent from every production bundle. Second, the deck was the secondary
+   * page, and no amount of config fixes that: a Vercel rewrite from `/` to `/deck.html`
+   * is dead on arrival, because static filesystem routing resolves `/` to index.html
+   * before rewrites are consulted. Measured on the live deployment, which quietly served
+   * the grid at `/`.
+   *
+   * So the deck IS index.html, which is also simply true — it is the app now. The grid
+   * keeps its export/import screen at /grid, which a rewrite CAN serve, because no file
+   * sits at that path to beat it.
    *
    * Plain relative paths rather than resolve(__dirname, …): this project has no
    * @types/node, and Vite resolves these against `root` anyway.
@@ -18,7 +25,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: 'index.html',
-        deck: 'deck.html',
+        grid: 'grid.html',
       },
     },
   },
