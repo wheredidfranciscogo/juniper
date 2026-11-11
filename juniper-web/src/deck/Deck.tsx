@@ -731,18 +731,6 @@ export function Deck() {
             : 'scroll or swipe through the deck'}
       </p>
 
-      {/*
-        The window's shape, defined once. objectBoundingBox units mean this single path
-        fits every card and every tile without being redrawn per size.
-      */}
-      <svg className="deck__defs" aria-hidden="true" focusable="false">
-        <defs>
-          <clipPath id="juniper-window" clipPathUnits="objectBoundingBox">
-            <path d="M0,0 Q0.5,0.055 1,0 Q0.945,0.5 1,1 Q0.5,0.945 0,1 Q0.055,0.5 0,0 Z" />
-          </clipPath>
-        </defs>
-      </svg>
-
       {editing && (
         <PlantForm
           key={editing}

@@ -868,13 +868,16 @@ select.field__in { appearance: none; }
 }
 
 /*
- * THE WINDOW. Its sides curve inward, which is what pulls the artwork off the card's
- * corners and leaves the rank and suit room to be large. Defined once as an SVG
- * clipPath in objectBoundingBox units, so one path fits a 300px card and a 120px tile
- * without being redrawn.
+ * THE WINDOW IS AN ARCH — a dome over squared feet.
  *
- * A clip removes the box-shadow with everything else outside the path, so the window's
- * edge is drawn by colour alone rather than by a ring.
+ * It began as a square with its sides curved inward, which looked like a cushion and
+ * had no reason to be that shape. An arch has several: it is the frame a botanical
+ * plate is printed in, the shape of a seed packet and of a glasshouse light, and it
+ * crops a photograph far more kindly than a square whose edges push into the subject.
+ *
+ * Built from `border-radius` rather than a clip path. A clip would take the box-shadow
+ * away with everything else outside it; this way the window keeps the thin rule that
+ * separates it from the card.
  */
 .face__panel {
   grid-area: 2 / 1 / 3 / 3;
@@ -885,7 +888,8 @@ select.field__in { appearance: none; }
   aspect-ratio: 1;
   max-height: 100%;
   overflow: hidden;
-  clip-path: url(#juniper-window);
+  border-radius: 50% 50% 13px 13px / 44% 44% 13px 13px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   color: var(--stock);
 }
 
@@ -952,3 +956,5 @@ select.field__in { appearance: none; }
 }
 
 .shot__btn:hover { color: var(--lit); box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.3); }
+
+.card--tile .face__panel { border-radius: 50% 50% 6px 6px / 44% 44% 6px 6px; }
