@@ -31,6 +31,7 @@
 import * as React from 'react';
 
 import { IconDrop, PlantIcon } from '../components/icons';
+import { Suit } from './suits';
 import type { Plant } from '../data/types';
 import { usePhotoURL } from '../lib/use-photo';
 import { DRY_SHADES, WET_SHADES, kindColor, kindGround, markColor } from './palette';
@@ -322,13 +323,13 @@ export const DeckCard = React.memo(function DeckCard({
               {photo ? (
                 <img className="face__photo" src={photo} alt="" />
               ) : (
-                <PlantIcon name={plant.icon} size={grid ? 52 : 150} stroke={grid ? 2 : 1.6} />
+                <Suit name={plant.icon} size={grid ? 52 : 150} />
               )}
 
             </div>
 
             <span className="face__suit" aria-hidden="true">
-              <PlantIcon name={plant.icon} size={grid ? 18 : 34} stroke={grid ? 2.1 : 2} />
+              <Suit name={plant.icon} size={grid ? 18 : 34} />
             </span>
           </div>
 
