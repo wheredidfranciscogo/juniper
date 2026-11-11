@@ -42,6 +42,19 @@ import { demoPlants } from './demo';
 
 gsap.registerPlugin(Flip);
 
+/*
+ * A handle on GSAP in dev, so a transition can be slowed down and looked at.
+ *
+ * Motion bugs do not survive being described; they have to be watched a frame at a
+ * time. `__gsap.globalTimeline.timeScale(0.08)` stretches every tween by 12x, which
+ * also separates the two halves of this file cleanly: anything still moving at full
+ * speed under that is CSS, not GSAP, and that distinction has cost hours before.
+ */
+// import.meta.env is Vite's, and this project does not pull in vite/client types.
+if ((import.meta as unknown as { env?: { DEV?: boolean } }).env?.DEV) {
+  (window as unknown as { __gsap?: typeof gsap }).__gsap = gsap;
+}
+
 type View = 'deck' | 'grid';
 
 /**
@@ -582,6 +595,17 @@ export function Deck() {
    * differ, which a transition handles. Going to the grid is a real LAYOUT change —
    * absolutely positioned cards become grid children — and Flip exists precisely to
    * animate that: measure before, let the DOM change, animate the difference.
+   *
+   * NOT `absolute: true`, though it is the obvious option and was here for a long time.
+   * Taking the cards out of the flow for the flight leaves the "add a plant" tile as the
+   * only item the grid still has to place, so it sits in the FIRST cell for the whole
+   * transition and is then shoved aside when the cards come back. Measured: a 510px
+   * teleport in a single frame at 899ms, from [313, 59] to [577, 305], every time, at
+   * every window size. That was the jump that survived two earlier fixes.
+   *
+   * Without it the cards keep their grid cells from the first frame and Flip moves them
+   * with transforms, so the layout is settled before the animation starts and the add
+   * tile never goes anywhere it does not belong.
    */
   /**
    * The cards in the order they are STACKED, which is not the order they are in the DOM.
@@ -661,12 +685,11 @@ export function Deck() {
        *
        * Removing the class turns the cards' 0.55s CSS transform transition back on. It
        * used to be removed FIRST, and the handover then played as a visible second
-       * animation: Flip tears down `absolute: true` at the end, every card drops out of
-       * absolute positioning into its grid slot, and the leftover transform was
-       * TRANSITIONED to identity instead of simply being gone. Recorded per frame on
-       * the real thing — movement went quiet at 752ms, the cards jumped 2574px in total
-       * at 839ms, and then slid for another 540ms, which is exactly the transition
-       * duration. It read as the grid arriving and then refreshing into place.
+       * animation: at the end every card went back to being laid out by CSS, and the
+       * leftover transform was TRANSITIONED to identity instead of simply being gone.
+       * Recorded per frame on the real thing — movement went quiet at 752ms, the cards
+       * jumped 2574px in total at 839ms, and then slid for another 540ms, which is
+       * exactly the transition duration.
        *
        * So: write the final values while transitions are still OFF, force the browser to
        * commit them, and only then hand the cards back to CSS. The handover becomes a
@@ -698,7 +721,6 @@ export function Deck() {
     Flip.from(from, {
       duration: 0.62,
       ease: 'power3.inOut',
-      absolute: true,
       stagger: 0.03,
       /**
        * OPACITY HAS TO TRAVEL WITH THE CARD. Without this it teleported.
