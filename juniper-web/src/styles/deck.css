@@ -1,0 +1,954 @@
+/**
+ * The deck prototype's own skin.
+ *
+ * Deliberately NOT the herbarium palette. The grid's warm paper is why the current app
+ * reads as a document; a card has to look like an object with a light on it, so the
+ * ground goes dark and the cards are the only lit thing on screen. Everything here is
+ * scoped under .deck and cannot leak into the grid app.
+ */
+
+.deck {
+  --ground: #11150f;
+  --ground-2: #1b211a;
+  --lit: #f3f1e8;
+  --dim: rgba(243, 241, 232, 0.52);
+  --faint: rgba(243, 241, 232, 0.16);
+  --water: #5fb0d6;
+  --due: #e8a06a;
+  /* Card stock and the ink printed on it — see palette.ts for the ramp itself. */
+  --stock: #fbf7ee;
+  --ink-card: #2a2e26;
+
+  --serif: 'Source Serif 4', Georgia, serif;
+  --sans: 'Public Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  background:
+    radial-gradient(120% 80% at 50% 8%, #222a20 0%, var(--ground) 62%),
+    var(--ground);
+  color: var(--lit);
+  font-family: var(--sans);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* ---- chrome ------------------------------------------------------------- */
+
+.deck__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: max(18px, env(safe-area-inset-top)) 22px 0;
+}
+
+.deck__mark {
+  font-family: var(--serif);
+  font-size: 20px;
+  letter-spacing: 0.01em;
+}
+
+.deck__count,
+.deck__hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.deck__hint {
+  text-align: center;
+  padding: 0 0 max(16px, env(safe-area-inset-bottom));
+  font-size: 10px;
+  color: var(--faint);
+}
+
+/* ---- stage -------------------------------------------------------------- */
+
+.deck__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  perspective: 1400px;
+  cursor: grab;
+}
+
+.deck__stage:active {
+  cursor: grabbing;
+}
+
+/* Room for the fan AND for the idle drift. Centring the spread pushes the front card
+   half the spread (30px) down, and the slow breathing animation adds another 7 — at
+   36px of padding the front card was landing exactly on the rail. */
+.deck__stage--deck {
+  padding: 44px 0;
+}
+
+/* Height-driven, not width-driven: on a short screen (iPhone SE is 667px tall) a
+   width-sized card either overflows the stage or leaves it half empty. */
+.deck__stack {
+  position: relative;
+  height: min(100%, 480px);
+  aspect-ratio: 2 / 3;
+  width: auto;
+  max-width: 80vw;
+  transform-style: preserve-3d;
+}
+
+/* ---- the card ----------------------------------------------------------- */
+
+/*
+ * THE CARD IS FOUR NESTED LAYERS, and which layer owns what is the whole design.
+ *
+ *   .card        STATE: stack position, written by React as a concrete inline
+ *                transform, animated only by a CSS transition. If the transition
+ *                never plays, the card is still in the right place.
+ *   .card__tilt  FLOURISH: GSAP's layer — pointer tilt, pour, flight off the deck.
+ *                Always returns to identity and never carries meaning.
+ *   .card__flip  STATE: which way the card faces, driven purely by the .card--turned
+ *                class so it cannot half-apply.
+ *   .card__face  the two sides, the back pre-rotated behind the front.
+ *
+ * `overflow: hidden` deliberately lives on the FACES and not above them. Higher up it
+ * flattens the 3D context in Chrome and Safari, and the back face then renders in the
+ * same plane as the front instead of behind it — the flip collapses into a smear. It
+ * also lets the droplets fly past the card's edge, which is what a splash does.
+ */
+.card {
+  position: absolute;
+  inset: 0;
+  will-change: transform, opacity;
+  transform-style: preserve-3d;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 0.8, 0.25, 1),
+    opacity 0.45s ease;
+}
+
+.card__tilt,
+.card__flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.card__tilt {
+  /* `backwards` and not `both`: a filled-forwards animation keeps overriding inline
+     styles after it ends, which would lock GSAP out of this layer for good. */
+  animation: deal 0.72s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.card__flip {
+  transition: transform 0.72s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* The turned transform itself is written inline by React — see DeckCard.tsx. This
+   class carries only what CSS can own safely. */
+
+@keyframes deal {
+  from { transform: translateY(120px) scale(0.94); opacity: 0; }
+}
+
+.card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 18px 40px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+.card--front .card__face {
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.35),
+    0 30px 70px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* Backface-hidden keeps the far side from DRAWING, but not always from being hit.
+   Only the side you can see accepts a tap. */
+.card__face--back { pointer-events: none; }
+.card--turned .card__face--back { pointer-events: auto; }
+.card--turned .card__face--front { pointer-events: none; }
+
+.card__face--back {
+  transform: rotateY(180deg);
+  background: linear-gradient(168deg, #232a21 0%, #161b15 100%);
+  color: var(--lit);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card__flip { transition: none; }
+  .card__tilt { animation: none; }
+}
+
+/* ---- the back ----------------------------------------------------------- */
+
+.back {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: 12px;
+  padding: 24px 22px 20px;
+}
+
+.back > :not(.back__mark) { position: relative; }
+
+.back__head { display: grid; gap: 3px; }
+
+.back__name {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.back__species {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--dim);
+}
+
+.back__rows {
+  margin: 0;
+  align-content: start;
+  display: grid;
+  gap: 1px;
+  min-height: 0;
+}
+
+.back__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(243, 241, 232, 0.08);
+}
+
+.back__row dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.back__row dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  text-align: right;
+}
+
+.back__mark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--lit);
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+.back__meter {
+  height: 5px;
+  margin-bottom: 4px;
+  border-radius: 99px;
+  background: rgba(243, 241, 232, 0.1);
+  overflow: hidden;
+}
+
+.back__meter-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* The dryness colour. GSAP animates this on a watering, so no CSS transition. */
+.card__field {
+  position: absolute;
+  inset: 0;
+}
+
+/* A fixed highlight, so the 3D tilt has something to catch. */
+.card__sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.26) 62%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.card__turn {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.card__turn:disabled { cursor: default; }
+
+/* The back's hit area stops short of the action, or the button is unreachable. */
+.card__turn--back { bottom: 86px; }
+
+.back__water {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-radius: 14px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--water);
+  color: #0d1a20;
+  box-shadow: 0 6px 26px rgba(95, 176, 214, 0.3);
+  transition: transform 0.12s, filter 0.2s;
+}
+
+.back__water:not(:disabled):hover { filter: brightness(1.08); }
+.back__water:active { transform: scale(0.97); }
+.back__water:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- droplets ----------------------------------------------------------- */
+
+.drop {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 7px;
+  height: 11px;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: var(--water);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ---- the ending --------------------------------------------------------- */
+
+.deck__done {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.deck__done-k,
+.deck__done-t {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.deck__done-n {
+  margin: 4px 0;
+  font-family: var(--serif);
+  font-size: 92px;
+  line-height: 1;
+  color: var(--lit);
+}
+
+.deck__again {
+  margin-top: 26px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 13px 24px;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  color: var(--lit);
+  box-shadow: inset 0 0 0 1px var(--faint);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck__done { animation: none; }
+}
+
+/* ---- grid view ----------------------------------------------------------- */
+
+/*
+ * The same cards, laid out instead of stacked. Going between the two is a real layout
+ * change — absolutely positioned children become grid children — which is why this is
+ * the one transition in the prototype that GSAP Flip drives (see Deck.tsx).
+ */
+
+.deck__stage--grid {
+  align-items: start;
+  overflow-y: auto;
+  padding: 10px 18px 24px;
+}
+
+.deck__stack--grid {
+  position: relative;
+  width: min(100%, 780px);
+  aspect-ratio: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: 12px;
+}
+
+.card--tile {
+  position: relative;
+  inset: auto;
+  aspect-ratio: 2 / 3;
+  opacity: 1;
+}
+
+/* While Flip owns the transforms, the cards' own transition must stand down —
+   two authors on one property is the bug this whole file is arranged to avoid. */
+.deck__stack--flipping .card,
+.deck__stack--flipping .card__flip {
+  transition: none;
+}
+
+.deck__stack--flipping .card__tilt {
+  animation: none;
+}
+
+/* A tile is a sixth of the size, so its furniture has to shrink with it. */
+.card--tile .card__face { border-radius: 13px; }
+.card--tile .card__face {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ---- view toggle --------------------------------------------------------- */
+
+.deck__top-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deck__view {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 7px 13px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  box-shadow: inset 0 0 0 1px var(--faint);
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.deck__view:not(:disabled):hover {
+  color: var(--lit);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.3);
+}
+
+.deck__view:disabled { opacity: 0.35; cursor: default; }
+
+/*
+ * A tile is 120px wide and the card is a fixed 2:3 box, so anything that wraps pushes
+ * the rest of the content out through the bottom edge. "Zamioculcas zamiifolia" was
+ * being cut off mid-word. One line each, elided — the full species is on the card's
+ * back, which is where you go when you want it.
+ */
+
+/* ---- the rail ------------------------------------------------------------ */
+
+.rail {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 16px;
+  transition: opacity 0.3s;
+}
+
+.rail[data-hidden] { opacity: 0; pointer-events: none; }
+
+.rail__arrow {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--dim);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.rail__arrow:not(:disabled):hover { color: var(--lit); background: rgba(243, 241, 232, 0.07); }
+.rail__arrow:disabled { opacity: 0.3; cursor: default; }
+
+.rail__next {
+  min-width: 10ch;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---- header add ---------------------------------------------------------- */
+
+.deck__add {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  font-size: 17px;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px var(--faint);
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.deck__add:not(:disabled):hover {
+  color: var(--lit);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.3);
+}
+
+.deck__add:disabled { opacity: 0.35; cursor: default; }
+
+/* ---- the blank card at the end of the garden ----------------------------- */
+
+.tile-add {
+  aspect-ratio: 2 / 3;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.14);
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.tile-add:hover { color: var(--lit); box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.34); }
+.tile-add__plus { font-size: 26px; line-height: 1; }
+.tile-add__k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* ---- edit, on the back --------------------------------------------------- */
+
+.back__title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+
+/*
+ * `position: relative; z-index: 4` IS LOAD-BEARING, not tidiness.
+ *
+ * The whole back face is covered by `.card__turn--back` at z-index 3 so that tapping
+ * anywhere turns the card over. A static child paints below that, so every tap aimed
+ * at this button hit the turn target instead and flipped the card. `.back__water`
+ * only works because it was given a higher z-index; this one was not.
+ *
+ * Anything interactive added to the back needs the same treatment.
+ */
+.back__edit {
+  position: relative;
+  z-index: 4;
+  flex: none;
+  border: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px var(--faint);
+  transition: color 0.15s, box-shadow 0.15s;
+}
+
+/* The visible pill stays small next to the name; the TARGET is thumb-sized. */
+.back__edit::after {
+  content: '';
+  position: absolute;
+  inset: -11px -8px;
+}
+
+.back__edit:not(:disabled):hover {
+  color: var(--lit);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.32);
+}
+
+.deck__done-acts { display: flex; gap: 10px; margin-top: 26px; }
+.deck__again { margin-top: 0; }
+
+/* ---- the add / edit sheet ------------------------------------------------ */
+
+/*
+ * A native <dialog>. showModal() brings the focus trap, Escape-to-close and an inert
+ * background with it, which is a lot of correctness for one method call.
+ */
+.sheet {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: 100vw;
+  max-height: 100dvh;
+  overflow: visible;
+}
+
+.sheet::backdrop {
+  background: rgba(8, 11, 8, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.sheet__card {
+  width: min(92vw, 390px);
+  max-height: 88dvh;
+  overflow-y: auto;
+  display: grid;
+  gap: 15px;
+  padding: 22px;
+  border-radius: 20px;
+  background: linear-gradient(168deg, #242b22 0%, #171c16 100%);
+  color: var(--lit);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.sheet__head { display: flex; align-items: center; justify-content: space-between; }
+
+.sheet__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 500;
+}
+
+.sheet__x {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.sheet__x:hover { color: var(--lit); background: rgba(243, 241, 232, 0.08); }
+
+.field { display: grid; gap: 6px; }
+.field-row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 12px; }
+
+.field__k {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.field__in {
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--lit);
+  font-family: var(--serif);
+  font-size: 16px; /* 16px or iOS zooms the page on focus. */
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.12);
+}
+
+.field__in:focus-visible {
+  outline: 0;
+  box-shadow: inset 0 0 0 1px var(--water);
+}
+
+select.field__in { appearance: none; }
+
+.glyphs { display: flex; gap: 6px; }
+
+/* Share the row rather than wrapping — seven fixed 42px buttons spilled a seventh
+   onto its own line at 375px wide. */
+.glyphs__b {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 11px;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--dim);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.1);
+  transition: color 0.15s, box-shadow 0.15s;
+}
+
+.glyphs__b--on {
+  color: #0d1a20;
+  background: var(--water);
+  box-shadow: none;
+}
+
+.sheet__foot { display: grid; gap: 12px; margin-top: 2px; }
+
+.sheet__save {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: 13px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--water);
+  color: #0d1a20;
+}
+
+.sheet__save:disabled { opacity: 0.35; cursor: default; }
+
+.sheet__remove,
+.sheet__no,
+.sheet__yes {
+  border: 0;
+  padding: 11px 14px;
+  border-radius: 11px;
+  cursor: pointer;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sheet__remove { color: var(--dim); }
+.sheet__remove:hover { color: #e8826c; }
+
+/* Destructive and irreversible, so it asks in words and the safe answer is first. */
+.sheet__confirm {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  border-radius: 13px;
+  background: rgba(232, 130, 108, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(232, 130, 108, 0.3);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--lit);
+}
+
+.sheet__confirm-row { display: flex; gap: 8px; }
+.sheet__no { flex: 1; color: var(--lit); box-shadow: inset 0 0 0 1px var(--faint); }
+.sheet__yes { flex: 1; background: #c7604a; color: #fff; }
+
+
+/* A plant in the garden but not in today's pass: present for the grid and for Flip,
+   absent from the deck. */
+.card[data-off] { pointer-events: none; }
+
+/* ---- the card face ------------------------------------------------------- */
+
+/*
+ * Title at the top, set the same way as the card's back so both sides introduce the
+ * plant identically. Rank and suit take opposite corners on the diagonal instead of
+ * being stacked into one mark. The window hangs between them.
+ */
+
+/* The ring sits under the face's content and inside the card's rounded edge. */
+.face__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px 12px;
+  padding: 22px 22px 20px;
+  color: var(--ink-card);
+}
+
+.face__title { grid-area: 1 / 1; min-width: 0; }
+
+.face__name {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.face__species {
+  margin: 3px 0 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.62;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Big enough to read across a room — the whole point of a rank. */
+.face__rank {
+  grid-area: 1 / 2;
+  justify-self: end;
+  align-self: start;
+  font-family: var(--serif);
+  font-size: 46px;
+  font-weight: 600;
+  line-height: 0.82;
+  letter-spacing: -0.03em;
+  opacity: 0.9;
+}
+
+.face__suit {
+  grid-area: 3 / 1;
+  justify-self: start;
+  display: grid;
+  place-items: center;
+  opacity: 0.55;
+}
+
+/*
+ * THE WINDOW. Its sides curve inward, which is what pulls the artwork off the card's
+ * corners and leaves the rank and suit room to be large. Defined once as an SVG
+ * clipPath in objectBoundingBox units, so one path fits a 300px card and a 120px tile
+ * without being redrawn.
+ *
+ * A clip removes the box-shadow with everything else outside the path, so the window's
+ * edge is drawn by colour alone rather than by a ring.
+ */
+.face__panel {
+  grid-area: 2 / 1 / 3 / 3;
+  place-self: center;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 100%;
+  overflow: hidden;
+  clip-path: url(#juniper-window);
+  color: var(--stock);
+}
+
+.face__photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.deck__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ---- the same card, tile sized ------------------------------------------- */
+
+.card--tile .face { padding: 11px 11px 10px; gap: 5px 7px; }
+.card--tile .face__name { font-size: 15px; }
+.card--tile .face__species { font-size: 7px; letter-spacing: 0.1em; margin-top: 2px; }
+.card--tile .face__rank { font-size: 22px; }
+
+/* ---- choosing a photograph ----------------------------------------------- */
+
+.shot { display: flex; align-items: center; gap: 12px; }
+
+/* Square, like the window on the card, so what you pick is what you will see. */
+.shot__well {
+  width: 62px;
+  height: 62px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.12);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.shot__img { width: 100%; height: 100%; object-fit: cover; }
+
+.shot__acts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.shot__btn {
+  border: 0;
+  padding: 10px 14px;
+  border-radius: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px var(--faint);
+  transition: color 0.15s, box-shadow 0.15s;
+}
+
+.shot__btn:hover { color: var(--lit); box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.3); }
