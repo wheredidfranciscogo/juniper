@@ -47,3 +47,6 @@ juniper-app/coverage/
 
 # Local archive of pre-collapse artefacts (see DECISIONS.md D4)
 .archive/
+
+# Claude Code scratch worktrees — never part of the project.
+.claude/worktrees/

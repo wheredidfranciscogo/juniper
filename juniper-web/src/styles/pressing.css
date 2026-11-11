@@ -1,0 +1,59 @@
+.pressing {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: var(--s-md);
+  overflow: hidden;
+  /* A paper grain, so a garden of pressings does not read as flat swatches. */
+  background-image: radial-gradient(
+    circle at 30% 25%,
+    rgb(255 255 255 / 28%),
+    transparent 60%
+  );
+}
+
+.pressing--default { background-color: var(--surface-2); color: var(--ink-faint); }
+.pressing--moss    { background-color: #dde3d8; color: var(--moss); }
+.pressing--clay    { background-color: #f0ddd3; color: var(--clay-deep); }
+.pressing--deep    { background-color: #d5dcd4; color: var(--moss); }
+
+.pressing__glyph {
+  display: block;
+  opacity: 0.5;
+}
+
+.pressing--big {
+  gap: var(--s-base);
+  padding: var(--s-lg);
+}
+
+.pressing--big .pressing__glyph {
+  opacity: 0.38;
+}
+
+.pressing__species {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.33;
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+/*
+ * Inside a grid square. No fill of its own — the tile's dryness colour is the
+ * background, and this draws only the silhouette on top of it.
+ *
+ * The glyph is paper-white at low alpha rather than a fixed ink colour, because it has
+ * to sit on every colour the ramp passes through. A fixed colour that reads well on
+ * fresh moss disappears against dried clay, and vice versa.
+ */
+.pressing--bare {
+  background: none;
+  color: var(--paper);
+}
+
+.pressing--bare .pressing__glyph {
+  opacity: 0.62;
+}

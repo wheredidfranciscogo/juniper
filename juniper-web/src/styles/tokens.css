@@ -1,0 +1,81 @@
+/*
+ * Juniper — herbarium design tokens.
+ * Source of truth: juniper-design/styles.css + README.md, same as the native app's
+ * theme/tokens.ts. Ported to custom properties so the stylesheet, and not JavaScript,
+ * owns colour. No ad-hoc colours anywhere else.
+ */
+
+:root {
+  /* Surfaces */
+  --paper: #faf9f5;
+  --surface: #f5f2ea;
+  --surface-2: #efebdf;
+
+  /* Ink — warm near-black, never #000 */
+  --ink: #2d2a26;
+  --ink-muted: #7a716a;
+  --ink-faint: #a89f95;
+
+  /* Clay — primary CTA, watering */
+  --clay: #cc785c;
+  --clay-deep: #b5654a;
+  --clay-soft: #e8b8a6;
+
+  /* Moss — living, watered */
+  --moss: #3f5d3e;
+  --moss-soft: #6b8a6a;
+
+  /* Dried — thirsty. Desaturated, never red, never alarming. */
+  --dried: #b8826c;
+
+  /* Lines */
+  --hairline: #e8e2d5;
+  --hairline-strong: #d9d2c2;
+
+  /* Type */
+  --serif: 'Source Serif 4', ui-serif, Georgia, serif;
+  --sans: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-xl: 18px;
+  --r-xxl: 24px;
+
+  /* Rhythm */
+  --s-xs: 4px;
+  --s-sm: 6px;
+  --s-md: 10px;
+  --s-base: 16px;
+  --s-lg: 20px;
+  --s-xl: 22px;
+  --s-page: 24px;
+  --s-section: 32px;
+
+  /* Motion. --ease-long is the curve the native app used for the watering ramp. */
+  --ease-base: cubic-bezier(0.32, 0.72, 0.32, 1);
+  --ease-long: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 220ms;
+  --t-base: 240ms;
+  --t-medium: 320ms;
+  --t-long: 360ms;
+  /* How long a square takes to sink back to its true dryness after a watering. */
+  --t-settle: 1100ms;
+}
+
+/*
+ * THE RAMP lives in src/lib/ramp.ts, not here.
+ *
+ * Three CSS formulations were tried on a real screen first and two are quietly broken
+ * in Chrome 152 — `color-mix()` driven by a custom property, and a tall gradient slid
+ * by `background-position` — both of which resolve once at first paint and then never
+ * update, while firing no transition events. A watered square kept the exact colour it
+ * already had, and nothing failed: not the store, not the DOM, not the tests.
+ *
+ * So the interpolation is a pure function in TypeScript, the component sets a concrete
+ * `background-color`, and the transition that carries it is the most ordinary one in
+ * CSS. The ramp's two endpoint colours are --moss-soft and --dried above; ramp.ts holds
+ * their OKLab conversions and must be kept in step with them.
+ */

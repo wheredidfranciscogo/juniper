@@ -1,39 +1,39 @@
 {
   "project": "juniper",
   "last_run": {
-    "timestamp": "2026-11-07T20:30:00+11:00",
+    "timestamp": "2026-11-08T20:20:00+11:00",
     "mode": "manual-feature",
     "result": "success"
   },
   "state": "ready",
-  "progress_pct": 94,
+  "progress_pct": 35,
   "current_task": null,
-  "last_action": "THE GARDEN IS NOW A GRID, AND IT REPLACED BOTH TODAY AND THE GARDEN LIST. Recorded as DECISIONS.md D12. Every plant is one square: its photograph matted on a coloured mount that drifts mossSoft -> dried as the plant goes from watered to due, so one glance reports the whole garden with nothing to read. Watering happens from the square's own drop without leaving the screen; tapping a square expands it in place over the grid, with the full record one tap further in. THE RAMP HOLDS AT 1 — a plant three days late looks identical to one due today; no streaks, no badges, no counting how late you are, enforced by tests. Filters are gone (colour answers 'thirsty' before you could tap a chip). Three tabs now, not four, with an invisible spacer keeping the FAB centred. Every square also states itself in words, because a grid encoding its only information as hue is no interface to a colourblind or screen-reader user. New pure module src/lib/dryness.ts (15 tests) and src/lib/haptics.ts, which takes the Android-native performAndroidHapticsAsync path the SDK 54 docs recommend over the simulated Vibrator one. WHY THIS WAS BUILT: the project sat untouched from 2026-09-09 to 2026-11-07, the preview build expired unused, and the reminder still never fired. The app had solved the problem on paper and did not pull anyone back. SEPARATE FINDING, NOW FIXED: EVERY MAESTRO FLOW WAS DEAD. onboarding.yaml still drove the five personality questions and the archetype reveal deleted in afe7898 back in AUGUST, and every other flow starts with runFlow: onboarding.yaml, so the whole suite had been failing at its second step for roughly three months. you-tab.yaml asserted 'YOU ARE', 'The Plant Whisperer', 'PLANT-DAYS' and '6 plants', none of which exist. Nobody learned any of this because the flows have still never been executed. All five rewritten against strings read out of the current source — still unverified until maestro actually runs. Verified: tsc clean, 22 suites / 261 tests (was 21/239), expo export --platform ios.",
-  "next_action": "(1) CUT A FRESH iOS PREVIEW BUILD — there has been no installable copy since 4bc720fe expired 2026-09-23, and the grid is the whole reason to install one: `eas build --platform ios --profile preview` from juniper-app. (2) USE IT, and judge the grid on a real garden: is the colour drift legible at a glance, is the mat the right weight, does watering from a square feel good enough to do daily? That is the question this build exists to answer and it cannot be answered from here. (3) THE WATERING REMINDER HAS STILL NEVER FIRED ON REAL HARDWARE — turn reminders on, pick the next slot ahead of the current hour, leave the phone alone. (4) Run the rewritten Maestro flows for the first time in the project's life: brew install maestro && maestro test juniper-app/.maestro/ — expect failures, they have never once been executed. (5) Export the data once real plants are in. (6) Then: TestFlight, Play internal.",
+  "last_action": "JUNIPER IS A WEB APP NOW. The user, the day after installing the first grid build: \"I think this ideas are better as web apps. For some reason it make more sense like that, I know the notification an all that, but still.\" Recorded as DECISIONS.md D13, which SUPERSEDES D1 (\"native only, there is no web app\") and DEMOTES D7 (\"the watering reminder is the product\"). The justification is in the project's own record: the reminder, the one feature that required being native, has never fired on real hardware once in the app's life, while the app sat unopened for two months and its build expired. New juniper-web/: Vite + React + plain CSS, no React Native anywhere. 581 lines of pure logic ported BYTE FOR BYTE with 74 of their tests (dryness, watering, stats, cover, today-utils, seed) \u2014 keeping those modules RN-free is the only reason this was a day and not a rewrite. juniper-app/ is frozen, not deleted (see its FROZEN.md). THE GRID WAS BUILT AND THEN ACTUALLY LOOKED AT, which changed it three times. (1) The dryness colour was a thin FRAME around a pale pressing, and a frame is too little colour to read across a room; a plant with no photograph now has no mat at all and the silhouette sits straight on the dryness field. The per-plant pressing tone was also a SECOND colour system fighting the first \u2014 a clay-toned plant looked warm and thirsty however recently it was watered \u2014 so in the grid the tone steps aside. (2) Watering a square sent it FLYING to the far end of the grid, because sorting by thirst re-sorts on every change; you tap a drop and the thing you touched teleports. The order is now frozen while the page is open and recomputed only when the set of plants changes. (3) THE RAMP WAS SILENTLY BROKEN IN CSS, TWICE \u2014 see D14. `color-mix()` driven by a custom property, and then a gradient slid by `background-position`, each resolving once at first paint and never again, firing no transition events. Watering updated the store, the DOM, the inline style and the accessibility label and left the square exactly the colour it already was. EVERY TEST PASSED THROUGH BOTH, because no test could see a colour \u2014 the same blind spot the native app had with Reanimated mocked. The ramp is now a pure OKLab function in src/lib/ramp.ts with 8 tests that assert the colour directly, including that it saturates past due (D12). Verified: tsc clean, 98 tests across 7 suites, production build 68 kB gzipped (the native bundle was 4.43 MB), and the grid, the watering pour, the expanding card and the whole ramp checked by eye in a browser.",
+  "next_action": "(1) DEPLOY IT. The web app runs on localhost and nowhere else, which is the single biggest thing standing between this and being used \u2014 the entire argument for the pivot was that a URL has no install step, and there is no URL yet. `npm run build` in juniper-web produces a static dist/; Vercel already hosts juniper-website, so it is a project and a domain away. (2) USE IT ON A PHONE, with real plants and real photographs. The ramp's midtones, the pour, the size of the drop target and whether a drifting square reads from across a room have been judged on a laptop, in one browser, by eye. (3) EXPORT, THE MOMENT THERE ARE REAL PLANTS IN IT \u2014 the garden lives in one browser on one machine and 'clear site data' destroys it; the export is the only backup that exists. (4) Decide on a PWA manifest + service worker, which is what would let it sit on the home screen and is also the precondition for ever having notifications again. (5) Decide what happens to juniper-app/ \u2014 frozen is a decision, deleting it is another, and leaving it ambiguous is the only bad option. (6) GitHub Actions billing is still unverified since 2026-08-30, and the CI workflow now points at a frozen app.",
   "fix_attempts": 0,
   "blockers": [
     {
-      "description": "There is no installable copy of Juniper. The last preview build (4bc720fe) expired 2026-09-23 and nothing has been cut since, so the grid exists only in the repository. A new preview build is the gate on every remaining item.",
+      "description": "The web app has never been deployed. It exists only on localhost, so the whole premise of the pivot \u2014 that a link needs no install step \u2014 is so far untested. This gates everything else.",
       "needs": "human",
-      "since": "2026-09-23"
+      "since": "2026-11-08"
     },
     {
-      "description": "The watering reminder — the feature the whole app exists for — has never fired on real hardware. Everything around it is tested; delivery itself is not.",
-      "needs": "human",
-      "since": "2026-08-30"
-    },
-    {
-      "description": "The grid is unvalidated by use. Whether the colour drift reads at a glance, whether the mat is the right weight, and whether watering from a square feels worth doing daily are all questions only a real garden on a real phone can answer.",
+      "description": "The grid is unvalidated by real use. Whether a square drifting toward dried reads at a glance, whether the pour is satisfying enough to want daily, and whether the midtones sit right are questions only a real garden on a real phone can answer.",
       "needs": "human",
       "since": "2026-11-07"
     },
     {
-      "description": "The Maestro suite has still never executed a single assertion. All five flows were found dead on 2026-11-07 (asserting against the pre-August app) and have been rewritten against current source, but a rewrite is not a run.",
+      "description": "Juniper now has no reminders at all. That is a deliberate bet (D13) \u2014 the grid is meant to be the reminder \u2014 but it is a bet, and the only thing that settles it is whether real use happens without one.",
       "needs": "human",
-      "since": "2026-08-16"
+      "since": "2026-11-08"
     },
     {
-      "description": "GitHub Actions was last seen failing on account billing rather than on code. Not re-verified since 2026-08-30, so CI cannot be trusted green or red until Settings -> Billing & plans is checked.",
+      "description": "The garden has exactly one copy, in one browser, on one machine. There is no backend and no sync, so clearing site data destroys it. The export button is the entire safety net and has never been used on real data.",
+      "needs": "human",
+      "since": "2026-11-08"
+    },
+    {
+      "description": "CI and the Maestro suite both now point at the frozen native app. The Maestro flows were rewritten on 2026-11-07 and have still never executed a single assertion; they are now testing something that is no longer the product. GitHub Actions billing unverified since 2026-08-30.",
       "needs": "human",
       "since": "2026-08-30"
     }

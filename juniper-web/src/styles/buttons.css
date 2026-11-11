@@ -1,0 +1,114 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-sm);
+  min-height: 44px;
+  padding: 0 var(--s-lg);
+  border-radius: var(--r-md);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  transition:
+    background-color var(--t-base) var(--ease-base),
+    transform var(--t-fast) var(--ease-base);
+}
+
+.btn:not(:disabled):active { transform: scale(0.97); }
+
+.btn--primary { background: var(--clay); color: var(--paper); }
+.btn--primary:not(:disabled):hover { background: var(--clay-deep); }
+.btn--primary:disabled { background: color-mix(in oklab, var(--paper) 55%, var(--moss)); color: var(--moss); }
+
+.btn--ghost { background: var(--surface); color: var(--ink); }
+.btn--ghost:hover { background: var(--surface-2); }
+
+.btn--danger { background: var(--clay-deep); color: var(--paper); }
+
+/* The one standing control: add a plant. */
+.add-plant {
+  position: fixed;
+  right: max(var(--s-page), env(safe-area-inset-right));
+  bottom: max(var(--s-page), calc(env(safe-area-inset-bottom) + var(--s-md)));
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-md);
+  min-height: 52px;
+  padding: 0 var(--s-lg);
+  border-radius: 999px;
+  background: var(--clay);
+  color: var(--paper);
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: 15px;
+  box-shadow: 0 6px 20px rgb(45 42 38 / 22%);
+  transition:
+    background-color var(--t-base) var(--ease-base),
+    transform var(--t-fast) var(--ease-base);
+}
+
+.add-plant:hover { background: var(--clay-deep); transform: translateY(-1px); }
+.add-plant:active { transform: scale(0.97); }
+
+/* A plain modal for forms — no FLIP, nothing to grow out of. */
+.sheet {
+  width: min(420px, calc(100vw - 2 * var(--s-base)));
+  margin: auto;
+  padding: var(--s-xl);
+  border: 0;
+  border-radius: var(--r-xxl);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 18px 50px rgb(45 42 38 / 26%);
+}
+
+.sheet::backdrop {
+  background: rgb(45 42 38 / 38%);
+  animation: peek-fade var(--t-base) var(--ease-base);
+}
+
+.sheet h2 {
+  margin: 0 0 var(--s-lg);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 26px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-base);
+}
+
+.field > span {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.field input,
+.field select {
+  min-height: 44px;
+  padding: 0 var(--s-md);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: var(--serif);
+  font-size: 17px;
+}
+
+.field input:focus,
+.field select:focus { border-color: var(--clay); outline: none; }
+
+.sheet__actions {
+  display: flex;
+  gap: var(--s-md);
+  margin-top: var(--s-lg);
+}
+
+.sheet__actions .btn { flex: 1; }

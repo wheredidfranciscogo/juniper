@@ -1,0 +1,166 @@
+/*
+ * The square.
+ *
+ * `.ramp` (tokens.css) turns --dryness into the field colour. Everything here is about
+ * the shape of the square and the two different speeds it changes colour at.
+ */
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--r-lg);
+  /* No mat by default: the square IS the colour. A photograph adds one — see below. */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  isolation: isolate;
+
+  /*
+   * THE SINK. The slow direction: a square returning to its true dryness after a
+   * watering takes a beat over a second, long enough to read as settling rather than as
+   * a state change. What actually moves is the gradient's position — see `.ramp` in
+   * tokens.css for why it is not `background-color`.
+   */
+  transition: background-position var(--t-settle) var(--ease-long);
+}
+
+/*
+ * THE POUR, as its own layer.
+ *
+ * A flood of full moss over the square, faded in fast and out slowly. It is a separate
+ * element rather than another value of the ramp because the ramp has no room above its
+ * fresh end — `--dryness: 0` is already the greenest a square can be, and the pour needs
+ * to go deeper than that to register as something happening.
+ */
+.tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: var(--moss);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-settle) var(--ease-long);
+}
+
+/*
+ * Two speeds on one property. Adding the class floods the square in 220ms; removing it
+ * hands the layer back to the rule above, which takes it the long way home. No
+ * keyframes and no JS interpolation — the part that needed a Reanimated worklet on
+ * native is a transition here.
+ */
+.tile--pouring::before {
+  opacity: 1;
+  transition-duration: var(--t-fast);
+}
+
+/*
+ * The mat: a photograph sits inside the colour, never under it.
+ *
+ * `:has()` is what lets the square know whether it is holding a picture, so the mat
+ * appears only when there is something to mat. Without a photograph the silhouette
+ * floats on the dryness field and the colour fills the whole tile.
+ */
+.tile__mat {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+}
+
+.tile:has(.tile__photo) {
+  padding: 8px 8px 0;
+}
+
+.tile:has(.tile__photo) .tile__mat {
+  border-radius: calc(var(--r-lg) - 6px);
+  background: var(--surface-2);
+}
+
+.tile__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tile__name {
+  position: relative; /* Above the pour layer, which is positioned. */
+  z-index: 1;
+  flex: none;
+  padding: 6px 8px 8px;
+  font-family: var(--serif);
+  font-size: 13px;
+  line-height: 1.23;
+  color: var(--paper);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* The name sits on the ramp, which runs from a mid moss to a mid clay — light text
+     holds up across all of it, but it needs a little weight behind it at the dry end. */
+  text-shadow: 0 1px 2px rgb(45 42 38 / 22%);
+}
+
+/* Covers the square and opens the plant. Transparent: the square IS the button. */
+.tile__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: var(--r-lg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile__open:active {
+  transform: scale(0.97);
+  transition: transform var(--t-fast) var(--ease-base);
+}
+
+/*
+ * The drop. 30px, which is under the 44px that guidelines ask for — so the hit area is
+ * pushed back out to 44 with a pseudo-element rather than by growing the visible
+ * target, which at this size would start to look like a button with a square round it.
+ */
+.tile__water {
+  position: absolute;
+  right: 6px;
+  bottom: 24px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--clay);
+  box-shadow: 0 1px 3px rgb(45 42 38 / 18%);
+  transition:
+    transform var(--t-fast) var(--ease-base),
+    background-color var(--t-base) var(--ease-base),
+    color var(--t-base) var(--ease-base);
+}
+
+.tile__water::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+}
+
+.tile__water:not(:disabled):hover {
+  background: #fff;
+  transform: scale(1.08);
+}
+
+.tile__water:not(:disabled):active {
+  transform: scale(0.92);
+}
+
+.tile__water:disabled {
+  background: color-mix(in oklab, var(--paper) 72%, var(--moss));
+  color: var(--moss);
+  box-shadow: none;
+}

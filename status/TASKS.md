@@ -14,6 +14,59 @@ If an item here contradicts the code, trust the code and fix this file.
 If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 -->
 
+## ⚠️ Everything below "Phase 1 — Useful" is about the retired native app
+
+Juniper became a web app on 2026-11-08 ([D13](../juniper-design/DECISIONS.md)).
+`juniper-app/` is frozen; nothing new ships from it. The native queue below is **kept, not
+current** — it records what was done and what was still outstanding when the app was
+retired, and several of its items (EAS builds, TestFlight, Play internal, the Maestro
+suite, the notification work) are now about something that is no longer the product.
+
+Do not work the old queue. Work this one.
+
+## Web — the only live queue
+
+- [!] **DEPLOY IT.** The web app runs on localhost and nowhere else, which leaves the
+      entire argument for the pivot untested: a link has no install step, and there is no
+      link. `npm run build` in `juniper-web/` emits a static `dist/`. Vercel already hosts
+      `juniper-website`, so this is one project and one domain away.
+      **Needs a human** — it is an account and a domain decision, not a code one.
+
+- [!] **Use it on a phone, with real plants and real photographs.** The ramp's midtones,
+      the weight of the pour, the size of the drop target and whether a drifting square
+      reads from across a room have all been judged by eye, on a laptop, in one browser.
+      That is better than the native grid ever got — it was never rendered at all — but
+      it is not use. **Needs a human.**
+
+- [!] **Export, the moment there are real plants in it.** The garden is localStorage plus
+      IndexedDB for photographs, in one browser, on one machine. "Clear site data"
+      destroys it and nothing else holds a copy. The export button is the entire safety
+      net and has never been run against real data. **Needs a human.**
+
+- [ ] **Decide on a PWA manifest + service worker.** This is what would let Juniper sit
+      on a home screen and open offline, and it is also the precondition for ever having
+      notifications again (iOS requires an installed PWA for Web Push). Small, and it
+      makes the phone case much stronger.
+
+- [ ] **Writing, not just reading.** The per-plant journal and the log render but cannot
+      be added to from the UI. The data model and the store action (`logAction`) already
+      support it; only the input is missing.
+
+- [ ] **Decide what happens to `juniper-app/`.** Frozen is a decision and deleting it is a
+      decision; leaving it ambiguous is the only bad option. Note that `src/lib/dryness.ts`,
+      `watering.ts`, `stats.ts`, `cover.ts` and `today-utils.ts` now exist in two places,
+      and a fix applied to one will not reach the other.
+
+- [ ] **Point CI at the web app, or turn it off.** The GitHub Actions workflow still runs
+      the native app's suite, and the Maestro flows — rewritten 2026-11-07, still never
+      once executed — now assert against a product that no longer ships. Billing has also
+      been unverified since 2026-08-30, so CI cannot be trusted green or red.
+
+- [ ] **Fold the `--dryness` finding back into the design handoff.** `juniper-design/`
+      still describes the native component set. The ramp's endpoints now live in two
+      places that must agree (`juniper-web/src/lib/ramp.ts` and `styles/tokens.css`), and
+      the handoff should say which is canonical.
+
 ## Phase 1 — Useful
 
 <!-- Phase 0 (the restructure) shipped 2026-08-15 in commits 570d211, bf0f3ff, 2e230f0.

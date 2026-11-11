@@ -1,0 +1,66 @@
+.footer {
+  margin-top: calc(var(--s-section) * 2);
+  padding-top: var(--s-lg);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-base);
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.footer button {
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.footer button:hover { color: var(--clay-deep); }
+
+.footer p {
+  flex: 1 1 100%;
+  margin: 0;
+  max-width: 54ch;
+  line-height: 1.54;
+}
+
+.welcome {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-base);
+  max-width: 460px;
+}
+
+.welcome__title {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1.18;
+}
+
+.welcome__blurb {
+  margin: 0 0 var(--s-lg);
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--ink-muted);
+}
+
+.welcome__form { margin: 0; }
+
+.welcome__restore {
+  margin: var(--s-lg) 0 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+
+.welcome__restore button {
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

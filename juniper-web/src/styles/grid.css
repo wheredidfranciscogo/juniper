@@ -1,0 +1,78 @@
+/*
+ * The garden.
+ *
+ * `auto-fill` with a minimum square size replaces every pixel of the native version's
+ * tile-size arithmetic: three across on a phone, six or more on a laptop, and it
+ * reflows on window resize with no JavaScript and no re-render. This is the single
+ * clearest place the web platform does the job better.
+ *
+ * THERE ARE NO FILTERS, deliberately. A list needs sorting and filtering because its
+ * rows all look alike; a grid does not, because colour carries the state and position
+ * makes each plant recognisable. "Thirsty" was the only filter anyone wanted, and the
+ * grid answers it faster than a chip could be clicked.
+ */
+
+.shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: max(var(--s-section), env(safe-area-inset-top)) var(--s-page)
+    calc(var(--s-section) * 3);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+  margin-bottom: var(--s-section);
+}
+
+.greeting {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.29;
+  color: var(--ink);
+}
+
+.overline {
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: var(--s-base);
+  }
+}
+
+.empty {
+  padding: var(--s-section) 0;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+/* A failed save is the only thing in this app that is allowed to shout. */
+.storage-warning {
+  margin-bottom: var(--s-lg);
+  padding: var(--s-md) var(--s-base);
+  border: 1px solid var(--clay);
+  border-radius: var(--r-md);
+  background: #fdf1ec;
+  color: var(--clay-deep);
+  font-size: 14px;
+}

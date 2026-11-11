@@ -1,39 +1,94 @@
 # Juniper — Status
 
-Juniper is a calm plant-care app for iOS and Android that tells you when to water your plants
-and gets out of the way. On-device, no account, no server.
+Juniper is a calm plant-care **web app** that shows you, at a glance, which of your plants
+need water. In your browser, no account, no server.
 
-One repo, three folders:
+One repo, four folders:
 
 | Folder | Purpose | Stack |
 |---|---|---|
-| [`juniper-app/`](../juniper-app) | The product | Expo SDK 54 · TypeScript · expo-router v6 · Reanimated v4 · react-native-svg |
+| [`juniper-web/`](../juniper-web) | **The product** | Vite · React 19 · TypeScript · plain CSS |
+| [`juniper-app/`](../juniper-app) | **Frozen** — the retired Expo app ([why](../juniper-app/FROZEN.md)) | Expo SDK 54 · expo-router v6 · Reanimated v4 |
 | [`juniper-website/`](../juniper-website) | Marketing site + privacy/terms | Static HTML on Vercel |
 | [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
 
 **Read [`DECISIONS.md`](../juniper-design/DECISIONS.md) first.** It holds the load-bearing calls
-(D1–D12) and wins over anything written here.
+(D1–D14) and wins over anything written here. Note that **D13 supersedes D1** — Juniper used to
+be native-only — and **demotes D7**, which called the watering reminder "the product".
 
 ## 📌 Current phase
 
-**Phase 1 — Useful. The app is built; it has never been lived with.** Every feature Phase 1
-asked for exists and is tested: the watering loop, reminders, the You tab, backup export and
-import, real photographs, plant deletion. 22 suites / 261 tests, tsc clean, the iOS bundle
-builds.
+**Rebuilt as a web app, and not yet deployed anywhere.** Juniper moved off Expo on
+2026-11-08 ([D13](../juniper-design/DECISIONS.md)). The garden grid, watering, the
+expanding plant card, photographs, add and remove, and export/import all work;
+98 tests pass across 7 suites, tsc is clean, and the production bundle is 68 kB gzipped
+against the native app's 4.43 MB.
 
-**And it sat untouched for two months.** Nothing was committed between 2026-09-09 and
-2026-11-07; the preview build expired unused on 2026-09-23 and the watering reminder still
-has never fired on real hardware. The app had solved the problem on paper and did not pull
-anyone back — which is the finding that produced **D12**: the Garden is now a grid of squares
-that drift from watered to dry, replacing both Today and the Garden list. A list has to be
-read; a grid is just *seen*.
+**Why the pivot.** The reminder — the one feature that genuinely required a native app,
+and which [D7](../juniper-design/DECISIONS.md) called "the product" — has never fired on
+real hardware once in the project's life. Meanwhile the app sat unopened for two months
+and its preview build expired unused. Native bought a notification nobody ever received,
+at the cost of an install step and four and a half minutes between a change and seeing it.
+The user's own words, the day after installing the first grid build: *"I think this ideas
+are better as web apps."*
 
-What is left is not code. There is no installable copy of Juniper right now, and the grid is
-entirely unvalidated by use.
+**The pivot cost a day because the logic was already portable.** 581 lines of pure,
+DOM-free modules — `dryness`, `watering`, `stats`, `cover`, `today-utils`, the seed — were
+copied byte for byte along with 74 of their tests, and pass unmodified.
 
-Progress against the (much smaller) Phase 1: ~94%.
+**What is left is not code.** It runs on localhost and nowhere else, which makes the
+central claim of the pivot — that a link needs no install step — still untested. And
+the grid has been judged by eye, on a laptop, in one browser.
+
+Progress against the new, much smaller scope: ~35%. The number went *down* from 94
+deliberately: Phase 1 was measured against a native app that no longer ships.
 
 ## ✅ Recently done
+
+### 2026-11-08 — Juniper becomes a web app, and the grid is seen for the first time
+
+**The pivot** is [D13](../juniper-design/DECISIONS.md), and the reasoning is in Current
+phase above. New [`juniper-web/`](../juniper-web); [`juniper-app/`](../juniper-app) frozen
+with a [FROZEN.md](../juniper-app/FROZEN.md) saying so. Haptics are gone, photos are a
+file input, export is a download — each *smaller* than the native module it replaced.
+
+**Then the grid was put on a screen, which changed it three times.** None of this came
+from tests. All of it came from looking.
+
+1. **The dryness colour was a thin frame, not a field.** With a photo mat on every square,
+   most of each tile was a pale pressing and the signal was a 7px border — too little
+   colour to read across a room, which is the grid's only job. A plant with no photograph
+   now has no mat: the silhouette sits straight on the dryness colour. The per-plant
+   pressing tone was also a **second colour system fighting the first** — a clay-toned
+   plant looked warm and thirsty however recently it had been watered — so in the grid the
+   tone steps aside and keeps its job on the expanded card.
+
+2. **Watering a square sent it flying to the far end of the grid.** Sorting by thirst
+   re-sorts on every change, so watering dropped a plant to zero and its square teleported
+   out from under the thumb that tapped it — losing the exact moment the design exists to
+   make satisfying. The order is now frozen while the page is open and recomputed only
+   when the set of plants changes. There is a test.
+
+3. **The ramp was silently broken in CSS, twice** — now [D14](../juniper-design/DECISIONS.md).
+   First `background-color: color-mix(in oklab, …var(--dryness)…)` with a transition, then
+   a tall gradient slid by `background-position`. Both resolve once at first paint and
+   never again; no transition events fire at all. Watering a plant updated the store, the
+   DOM, the inline style and the accessibility label, and left the square **exactly the
+   colour it already was**.
+
+   **Every test passed through both versions**, because no test could see a colour — the
+   same blind spot the native app has, where Reanimated is mocked to a plain View and
+   `interpolateColor` returns a constant. The grid's entire purpose is a colour, and the
+   colour was the one thing nothing checked. It is now a pure OKLab function in
+   [`src/lib/ramp.ts`](../juniper-web/src/lib/ramp.ts) with 8 tests asserting it directly,
+   including that it **saturates** past due, so ninety days late is the colour of due today.
+
+**Smaller things found by looking:** the expanded card's photo filled the viewport and
+pushed the Water button below the fold on a laptop window (capped); and "LAST WATERED /
+last watered wednesday." said it twice (now "4 days ago").
+
+**Verified:** tsc clean · 98 tests / 7 suites · `vite build` → 68 kB gzipped · grid,
+watering pour, expanding card and full ramp checked by eye in a browser.
 
 ### 2026-09-07 — A flaky test and the dependency backlog
 

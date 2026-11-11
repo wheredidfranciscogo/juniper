@@ -8,6 +8,106 @@ contradicts PLAN.md or TASKS.md, this file wins and the other one gets fixed.
 
 ---
 
+## D13 — Juniper is a web app. The native app is retired.
+**Date:** 2026-11-08 · **Status:** Decided (reverses D1, demotes D7)
+
+**The call.** Juniper is a web app: Vite, React, plain CSS, served from a URL. The Expo
+app is no longer built. `juniper-app/` stays in the repository, frozen, because its pure
+modules are the web app's ancestry and its git history is the project's — but nothing
+new ships from it.
+
+**Why.** The user, unprompted, the day after the first grid build was cut: *"I think this
+ideas are better as web apps. For some reason it make more sense like that, I know the
+notification an all that, but still."*
+
+The reason is in this project's own record. **The one feature that justified being native
+has never worked.** The watering reminder — D7 called it "the product" — has never fired
+on real hardware in the app's entire life. Meanwhile the app sat unopened for two months
+and its build expired unused. Native bought a notification nobody has ever received, at
+the cost of an install step, a 14-day ad-hoc certificate, and four and a half minutes
+between a colour change and seeing it.
+
+The grid is also simply a better fit for the web. A field of squares that drift between
+two colours is close to the platform's native idiom; `grid-template-columns: repeat(
+auto-fill, minmax(…))` replaced every line of the native version's tile-size arithmetic,
+and `getBoundingClientRect()` being synchronous deleted the whole apparatus the expanding
+card needed on native — the bridge round-trip, the rect cached on layout, the
+re-measure-on-scroll, the fallback for a rect that never arrived.
+
+**What D1 got right, and where it was wrong.** D1 argued that the tactile parts degrade in
+a browser and that "when you are standing next to your plants, you are holding your phone."
+The first half was true of the app D1 described, whose pleasures were the ripple and the
+haptics. D11 deleted most of that, and D12 moved the pleasure into *colour*, which a
+browser renders at least as well. The second half still stands — which is why the grid is
+designed phone-first and the page is a PWA candidate, not a desktop dashboard.
+
+**Consequences and caveats.**
+- **No reminders, and that is the bet.** Web Push on iOS requires the page be installed to
+  the home screen and cannot schedule locally, so a real reminder needs a server holding
+  subscriptions and a cron — which would reverse D2. Instead the grid *is* the reminder:
+  you come back because looking is pleasant, not because something nagged. Revisit only if
+  real use shows otherwise. D7 is hereby demoted from "the product" to "an open question".
+- **"On-device" is much weaker in a browser, and this is the real cost.** The garden lives
+  in one browser on one machine: localStorage for the record, IndexedDB for photographs.
+  "Clear site data" destroys it, and it does not follow you to a laptop. **The export is
+  therefore the only backup that exists**, which is why a failed write is surfaced loudly
+  (`storageError`) instead of swallowed, and why the footer says so in plain words. This,
+  not notifications, is what will eventually argue for accounts.
+- **581 lines of pure logic ported byte for byte**, with 74 of their tests: `dryness`,
+  `watering`, `stats`, `cover`, `today-utils`, and the seed. Keeping those modules
+  RN-free was not fastidiousness; it is the reason this pivot cost a day instead of a
+  rewrite.
+- **The ramp moved into TypeScript** (`src/lib/ramp.ts`) rather than CSS, and this was
+  forced by evidence, not taste — see D14.
+- Haptics are gone (no Vibration API on iOS Safari). `expo-notifications`,
+  `expo-file-system`, `expo-image-picker` and Reanimated have no successors; photos are a
+  file input, export is a download, import is a file picker. Each is *smaller* than what
+  it replaced.
+- The bundle is **68 kB gzipped**, against the native bundle's 4.43 MB.
+
+---
+
+## D14 — The dryness ramp is computed in TypeScript, not CSS.
+**Date:** 2026-11-08 · **Status:** Decided (from browser behaviour observed directly)
+
+**The call.** `src/lib/ramp.ts` interpolates the moss→dried ramp in OKLab and returns an
+`oklab()` string; the tile sets it as a concrete inline `background-color`. The stylesheet
+owns the two endpoint colours and the transition duration, and does no arithmetic.
+
+**Why. Two CSS versions of this were written, looked correct, and were silently broken.**
+
+1. `background-color: color-mix(in oklab, var(--dried) calc(var(--dryness) * 100%),
+   var(--moss-soft))` with `transition: background-color`. In Chrome 152 the colour
+   resolves once at first paint and never again.
+2. A tall `linear-gradient` slid by `background-position-y`, transitioned. Identical
+   failure: the element's inline position read `0%` and its computed position stayed
+   `100%`.
+
+In both cases **no transition events fired at all**, and watering a plant updated the
+store, the DOM, the inline style and the accessibility label while leaving the square
+exactly the colour it already was. Reduced to isolation: *any* transition on
+`background-position` froze it, and a transitioned property computed from a custom
+property does not re-resolve when that property changes.
+
+**The deeper point is how nearly this shipped.** Every test passed through both broken
+versions, because no test could see a colour — the same blind spot the native app had,
+where Reanimated is mocked to a plain View and `interpolateColor` returns a constant.
+The grid's entire purpose is a colour, and the colour was the one thing nothing checked.
+
+**Consequences and caveats.**
+- The ramp is a pure function of one number, so `ramp.test.ts` asserts it directly —
+  including that it **saturates** (D12: ninety days late is the colour of due today) and
+  that the OKLab midpoint is near-neutral rather than the khaki sRGB mixing produces.
+  These are the first tests in the project's history that cover the colour.
+- Component tests assert `toHaveStyle({ backgroundColor: rampColor(d) })`, so a tile
+  wired to the wrong number now fails.
+- `ramp.ts` and `styles/tokens.css` both hold the ramp's endpoints and must be kept in
+  step. That duplication is the price of the above and is marked in both files.
+- **Anything that must visibly change should be checked on a screen before it is called
+  done.** Nothing in the test suite was capable of catching this.
+
+---
+
 ## D12 — The garden is a grid of squares that drift from watered to dry.
 **Date:** 2026-11-07 · **Status:** Decided (from user feedback after two months of not using the app)
 
@@ -137,7 +237,9 @@ telling you when to water cannot afford ambiguity in the field that drives the r
 ---
 
 ## D1 — Native app only. There is no web app.
-**Date:** 2026-08-15 · **Status:** Decided
+**Date:** 2026-08-15 · **Status:** SUPERSEDED by D13 (2026-11-08) — Juniper is now a web
+app and the Expo app is retired. Kept for the reasoning, which is still worth reading:
+D13 says which half of it held up.
 
 **Context.** Juniper started as a Next.js web plant tracker (`jungle-jungle`) and was
 re-founded as an Expo app, but the web app was never actually killed — it still sits in
@@ -285,7 +387,9 @@ is four HTML files and has never once needed maintenance.
 ---
 
 ## D7 — The watering reminder is the product.
-**Date:** 2026-08-15 · **Status:** Decided
+**Date:** 2026-08-15 · **Status:** DEMOTED by D13 (2026-11-08). The reminder was never
+once delivered on real hardware, and the web app has none. The claim is now an open
+question, not a decision.
 
 **Context.** Notifications have sat at the bottom of Phase 1 behind five screens, as if they
 were the finishing touch. `expo-notifications` has been an installed dependency for months

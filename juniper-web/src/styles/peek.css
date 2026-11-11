@@ -1,0 +1,199 @@
+/*
+ * The expanded square.
+ *
+ * A real <dialog>, so the backdrop, Escape, the focus trap and the inert background all
+ * come from the platform. The growing-out-of-the-tile motion is a FLIP applied to
+ * `.peek__card` from PlantPeek.tsx; the transition it rides on is declared here.
+ */
+
+.peek {
+  width: min(420px, calc(100vw - 2 * var(--s-base)));
+  max-height: calc(100vh - 2 * var(--s-base));
+  margin: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+}
+
+.peek::backdrop {
+  background: rgb(45 42 38 / 38%);
+  backdrop-filter: blur(2px);
+  animation: peek-fade var(--t-base) var(--ease-base);
+}
+
+@keyframes peek-fade {
+  from { opacity: 0; }
+}
+
+.peek__card {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 2 * var(--s-base));
+  overflow: hidden auto;
+  border-radius: var(--r-xxl);
+  background: var(--paper);
+  box-shadow: 0 18px 50px rgb(45 42 38 / 26%);
+
+  /* The FLIP rides this. `transform-origin: center` matches the maths in the component. */
+  transform-origin: center center;
+  transition:
+    transform var(--t-medium) var(--ease-base),
+    opacity var(--t-base) var(--ease-base);
+}
+
+/*
+ * The picture is capped, not square-at-any-size.
+ *
+ * A 420px-wide card with a 1:1 photo is 420px of picture before a word of the record,
+ * which on a laptop window pushed the Water button — the thing the card exists to offer
+ * — below the fold. The cap keeps the actions reachable without scrolling on a short
+ * window, and `aspect-ratio` still shapes it on a tall one.
+ */
+.peek__photo {
+  position: relative;
+  flex: none;
+  aspect-ratio: 1;
+  max-height: min(38vh, 300px);
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.peek__photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.peek__close {
+  position: absolute;
+  top: var(--s-md);
+  right: var(--s-md);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(250 249 245 / 88%);
+  color: var(--ink);
+  backdrop-filter: blur(4px);
+}
+
+.peek__close:hover { background: var(--paper); }
+
+.peek__body {
+  padding: var(--s-lg) var(--s-xl) var(--s-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+}
+
+.peek__name {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.21;
+}
+
+.peek__species,
+.peek__nickname {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+.peek__species { font-size: 18px; margin-top: calc(var(--s-md) * -1); }
+.peek__nickname { font-size: 15px; color: var(--ink-faint); }
+
+.peek__status {
+  margin: var(--s-xs) 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+
+.peek__facts {
+  margin: var(--s-sm) 0 0;
+  padding: var(--s-base) 0;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-base) var(--s-md);
+}
+
+.peek__facts div { display: flex; flex-direction: column; gap: 2px; }
+
+.peek__facts dt {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.peek__facts dd {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.peek__journal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+}
+
+.peek__journal p {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.53;
+  color: var(--ink);
+}
+
+.peek__journal-date {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.peek__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-md);
+  margin-top: var(--s-xs);
+}
+
+.peek__actions .btn {
+  flex: 1 1 auto;
+}
+
+.peek__remove {
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--ink-faint);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.peek__remove:hover { color: var(--clay-deep); }
+
+.peek__confirm {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-md);
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.peek__confirm span { display: flex; gap: var(--s-md); }
