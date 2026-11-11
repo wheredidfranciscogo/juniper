@@ -87,7 +87,7 @@
    half the spread (30px) down, and the slow breathing animation adds another 7 — at
    36px of padding the front card was landing exactly on the rail. */
 .deck__stage--deck {
-  padding: 44px 0;
+  padding: 50px 0;
 }
 
 /* Height-driven, not width-driven: on a short screen (iPhone SE is 667px tall) a
@@ -800,17 +800,21 @@ select.field__in { appearance: none; }
  */
 
 /*
- * The ring is drawn ON the window, tracing its edge, so it sits above the artwork and
- * exactly over the panel it belongs to.
+ * The band is flush to the card's top edge — the only part of a buried card a fanned
+ * deck leaves visible. Its height matches the fan's step, so a card behind shows its
+ * whole band and nothing else.
  */
-.face__ring {
+.face__band {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 20px;
   pointer-events: none;
   display: block;
 }
+
+.card--tile .face__band { height: 9px; }
 
 .face {
   position: absolute;
@@ -819,7 +823,7 @@ select.field__in { appearance: none; }
   grid-template-columns: 1fr auto;
   grid-template-rows: auto 1fr auto;
   gap: 10px 12px;
-  padding: 18px 20px 16px;
+  padding: 34px 20px 16px;
   color: var(--ink-card);
 }
 
@@ -897,9 +901,7 @@ select.field__in { appearance: none; }
   isolation: isolate;
 }
 
-/* Artwork under, mosaic over. */
-.face__panel > :not(.face__ring) { grid-area: 1 / 1; }
-.face__panel > .face__ring { z-index: 1; }
+
 
 .face__photo {
   width: 100%;
@@ -917,7 +919,7 @@ select.field__in { appearance: none; }
 
 /* ---- the same card, tile sized ------------------------------------------- */
 
-.card--tile .face { padding: 9px 10px 8px; gap: 5px 7px; }
+.card--tile .face { padding: 17px 10px 8px; gap: 5px 7px; }
 .card--tile .face__name { font-size: 15px; }
 .card--tile .face__species { font-size: 7px; letter-spacing: 0.1em; margin-top: 2px; }
 .card--tile .face__rank { font-size: 22px; }

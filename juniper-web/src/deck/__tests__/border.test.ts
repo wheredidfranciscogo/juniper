@@ -1,29 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { archRing, dried, hash, order, ring, shade } from '../border';
+import { band, dried, hash, order, shade } from '../border';
+
+describe('the band', () => {
+  it('fills the block in reading order', () => {
+    const cells = band(3, 2);
+    expect(cells).toHaveLength(6);
+    expect(cells[0]).toEqual({ x: 0, y: 0 });
+    expect(cells[2]).toEqual({ x: 2, y: 0 });
+    expect(cells[3]).toEqual({ x: 0, y: 1 });
+  });
+
+  it('refuses an empty block', () => {
+    expect(band(0, 3)).toEqual([]);
+    expect(band(3, 0)).toEqual([]);
+  });
+});
 
 describe('the pixel border', () => {
-  it('walks the perimeter once, with no cell repeated', () => {
-    const cells = ring(4, 5);
-    expect(cells).toHaveLength(2 * 4 + 2 * 5 - 4);
-    const seen = new Set(cells.map((c) => `${c.x},${c.y}`));
-    expect(seen.size).toBe(cells.length);
-    // Nothing in the interior.
-    expect(cells.every((c) => c.x === 0 || c.y === 0 || c.x === 3 || c.y === 4)).toBe(true);
-  });
-
-  it('starts at the top-left and goes clockwise', () => {
-    const cells = ring(3, 3);
-    expect(cells[0]).toEqual({ x: 0, y: 0 });
-    expect(cells[1]).toEqual({ x: 1, y: 0 });
-    expect(cells[3]).toEqual({ x: 2, y: 1 });
-  });
-
-  it('refuses to build a ring that has no inside', () => {
-    expect(ring(1, 5)).toEqual([]);
-    expect(ring(0, 0)).toEqual([]);
-  });
-
   it('dries none at 0 and all at 1', () => {
     expect(dried('agnes', 0, 20).filter(Boolean)).toHaveLength(0);
     expect(dried('agnes', 1, 20).every(Boolean)).toBe(true);
@@ -46,8 +40,8 @@ describe('the pixel border', () => {
     }
   });
 
-  it('scatters rather than sweeping around the ring', () => {
-    // A clock hand would dry a contiguous run. Count how many boundaries there are.
+  it('scatters rather than drying in a block', () => {
+    // A sweep would dry one contiguous run. Count how many boundaries there are.
     const n = 48;
     const d = dried('agnes', 0.5, n);
     let flips = 0;
@@ -82,51 +76,3 @@ describe('the pixel border', () => {
   });
 });
 
-describe('the arch outline', () => {
-  const size = 40;
-  const cells = archRing(size);
-  const key = (c: { x: number; y: number }) => `${c.x},${c.y}`;
-  const set = new Set(cells.map(key));
-
-  it('produces a closed outline of some substance', () => {
-    expect(cells.length).toBeGreaterThan(size * 2);
-    expect(new Set(cells.map(key)).size).toBe(cells.length);
-  });
-
-  it('is symmetric about the vertical axis', () => {
-    for (const c of cells) {
-      expect(set.has(`${size - 1 - c.x},${c.y}`)).toBe(true);
-    }
-  });
-
-  it('keeps every cell inside the square', () => {
-    for (const c of cells) {
-      expect(c.x).toBeGreaterThanOrEqual(0);
-      expect(c.y).toBeGreaterThanOrEqual(0);
-      expect(c.x).toBeLessThan(size);
-      expect(c.y).toBeLessThan(size);
-    }
-  });
-
-  it('reaches the foot on both sides and domes at the top', () => {
-    const bottom = cells.filter((c) => c.y === size - 1);
-    expect(bottom.length).toBeGreaterThan(size / 2);
-    // The topmost row of the outline is narrow — that is the crown of the dome.
-    const top = Math.min(...cells.map((c) => c.y));
-    const crown = cells.filter((c) => c.y === top);
-    expect(crown.length).toBeLessThan(size / 2);
-    expect(top).toBe(0);
-  });
-
-  it('hollows out: nothing in the middle of the arch is on the outline', () => {
-    expect(set.has(`${Math.floor(size / 2)},${Math.floor(size / 2)}`)).toBe(false);
-  });
-
-  it('refuses a grid too small to have an inside', () => {
-    expect(archRing(2)).toEqual([]);
-  });
-
-  it('is deterministic', () => {
-    expect(archRing(size)).toEqual(archRing(size));
-  });
-});

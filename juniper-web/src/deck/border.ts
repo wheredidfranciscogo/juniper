@@ -25,57 +25,24 @@ export interface Cell {
 }
 
 /**
- * The perimeter cells of a grid, clockwise from the top-left corner.
+ * A block of cells, `cols` by `rows`, in reading order.
  *
- * Clockwise order is not what decides which square turns next — `order` below does
- * that — but it keeps the array stable and makes the geometry easy to reason about.
+ * THIS IS A STRIP ACROSS THE TOP OF THE CARD, and the placement is the whole idea.
+ * When a deck is fanned you can see almost nothing of the cards underneath — measured
+ * on the real thing, buried cards were showing between 1 and 9 pixels, because the
+ * scale applied with depth cancelled out the offset. A ring around the whole card
+ * therefore spent three quarters of itself where nothing could ever see it, and an
+ * outline around the window spent all of it.
+ *
+ * A strip along the top edge is the one part of a buried card that is exposed, so it
+ * is the only place a state can be read without dealing the card. The fan was widened
+ * to match (see restingStyle in DeckCard).
  */
-export function ring(cols: number, rows: number): Cell[] {
-  if (cols < 2 || rows < 2) return [];
+export function band(cols: number, rows: number): Cell[] {
+  if (cols < 1 || rows < 1) return [];
   const cells: Cell[] = [];
-  for (let x = 0; x < cols; x += 1) cells.push({ x, y: 0 });
-  for (let y = 1; y < rows; y += 1) cells.push({ x: cols - 1, y });
-  for (let x = cols - 2; x >= 0; x -= 1) cells.push({ x, y: rows - 1 });
-  for (let y = rows - 2; y >= 1; y -= 1) cells.push({ x: 0, y });
-  return cells;
-}
-
-/**
- * The outline of an ARCH, as cells on a square grid.
- *
- * The ring used to run around the whole card, which framed the plant in a rectangle of
- * pixels and fought the arch sitting inside it. Tracing the arch instead gives the card
- * one shape rather than two, and a mosaic that follows a curve reads as made rather
- * than applied.
- *
- * Rasterised rather than stroked: the region is tested cell by cell, and a cell is on
- * the outline when it is inside the arch and at least one of its four neighbours is
- * not. That gives a true pixel edge — stepped, the way a low-resolution curve actually
- * is — instead of a smooth stroke pretending to be one.
- *
- * `dome` is how far down the square the semi-ellipse reaches, as a fraction of it.
- */
-export function archRing(size: number, dome = 0.44): Cell[] {
-  if (size < 3) return [];
-  const ry = size * dome;
-  const rx = size / 2;
-  const inside = (ix: number, iy: number): boolean => {
-    if (ix < 0 || iy < 0 || ix >= size || iy >= size) return false;
-    const cx = ix + 0.5;
-    const cy = iy + 0.5;
-    if (cy >= ry) return true; // the straight sides and the flat foot
-    const dx = (cx - rx) / rx;
-    const dy = (cy - ry) / ry;
-    return dx * dx + dy * dy <= 1;
-  };
-
-  const cells: Cell[] = [];
-  for (let y = 0; y < size; y += 1) {
-    for (let x = 0; x < size; x += 1) {
-      if (!inside(x, y)) continue;
-      if (inside(x - 1, y) && inside(x + 1, y) && inside(x, y - 1) && inside(x, y + 1)) continue;
-      cells.push({ x, y });
-    }
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) cells.push({ x, y });
   }
   return cells;
 }

@@ -34,19 +34,24 @@ import { IconDrop, PlantIcon } from '../components/icons';
 import type { Plant } from '../data/types';
 import { usePhotoURL } from '../lib/use-photo';
 import { DRY_SHADES, WET_SHADES, kindColor, kindGround, markColor } from './palette';
-import { archRing, dried, shade } from './border';
+import { band, dried, shade } from './border';
 
 /**
- * The arch outline's grid. Square, because the window is.
+ * The band's grid: cells across by cells deep.
  *
  * TWO DENSITIES, ONE APPARENT SIZE. A single grid would give 5px cells on a full card
  * and under 2px on a grid tile, which stops being pixels and becomes a blurred line.
- * Scaling the grid with the card keeps every cell about 5px wherever it is drawn.
+ * Scaling with the card keeps every cell about 5px wherever it is drawn. Four rows
+ * deep on a card is 20px — the same as the fan's step, so a buried card shows its
+ * whole band and no more.
  */
-const ARCH = { deck: 56, tile: 20 } as const;
-const RINGS = {
-  deck: archRing(ARCH.deck),
-  tile: archRing(ARCH.tile),
+const BAND = {
+  deck: { cols: 68, rows: 4 },
+  tile: { cols: 24, rows: 3 },
+} as const;
+const BANDS = {
+  deck: band(BAND.deck.cols, BAND.deck.rows),
+  tile: band(BAND.tile.cols, BAND.tile.rows),
 };
 import { daysUntilWater, nextWateringDate } from '../lib/watering';
 
@@ -79,9 +84,23 @@ function thirstLine(plant: Plant, now: Date): string {
 
 const day = (d: Date) => d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
-/** How far each card behind the front is offset, in px. */
-const FAN_X = 11;
-const FAN_Y = 15;
+/**
+ * How the fan spreads.
+ *
+ * TUNED SO THE CARDS BEHIND ARE ACTUALLY VISIBLE. The first fan offset each card 11px
+ * right and 15px up but also shrank it 4.2% per step, and on a 343px card that shrink
+ * takes 7px off each side — almost exactly cancelling the offset. Measured on the real
+ * thing, the cards at depth 1 and 2 were showing ONE pixel. There was nothing for an
+ * edge marking to live on.
+ *
+ * Now the spread is mostly vertical and the shrink is small, so every buried card
+ * shows a clean horizontal strip of its top edge — which is where the water state is
+ * printed.
+ */
+const FAN_X = 5;
+const FAN_Y = 20;
+const FAN_SHRINK = 0.016;
+const FAN_TURN = 0.8;
 
 /**
  * The resting transform for a card at `depth`. Concrete values, never a var().
@@ -118,8 +137,8 @@ export function restingStyle(depth: number, count: number, turned: boolean): Rea
   const y = (spread * FAN_Y) / 2 - depth * FAN_Y;
   return {
     transform: `translate3d(${x}px, ${y}px, 0px) rotate(${
-      (depth - spread / 2) * 1.4
-    }deg) scale(${(1 - depth * 0.042).toFixed(4)})`,
+      (depth - spread / 2) * FAN_TURN
+    }deg) scale(${(1 - depth * FAN_SHRINK).toFixed(4)})`,
     opacity: depth > DEPTH_VISIBLE ? 0 : 1 - depth * 0.1,
     zIndex: count - depth,
     transitionDelay: `${depth * 35}ms`,
@@ -165,8 +184,8 @@ export const DeckCard = React.memo(function DeckCard({
    * The viewBox is in grid units and the aspect ratio matches the card, so nothing is
    * distorted and `crispEdges` keeps the squares sharp.
    */
-  const ringPaths = React.useMemo(() => {
-    const cells = grid ? RINGS.tile : RINGS.deck;
+  const bandPaths = React.useMemo(() => {
+    const cells = grid ? BANDS.tile : BANDS.deck;
     const burnt = dried(plant.id, dryness, cells.length);
     const buckets = new Map<string, string[]>();
     cells.forEach((cell, i) => {
@@ -213,6 +232,26 @@ export const DeckCard = React.memo(function DeckCard({
             <div className="card__sheen" />
 
             {/*
+              THE WATER STATE, PRINTED ON THE ONE EDGE A FANNED DECK SHOWS. Green cells
+              turn red a few at a time, in a scattered order fixed per plant, so a
+              glance down the stack says which plants are dry without dealing a card.
+            */}
+            <svg
+              className="face__band"
+              viewBox={`0 0 ${grid ? BAND.tile.cols : BAND.deck.cols} ${
+                grid ? BAND.tile.rows : BAND.deck.rows
+              }`}
+              preserveAspectRatio="none"
+              shapeRendering="crispEdges"
+              aria-hidden="true"
+              focusable="false"
+            >
+              {bandPaths.map((p) => (
+                <path key={p.colour} d={p.d} fill={p.colour} />
+              ))}
+            </svg>
+
+            {/*
             THE FACE IS A PLAYING CARD.
               - the title block sits at the TOP, set the same way as the card's back,
                 so both sides introduce the plant identically
@@ -256,23 +295,6 @@ export const DeckCard = React.memo(function DeckCard({
                 <PlantIcon name={plant.icon} size={grid ? 52 : 150} stroke={grid ? 2 : 1.6} />
               )}
 
-              {/*
-                The water state, traced around the window's own edge rather than
-                framing the whole card in a rectangle of pixels. One shape instead of
-                two fighting each other.
-              */}
-              <svg
-                className="face__ring"
-                viewBox={`0 0 ${grid ? ARCH.tile : ARCH.deck} ${grid ? ARCH.tile : ARCH.deck}`}
-                preserveAspectRatio="none"
-                shapeRendering="crispEdges"
-                aria-hidden="true"
-                focusable="false"
-              >
-                {ringPaths.map((p) => (
-                  <path key={p.colour} d={p.d} fill={p.colour} />
-                ))}
-              </svg>
             </div>
 
             <span className="face__suit" aria-hidden="true">
