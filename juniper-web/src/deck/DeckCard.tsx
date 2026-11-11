@@ -34,23 +34,19 @@ import { IconDrop, PlantIcon } from '../components/icons';
 import type { Plant } from '../data/types';
 import { usePhotoURL } from '../lib/use-photo';
 import { DRY_SHADES, WET_SHADES, kindColor, kindGround, markColor } from './palette';
-import { dried, ring, shade } from './border';
+import { archRing, dried, shade } from './border';
 
 /**
- * The pixel ring's grid, in 2:3 so the cells come out square on a 2:3 card.
+ * The arch outline's grid. Square, because the window is.
  *
- * TWO DENSITIES, ONE APPARENT SIZE. A single grid would give 5px squares on a full
- * card and 1.9px on a grid tile, which stops being pixels and starts being a blurred
- * line. Scaling the grid with the card keeps every square about 5px wherever it is
- * drawn.
+ * TWO DENSITIES, ONE APPARENT SIZE. A single grid would give 5px cells on a full card
+ * and under 2px on a grid tile, which stops being pixels and becomes a blurred line.
+ * Scaling the grid with the card keeps every cell about 5px wherever it is drawn.
  */
-const GRID = {
-  deck: { cols: 64, rows: 96 },
-  tile: { cols: 24, rows: 36 },
-} as const;
+const ARCH = { deck: 56, tile: 20 } as const;
 const RINGS = {
-  deck: ring(GRID.deck.cols, GRID.deck.rows),
-  tile: ring(GRID.tile.cols, GRID.tile.rows),
+  deck: archRing(ARCH.deck),
+  tile: archRing(ARCH.tile),
 };
 import { daysUntilWater, nextWateringDate } from '../lib/watering';
 
@@ -239,20 +235,6 @@ export const DeckCard = React.memo(function DeckCard({
             plant; this ring is the clock. Green squares turn red a few at a time, in a
             scattered order fixed per plant, until a plant that is due is ringed in red.
           */}
-          <svg
-            className="face__ring"
-            viewBox={`0 0 ${grid ? GRID.tile.cols : GRID.deck.cols} ${
-              grid ? GRID.tile.rows : GRID.deck.rows
-            }`}
-            preserveAspectRatio="none"
-            shapeRendering="crispEdges"
-            aria-hidden="true"
-            focusable="false"
-          >
-            {ringPaths.map((p) => (
-              <path key={p.colour} d={p.d} fill={p.colour} />
-            ))}
-          </svg>
 
           <div className="face">
             <header className="face__title">
@@ -273,6 +255,24 @@ export const DeckCard = React.memo(function DeckCard({
               ) : (
                 <PlantIcon name={plant.icon} size={grid ? 52 : 150} stroke={grid ? 2 : 1.6} />
               )}
+
+              {/*
+                The water state, traced around the window's own edge rather than
+                framing the whole card in a rectangle of pixels. One shape instead of
+                two fighting each other.
+              */}
+              <svg
+                className="face__ring"
+                viewBox={`0 0 ${grid ? ARCH.tile : ARCH.deck} ${grid ? ARCH.tile : ARCH.deck}`}
+                preserveAspectRatio="none"
+                shapeRendering="crispEdges"
+                aria-hidden="true"
+                focusable="false"
+              >
+                {ringPaths.map((p) => (
+                  <path key={p.colour} d={p.d} fill={p.colour} />
+                ))}
+              </svg>
             </div>
 
             <span className="face__suit" aria-hidden="true">

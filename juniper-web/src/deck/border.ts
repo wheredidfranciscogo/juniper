@@ -41,6 +41,46 @@ export function ring(cols: number, rows: number): Cell[] {
 }
 
 /**
+ * The outline of an ARCH, as cells on a square grid.
+ *
+ * The ring used to run around the whole card, which framed the plant in a rectangle of
+ * pixels and fought the arch sitting inside it. Tracing the arch instead gives the card
+ * one shape rather than two, and a mosaic that follows a curve reads as made rather
+ * than applied.
+ *
+ * Rasterised rather than stroked: the region is tested cell by cell, and a cell is on
+ * the outline when it is inside the arch and at least one of its four neighbours is
+ * not. That gives a true pixel edge — stepped, the way a low-resolution curve actually
+ * is — instead of a smooth stroke pretending to be one.
+ *
+ * `dome` is how far down the square the semi-ellipse reaches, as a fraction of it.
+ */
+export function archRing(size: number, dome = 0.44): Cell[] {
+  if (size < 3) return [];
+  const ry = size * dome;
+  const rx = size / 2;
+  const inside = (ix: number, iy: number): boolean => {
+    if (ix < 0 || iy < 0 || ix >= size || iy >= size) return false;
+    const cx = ix + 0.5;
+    const cy = iy + 0.5;
+    if (cy >= ry) return true; // the straight sides and the flat foot
+    const dx = (cx - rx) / rx;
+    const dy = (cy - ry) / ry;
+    return dx * dx + dy * dy <= 1;
+  };
+
+  const cells: Cell[] = [];
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      if (!inside(x, y)) continue;
+      if (inside(x - 1, y) && inside(x + 1, y) && inside(x, y - 1) && inside(x, y + 1)) continue;
+      cells.push({ x, y });
+    }
+  }
+  return cells;
+}
+
+/**
  * A small, stable string hash. Not cryptographic — just repeatable and well mixed.
  *
  * THE FINAL AVALANCHE IS NOT DECORATION. Plain FNV-1a over strings that differ only in

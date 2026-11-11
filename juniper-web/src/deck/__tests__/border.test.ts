@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dried, hash, order, ring, shade } from '../border';
+import { archRing, dried, hash, order, ring, shade } from '../border';
 
 describe('the pixel border', () => {
   it('walks the perimeter once, with no cell repeated', () => {
@@ -79,5 +79,54 @@ describe('the pixel border', () => {
   it('hashes without collapsing to one value', () => {
     const seen = new Set(['a', 'b', 'c', 'agnes', 'marcel'].map(hash));
     expect(seen.size).toBe(5);
+  });
+});
+
+describe('the arch outline', () => {
+  const size = 40;
+  const cells = archRing(size);
+  const key = (c: { x: number; y: number }) => `${c.x},${c.y}`;
+  const set = new Set(cells.map(key));
+
+  it('produces a closed outline of some substance', () => {
+    expect(cells.length).toBeGreaterThan(size * 2);
+    expect(new Set(cells.map(key)).size).toBe(cells.length);
+  });
+
+  it('is symmetric about the vertical axis', () => {
+    for (const c of cells) {
+      expect(set.has(`${size - 1 - c.x},${c.y}`)).toBe(true);
+    }
+  });
+
+  it('keeps every cell inside the square', () => {
+    for (const c of cells) {
+      expect(c.x).toBeGreaterThanOrEqual(0);
+      expect(c.y).toBeGreaterThanOrEqual(0);
+      expect(c.x).toBeLessThan(size);
+      expect(c.y).toBeLessThan(size);
+    }
+  });
+
+  it('reaches the foot on both sides and domes at the top', () => {
+    const bottom = cells.filter((c) => c.y === size - 1);
+    expect(bottom.length).toBeGreaterThan(size / 2);
+    // The topmost row of the outline is narrow — that is the crown of the dome.
+    const top = Math.min(...cells.map((c) => c.y));
+    const crown = cells.filter((c) => c.y === top);
+    expect(crown.length).toBeLessThan(size / 2);
+    expect(top).toBe(0);
+  });
+
+  it('hollows out: nothing in the middle of the arch is on the outline', () => {
+    expect(set.has(`${Math.floor(size / 2)},${Math.floor(size / 2)}`)).toBe(false);
+  });
+
+  it('refuses a grid too small to have an inside', () => {
+    expect(archRing(2)).toEqual([]);
+  });
+
+  it('is deterministic', () => {
+    expect(archRing(size)).toEqual(archRing(size));
   });
 });
