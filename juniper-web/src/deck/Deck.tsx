@@ -181,6 +181,17 @@ export function Deck() {
   const [busy, setBusy] = React.useState(false);
   const [turnedId, setTurnedId] = React.useState<string | null>(null);
   const [view, setView] = React.useState<View>('deck');
+
+  /*
+   * AN EMPTY GARDEN HAS NO GRID. Emptying it from the grid — the last plant removed,
+   * or "start over" — left the empty state hanging at the top of a grid-aligned stage,
+   * while the same state reached from the deck sits centred. The view already returns
+   * to the deck when a plant is added, dealt or demoed; it should when the last one
+   * goes too. The tile-add is guarded separately, for the frame before this runs.
+   */
+  React.useEffect(() => {
+    if (plants.length === 0) setView('deck');
+  }, [plants.length]);
   /** A deck<->grid transition is in flight. Starting a second one strands the first. */
   const [flipping, setFlipping] = React.useState(false);
 
@@ -1001,7 +1012,13 @@ export function Deck() {
               />
             );
           })}
-          {view === 'grid' && (
+          {/*
+            NOT WHEN THE GARDEN IS EMPTY. The empty state is absolutely positioned over
+            this stack and offers "add a plant" itself, so an empty grid drew both, one
+            through the other. Deleting the last plant from the grid is the way in —
+            removing it one at a time, or "start over" in the backup sheet.
+          */}
+          {view === 'grid' && !empty && (
             <button className="tile-add" onClick={() => setEditing('new')}>
               <span className="tile-add__plus">+</span>
               <span className="tile-add__k">add a plant</span>
