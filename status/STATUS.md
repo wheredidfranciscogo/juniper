@@ -43,9 +43,10 @@ reached a phone the same day it was built, and the deck has been through six rou
 "check it on the phone, fix what the phone showed" — a loop that cost four and a half
 minutes a turn when this was native.
 
-**What is left is not code.** The garden still has exactly one copy until a backup is
-actually saved, and the app has been judged against a demo garden rather than real
-plants over real weeks.
+**What is left is not code.** The garden has a second copy now, and it has been proven the
+hard way: on 2026-11-12 it was saved off the phone, the app moved address, and the garden
+came back out of that file at the new one. What remains is that the app has been judged
+against a demo garden rather than real plants over real weeks.
 
 Progress against the new, much smaller scope: ~75%.
 
@@ -342,15 +343,11 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 
 Nothing is blocked on code. What is left is time and real plants.
 
-- **The garden still has exactly one copy.** Backup and restore are now reachable from the
-  installed app and the home-screen install exempts the origin from WebKit's seven-day
-  eviction, but neither is worth anything until a backup is actually saved somewhere that
-  is not the phone. The sheet shows "last backup · …" precisely so this is visible.
-- **Juniper is unvalidated by real use.** The deck has been exercised hard, but against a
+- **Rayen is unvalidated by real use.** The deck has been exercised hard, but against a
   demo garden over two days. Whether a fanned deck is the right way to meet eight plants
   every morning, and whether the dryness ramp reads at a glance, are questions only real
   plants over real weeks answer.
-- **Juniper has no reminders at all.** A deliberate bet (D13) — the deck is meant to be the
+- **Rayen has no reminders at all.** A deliberate bet (D13) — the deck is meant to be the
   reminder — but a bet, and the only thing that settles it is whether use happens anyway.
 - **There is no service worker**, so the installed app needs the network on first paint of
   each session. The manifest alone was enough to get it on the home screen and to earn the
