@@ -266,7 +266,28 @@
 .card__face {
   position: absolute;
   inset: 0;
-  border-radius: 20px;
+
+  /*
+   * THE CARD'S FRONT IS SIZED FROM THIS BOX. The face's type and spacing are set in
+   * `cqw`, one percent of the card's own width, so a tile is a true miniature of the
+   * deck card rather than a second design at second sizes. That is what makes
+   * `scale: true` exact: Flip holds the element at its final layout size and scales
+   * it, so any property differing between the two views steps on the first frame.
+   * When the only difference IS the box, nothing steps.
+   *
+   * It goes here, not on .card or .card__flip: `container-type` implies `contain:
+   * layout`, which forces `transform-style: flat` and would collapse the 3D turn.
+   * .card__face is a leaf in that hierarchy, so flattening it costs nothing.
+   *
+   * Calibrated to the card at phone size (300px wide — 80vw at 375 — the LAYOUT width,
+   * not the bounding rect, which the fan's rotation inflates), so that view is
+   * unchanged to the pixel. The BACK is left in fixed px: it
+   * is only ever seen in the deck, so it has nothing to step against.
+   */
+  container-type: inline-size;
+
+  /* 20px at 300 x 450. Percentages, not cqw: a container cannot measure itself. */
+  border-radius: 6.667% / 4.444%;
   overflow: hidden;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -572,7 +593,6 @@
  */
 
 /* A tile is a sixth of the size, so its furniture has to shrink with it. */
-.card--tile .card__face { border-radius: 13px; }
 .card--tile .card__face {
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.3),
@@ -1053,14 +1073,29 @@ select.field__in { appearance: none; }
   display: block;
 }
 
+/*
+ * The tile's band is sized from the card's WIDTH, unlike the deck's.
+ *
+ * It has to be, because the two boxes are not similar: at 375px the deck card is
+ * 300x480 (the 80vw cap beats the 2:3 ratio) while a tile is a true 144x216. So a
+ * height percentage scales by 2.222 across the flip while everything else, keyed to
+ * width, scales by 2.083 — and the band steps against the type it sits above.
+ *
+ * 6.667cqw is the deck band's 20px at the 300px calibration width, so the tile's band
+ * is the exact miniature of it. The deck keeps the height percentage, because there it
+ * must equal STEP_Y in DeckCard.tsx or a buried card shows more or less than its own
+ * band — and the 14px floor is a fan concern, with nothing buried in a grid.
+ */
+.card--tile .face__band { height: 6.667cqw; }
+
 .face {
   position: absolute;
   inset: 0;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto 1fr auto;
-  gap: 10px 12px;
-  padding: 34px 20px 16px;
+  gap: 3.333cqw 4cqw;
+  padding: 11.333cqw 6.667cqw 5.333cqw;
   color: var(--ink-card);
 }
 
@@ -1069,7 +1104,7 @@ select.field__in { appearance: none; }
 .face__name {
   margin: 0;
   font-family: var(--serif);
-  font-size: 30px;
+  font-size: 10cqw; /* 30px on the phone's 300px card */
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.015em;
@@ -1079,9 +1114,9 @@ select.field__in { appearance: none; }
 }
 
 .face__species {
-  margin: 3px 0 0;
+  margin: 1cqw 0 0;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 3cqw; /* 9px on the phone's card, ~4.3px on a tile */
   letter-spacing: 0.14em;
   text-transform: uppercase;
   opacity: 0.62;
@@ -1096,7 +1131,7 @@ select.field__in { appearance: none; }
   justify-self: end;
   align-self: start;
   font-family: var(--serif);
-  font-size: 46px;
+  font-size: 15.333cqw; /* 46px on the phone's 300px card */
   font-weight: 600;
   line-height: 0.82;
   letter-spacing: -0.03em;
@@ -1132,13 +1167,21 @@ select.field__in { appearance: none; }
   aspect-ratio: 1;
   max-height: 100%;
   overflow: hidden;
-  border-radius: 50% 50% 13px 13px / 44% 44% 13px 13px;
+  border-radius: 50% 50% 4.333cqw 4.333cqw / 44% 44% 4.333cqw 4.333cqw;
   color: var(--stock);
   position: relative;
   isolation: isolate;
 }
 
 
+
+/*
+ * The suits are drawn by <Suit size=…>, which writes width/height ATTRIBUTES. CSS beats
+ * an attribute, so sizing them here keeps them on the same scale as the type instead of
+ * stepping from one hand-picked pixel size to another across the flip.
+ */
+.face__panel > svg { width: 50cqw; height: 50cqw; }
+.face__suit > svg { width: 11.333cqw; height: 11.333cqw; }
 
 .face__photo {
   width: 100%;
@@ -1156,10 +1199,15 @@ select.field__in { appearance: none; }
 
 /* ---- the same card, tile sized ------------------------------------------- */
 
-.card--tile .face { padding: 17px 10px 8px; gap: 5px 7px; }
-.card--tile .face__name { font-size: 15px; }
-.card--tile .face__species { font-size: 7px; letter-spacing: 0.1em; margin-top: 2px; }
-.card--tile .face__rank { font-size: 22px; }
+/*
+ * NOTHING HERE RESIZES THE FACE ANY MORE. There used to be a second set of sizes for
+ * tiles — name 15px, species 7px, rank 22px, padding halved — picked to look right at
+ * tile size. They did, standing still. In motion they were the whole of the snap: Flip
+ * puts the card at its final layout size from the first frame and scales it, so with a
+ * tile title of 15px and a 2.18x scale the title was drawn at 32.6px against the 30px
+ * it had a frame earlier, and the species line at 15.2px against 9px. Sizing the face
+ * from the card's own width instead makes a tile a scaled card, and the step is gone.
+ */
 
 /* ---- choosing a photograph ----------------------------------------------- */
 
@@ -1204,4 +1252,3 @@ select.field__in { appearance: none; }
 
 .shot__btn:hover { color: var(--lit); box-shadow: inset 0 0 0 1px rgba(243, 241, 232, 0.3); }
 
-.card--tile .face__panel { border-radius: 50% 50% 6px 6px / 44% 44% 6px 6px; }

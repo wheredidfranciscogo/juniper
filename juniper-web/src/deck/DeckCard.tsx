@@ -316,6 +316,11 @@ export const DeckCard = React.memo(function DeckCard({
               {rank}
             </span>
 
+            {/*
+              Both suits pass ONE size. They used to take a different pixel size per
+              view, which made them step across the flip like the type did; deck.css
+              now sizes them in cqw and CSS beats the width/height attributes.
+            */}
             <div
               className={`face__panel${photo ? ' face__panel--photo' : ''}`}
               style={{ backgroundColor: ground }}
@@ -323,13 +328,13 @@ export const DeckCard = React.memo(function DeckCard({
               {photo ? (
                 <img className="face__photo" src={photo} alt="" />
               ) : (
-                <Suit name={plant.icon} size={grid ? 52 : 150} />
+                <Suit name={plant.icon} size={150} />
               )}
 
             </div>
 
             <span className="face__suit" aria-hidden="true">
-              <Suit name={plant.icon} size={grid ? 18 : 34} />
+              <Suit name={plant.icon} size={34} />
             </span>
           </div>
 
