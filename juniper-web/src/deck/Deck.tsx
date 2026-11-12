@@ -867,6 +867,24 @@ export function Deck() {
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      /*
+       * A SHORTCUT IS A LETTER FIRST. These are bound on the window, so they fired
+       * while a form field had focus and preventDefault ate the keystroke: no space in
+       * a plant's name, and no 'g' or 'w' either — "Fig" and "Willow" came out short.
+       *
+       * Two guards, because they are two different wrongs. A sheet being open means
+       * nothing should reach the card behind it at all. Anything typable means the key
+       * belongs to whatever is being typed, sheet or not.
+       */
+      if (editing || backing) return;
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest('input, textarea, select, [contenteditable]')
+      ) {
+        return;
+      }
+
       if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         turn(!isTurned);
@@ -886,7 +904,7 @@ export function Deck() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isTurned, next, prev, toggleView, turn, water]);
+  }, [backing, editing, isTurned, next, prev, toggleView, turn, water]);
 
   /**
    * Deal the pass again, in thirst order.
