@@ -23,6 +23,7 @@ import {
   importGardenFile,
   saveGardenFile,
 } from '../lib/backup';
+import { deletePhotos } from '../lib/photos';
 import { useStore } from '../lib/store';
 
 /**
@@ -99,6 +100,7 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
   /** Picked, and waiting to be confirmed. Nothing has been touched yet. */
   const [pending, setPending] = React.useState<File | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [clearing, setClearing] = React.useState(false);
   const [note, setNote] = React.useState<Note | null>(null);
   const [lastSaved, setLastSaved] = React.useState<string | null>(() => readLastSaved());
   const now = React.useMemo(() => Date.now(), []);
@@ -147,6 +149,18 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
             : `Saved as ${built.name}. Keep it somewhere that is not this browser.`,
       });
     });
+  };
+
+  /**
+   * Back to the first screen. The demo garden is offered on that screen, so there has
+   * to be a way out of it; without one the only route was removing eight plants one at
+   * a time. `replaceGarden` with nothing in it IS that — no new store action needed.
+   */
+  const startOver = () => {
+    // The store does not touch storage, so the Blobs are this caller's to clean up.
+    void deletePhotos(plants.flatMap((plant) => plant.photos.map((photo) => photo.uri)));
+    replaceGarden({ plants: [], log: [], profile: { userName } });
+    onClose();
   };
 
   const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,6 +242,21 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
               </button>
             </div>
           </div>
+        ) : clearing ? (
+          <div className="sheet__confirm">
+            <span>
+              Delete all {count} and start over? This cannot be undone — save a backup
+              first if you want to keep this garden.
+            </span>
+            <div className="sheet__confirm-row">
+              <button type="button" className="sheet__no" onClick={() => setClearing(false)}>
+                keep mine
+              </button>
+              <button type="button" className="sheet__yes" onClick={startOver}>
+                delete
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="sheet__foot">
             <button
@@ -253,6 +282,12 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
             >
               {busy ? 'restoring…' : 'restore from a file'}
             </button>
+
+            {!empty && (
+              <button type="button" className="sheet__remove" onClick={() => setClearing(true)}>
+                start over
+              </button>
+            )}
           </div>
         )}
 
