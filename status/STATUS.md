@@ -50,7 +50,7 @@ Progress against the new, much smaller scope: ~75%.
 
 ## ✅ Recently done
 
-### 2026-11-12 — The deck becomes self-sufficient, and the repo becomes one app
+### 2026-11-12 — The deck becomes self-sufficient, the repo becomes one app, and Juniper becomes Rayen
 
 **Backing up is reachable from the thing people actually use.** Export and import lived
 in the grid app's footer, which was fine while the deck was a page you reached past an
@@ -75,6 +75,15 @@ a 0.0% step now, and it costs nothing per frame. Calibrated to the card's *layou
 no `w`; "Fig" and "Willow" came out short, Enter would not submit, and space turned the
 card behind the open sheet. Unnoticed until now because the demo garden filled those
 fields in.
+
+**The app is called Rayen now** — Mapudungun for "flower". Renamed everywhere a person
+sees it: both page titles, the manifest, the deck's wordmark, the grid's welcome, the
+share sheet, and the exported file. The storage identity was deliberately NOT renamed —
+`@juniper/store`, the `juniper` IndexedDB database and the `juniper.garden` format string
+are the address of somebody's garden and the magic string in every backup ever written,
+so renaming them would orphan a garden rather than move it. `juniper-web/` became
+`rayen-web/` and the GitHub repo became `…/rayen`; the deployed URL did not change,
+because storage is per-origin and moving it would strand the garden on the old domain.
 
 **The repo is one app again.** `juniper-app/` and `juniper-website/` are gone, with the
 root `vercel.json` and the Maestro e2e workflow. CI and `RUN_TEST.sh` now point at
