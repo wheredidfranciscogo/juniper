@@ -67,8 +67,9 @@ Do not work the old queue. Work this one.
 
 - [x] **Point CI at the web app, or turn it off.** Done 2026-11-12. `ci.yml` and
       `RUN_TEST.sh` now run `juniper-web`'s tsc, tests and build; the Maestro workflow is
-      deleted. Billing is still unverified since 2026-08-30, so CI still cannot be trusted
-      green or red — that part is now tracked in STATUS.md's blocked list alone.
+      deleted. The billing worry that was restated here was already closed (see "CI billing
+      blocker closed" below) and was re-listed by mistake; the repointed workflow has since
+      run green on `f661f81`, `f78147c` and `95e741c`, so CI is trusted again.
 
 - [ ] **Fold the `--dryness` finding back into the design handoff.** `rayen-design/`
       still describes the native component set. The ramp's endpoints now live in two

@@ -355,9 +355,6 @@ Nothing is blocked on code. What is left is time and real plants.
 - **There is no service worker**, so the installed app needs the network on first paint of
   each session. The manifest alone was enough to get it on the home screen and to earn the
   eviction exemption; offline is a separate, unmade decision.
-- **GitHub Actions was last seen failing on billing, not code** — not re-verified since
-  2026-08-30, so CI cannot be trusted green *or* red. Settings → Billing & plans. The
-  workflow itself now points at the right app, which it did not before 2026-11-12.
 - **GitHub's Dependabot count lags the repo.** It read 74 for some time after the trim,
   against two lockfiles that no longer exist. `npm audit` in `rayen-web` is the ground
   truth and reports none.
