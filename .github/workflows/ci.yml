@@ -1,9 +1,10 @@
 name: CI
 
-# Lives at the repository root — GitHub only reads workflows from /.github/workflows,
-# and this file used to sit inside juniper-app/, which stopped working the moment the
-# three repos were collapsed into one (DECISIONS.md D4). Every step therefore runs with
-# juniper-app as its working directory.
+# Lives at the repository root — GitHub only reads workflows from /.github/workflows.
+# Every step runs with juniper-web as its working directory, which is the only thing
+# left that builds: the native app was frozen when Juniper became a web app
+# (DECISIONS.md D13) and then removed, and the e2e workflow went with it, being
+# Maestro against an Android binary that is no longer produced.
 
 on:
   push:
@@ -13,7 +14,7 @@ on:
 
 defaults:
   run:
-    working-directory: juniper-app
+    working-directory: juniper-web
 
 jobs:
   test:
@@ -26,7 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: juniper-app/package-lock.json
+          cache-dependency-path: juniper-web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -35,18 +36,10 @@ jobs:
         run: npm run typecheck
 
       - name: Unit & component tests
-        run: npm run test:ci
+        run: npm test
 
-      - name: Verify the iOS bundle builds
-        # Catches broken imports, missing screens, and route-resolution issues that
-        # unit tests miss. This was `--platform web` until the web target was dropped
-        # (D1); iOS is now the canonical bundle check.
-        run: npx expo export --platform ios --output-dir /tmp/expo-export
-
-      - name: Upload coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: juniper-app/coverage/
-          if-no-files-found: ignore
+      - name: Verify both pages build
+        # The deck is index.html and the grid is grid.html, and a build that takes only
+        # one of them has happened before — it shipped a production deploy with no deck
+        # in it. This is the step that would have caught it.
+        run: npm run build

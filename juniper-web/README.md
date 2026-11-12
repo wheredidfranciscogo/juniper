@@ -9,7 +9,7 @@ leaving the grid; tapping a square grows it into the plant's full record.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 98 tests
+npm test           # 116 tests
 npm run build      # tsc --noEmit && vite build
 ```
 
@@ -17,8 +17,12 @@ npm run build      # tsc --noEmit && vite build
 
 See `juniper-design/DECISIONS.md` **D13**. In short: the one feature that justified being
 native — the watering reminder — never fired on real hardware once, while the app sat
-unopened for two months and its build expired. The Expo app is frozen, not deleted; its
-git history is this project's history.
+unopened for two months and its build expired.
+
+The Expo app was frozen, and has now been removed: it never shipped again, and all that
+was left of it in practice was a build toolchain generating dependency alerts for a
+binary nobody cuts. Its git history is still this project's history — `git log` before
+`9a5b078` reaches all of it, and `git show` will hand back any file from it.
 
 ## Layout
 
@@ -33,9 +37,8 @@ src/
 
 `lib/dryness.ts`, `lib/watering.ts`, `lib/stats.ts`, `lib/cover.ts`, `lib/today-utils.ts`
 and `data/seed.ts` were **copied byte for byte from the native app**, along with 74 of
-their tests. They have no DOM and no React in them. If you change one, consider whether
-the change belongs in the frozen `juniper-app/` copy too — or whether that copy should
-finally go.
+their tests. They have no DOM and no React in them. These are now the only copies —
+there is no second one to keep in sync any more.
 
 ## Three things that will bite you
 

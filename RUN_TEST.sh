@@ -3,26 +3,24 @@
 #
 # Called by project-test after each work cycle. Exit 0 = pass.
 #
-# Scope: juniper-app only. There is nothing else to test —
-#   * juniper-website is four static HTML files with no build step (D5)
-#   * juniper-design is a frozen prototype and design assets
+# Scope: juniper-web, which is now the whole of Juniper. The native app this script
+# used to run is gone (frozen at DECISIONS.md D13, then removed), and with it the
+# Maestro E2E workflow and the Expo bundle check.
 #
 # What's checked:
-#   [1] tsc --noEmit          — the canonical "still clean?" gate
-#   [2] jest                  — unit + component + route-gate + screen smoke suites
-#   [3] expo export --ios     — catches broken imports and route-resolution breakage
-#                               that unit tests miss (was --platform web until the web
-#                               target was dropped; see DECISIONS.md D1)
+#   [1] tsc --noEmit  — the canonical "still clean?" gate
+#   [2] vitest        — unit, lib and component suites
+#   [3] vite build    — catches broken imports, and that BOTH pages are built; a build
+#                       taking only index.html once shipped a deploy with no deck in it
 #
 # Deliberately NOT checked here:
-#   * Maestro E2E — needs a booted emulator and a built binary; manual workflow only
-#   * Native builds — EAS, too slow for the loop
-#   * Notification delivery — needs a real device on a dev build (D6)
+#   * Anything needing a browser — motion and layout are verified by hand in real
+#     Chrome, because the in-app preview pane reports frozen frames as real
 
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_ROOT/juniper-app"
+cd "$PROJECT_ROOT/juniper-web"
 
 echo "==> Juniper test suite"
 echo "    cwd: $(pwd)"
@@ -38,14 +36,13 @@ npx --no-install tsc --noEmit
 echo "      OK"
 echo ""
 
-echo "[2/3] jest..."
-npm run test:ci --silent
+echo "[2/3] vitest..."
+npm test --silent
 echo "      OK"
 echo ""
 
-echo "[3/3] expo export --platform ios..."
-npx --no-install expo export --platform ios --output-dir /tmp/juniper-export >/dev/null
-rm -rf /tmp/juniper-export
+echo "[3/3] vite build..."
+npm run build --silent >/dev/null
 echo "      OK"
 echo ""
 
