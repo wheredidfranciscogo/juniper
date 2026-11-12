@@ -2,7 +2,7 @@
  * The deck's suits: one solid silhouette per kind of plant.
  *
  * WHY THESE ARE NOT THE LINE-ART ICONS. components/icons.tsx holds one-weight stroked
- * drawings, shared verbatim with the native app and juniper-design, and they are right
+ * drawings, shared verbatim with the native app and rayen-design, and they are right
  * where they are. They are wrong on a card. A stroked drawing at 14px — the size of a
  * suit in a corner — is a 1.5px line enclosing a 2px gap, and it silts up into a blob;
  * every real suit on every real card is a solid shape for exactly that reason. Clubs and

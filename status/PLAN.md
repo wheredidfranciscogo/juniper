@@ -3,7 +3,7 @@
 > Rewritten 2026-08-15. The previous version was titled "Jungle Jungle", planned a
 > Supabase backend, and carried a three-phase roadmap ending in a neighbourhood
 > plant-sitting marketplace. It described a company. This describes a tool.
-> Load-bearing calls live in [`juniper-design/DECISIONS.md`](../juniper-design/DECISIONS.md).
+> Load-bearing calls live in [`rayen-design/DECISIONS.md`](../rayen-design/DECISIONS.md).
 
 ## 🎯 Goal
 

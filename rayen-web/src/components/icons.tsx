@@ -3,7 +3,7 @@
  * One-weight stroke, no fills, hand-drawn feel.
  *
  * Path data is identical to the native app's components/icons/index.tsx, which took it
- * from juniper-design/icons.jsx — keep all three in sync. Only the element names change
+ * from rayen-design/icons.jsx — keep all three in sync. Only the element names change
  * (react-native-svg's <Path> is the web's <path>), and `stroke` inherits from
  * `currentColor` so a square's silhouette can be coloured by CSS rather than by a prop.
  */

@@ -16,7 +16,7 @@ If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 
 ## ⚠️ Everything below "Phase 1 — Useful" is about an app that no longer exists
 
-Juniper became a web app on 2026-11-08 ([D13](../juniper-design/DECISIONS.md)), and
+Juniper became a web app on 2026-11-08 ([D13](../rayen-design/DECISIONS.md)), and
 `juniper-app/` was **deleted** on 2026-11-12. The native queue below is **kept as a
 record, not as work** — it says what was done and what was outstanding when the app was
 retired. Its items (EAS builds, TestFlight, Play internal, the Maestro suite, the
@@ -70,7 +70,7 @@ Do not work the old queue. Work this one.
       deleted. Billing is still unverified since 2026-08-30, so CI still cannot be trusted
       green or red — that part is now tracked in STATUS.md's blocked list alone.
 
-- [ ] **Fold the `--dryness` finding back into the design handoff.** `juniper-design/`
+- [ ] **Fold the `--dryness` finding back into the design handoff.** `rayen-design/`
       still describes the native component set. The ramp's endpoints now live in two
       places that must agree (`rayen-web/src/lib/ramp.ts` and `styles/tokens.css`), and
       the handoff should say which is canonical.
@@ -372,11 +372,11 @@ build expiry; take them when SDK 57 is wanted for its own sake.
 
 ### 2026-08-15 — Phase 0 restructure
 
-- [x] **Plan rewritten against a decision record.** `juniper-design/DECISIONS.md` created
+- [x] **Plan rewritten against a decision record.** `rayen-design/DECISIONS.md` created
       (D1–D9); PLAN.md, STATUS.md and this file rewritten to match. Supabase cut, web app
       cut, Phase 3 deleted, notifications promoted to the front of the queue.
 - [x] **Collapsed to one repo** (`570d211`). Three repos → one at the wrapper folder,
-      `juniper-app` history preserved (87 renames detected). `juniper-design/` and `status/`
+      `juniper-app` history preserved (87 renames detected). `rayen-design/` and `status/`
       now under version control. Stranded June working-tree edits committed; stray
       `hyperlocal/` removed.
 - [x] **Website replaced with static HTML** (`bf0f3ff`). Four files, root `vercel.json`,

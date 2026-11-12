@@ -326,7 +326,9 @@ nothing has a single history.
 **Decision.** One repo at `juniper-project/`, mirroring Alchemilla exactly:
 `github.com/wheredidfranciscogo/juniper`, containing `juniper-app/`, `juniper-website/`,
 `juniper-design/` and `status/`. (Renamed to `…/rayen` on 2026-11-12 with the app itself;
-GitHub redirects the old URL.)
+GitHub redirects the old URL. `juniper-web/` became `rayen-web/` and `juniper-design/`
+became `rayen-design/` the same day. The two names above are what these were called in
+August and are left alone.)
 
 **Why.** Alchemilla's clean sync state is not luck — it is the consequence of there being
 exactly one place for things to be. One history, one set of PRs, one status folder that

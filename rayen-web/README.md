@@ -19,7 +19,7 @@ npm run build      # tsc --noEmit && vite build
 
 ## Why this exists and `juniper-app/` doesn't
 
-See `juniper-design/DECISIONS.md` **D13**. In short: the one feature that justified being
+See `rayen-design/DECISIONS.md` **D13**. In short: the one feature that justified being
 native — the watering reminder — never fired on real hardware once, while the app sat
 unopened for two months and its build expired.
 

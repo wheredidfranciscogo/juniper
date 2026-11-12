@@ -3,7 +3,7 @@
  *
  * A tinted panel, a botanical silhouette at low opacity, and the species in italic
  * serif. Ported from the native app's components/Pressing.tsx, which took it from
- * juniper-design/pressing.jsx.
+ * rayen-design/pressing.jsx.
  *
  * It is deliberately not a grey "no image" box. A new garden is mostly pressings, so
  * this is the first thing anyone sees, and it has to look like a choice rather than an

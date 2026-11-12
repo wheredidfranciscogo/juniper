@@ -8,26 +8,26 @@ One repo, two folders and this record:
 | Folder | Purpose | Stack |
 |---|---|---|
 | [`rayen-web/`](../rayen-web) | **The product** | Vite · React 19 · TypeScript · plain CSS · GSAP Flip |
-| [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
+| [`rayen-design/`](../rayen-design) | Frozen design handoff + [`DECISIONS.md`](../rayen-design/DECISIONS.md) | Standalone React-in-browser prototype |
 
 `juniper-app/` (the retired Expo app) and `juniper-website/` (the marketing site) were
 removed on 2026-11-12 — see that day's entry below. Git still holds all of it.
 
-**Read [`DECISIONS.md`](../juniper-design/DECISIONS.md) first.** It holds the load-bearing calls
+**Read [`DECISIONS.md`](../rayen-design/DECISIONS.md) first.** It holds the load-bearing calls
 (D1–D14) and wins over anything written here. Note that **D13 supersedes D1** — Juniper used to
 be native-only — and **demotes D7**, which called the watering reminder "the product".
 
 ## 📌 Current phase
 
 **Deployed, installed on a phone, and in use.** Rayen moved off Expo on 2026-11-08
-([D13](../juniper-design/DECISIONS.md)) and went live on 2026-11-11, since 2026-11-12 at
+([D13](../rayen-design/DECISIONS.md)) and went live on 2026-11-11, since 2026-11-12 at
 `rayen-garden.vercel.app`, where `/` is the deck and `/grid` is the grid. The original
 `juniper-navy.vercel.app` still serves the same deployment. It installs to the home
 screen, which is also what stops iOS evicting the garden. 119 tests pass across 10
 suites, tsc is clean, and `npm audit` reports nothing.
 
 **Why the pivot.** The reminder — the one feature that genuinely required a native app,
-and which [D7](../juniper-design/DECISIONS.md) called "the product" — has never fired on
+and which [D7](../rayen-design/DECISIONS.md) called "the product" — has never fired on
 real hardware once in the project's life. Meanwhile the app sat unopened for two months
 and its preview build expired unused. Native bought a notification nobody ever received,
 at the cost of an install step and four and a half minutes between a change and seeing it.
@@ -106,7 +106,7 @@ dev dependencies, fixed by vite 6.4.6 and vitest 5.1.0.
 
 ### 2026-11-08 — Juniper becomes a web app, and the grid is seen for the first time
 
-**The pivot** is [D13](../juniper-design/DECISIONS.md), and the reasoning is in Current
+**The pivot** is [D13](../rayen-design/DECISIONS.md), and the reasoning is in Current
 phase above. New `juniper-web/` (renamed `rayen-web/` on 2026-11-12); `juniper-app/` frozen
 with a `FROZEN.md` saying so (both since removed — 2026-11-12; unlinked here because the
 paths are gone, though the words were true on the day). Haptics are gone, photos are a
@@ -129,7 +129,7 @@ from tests. All of it came from looking.
    make satisfying. The order is now frozen while the page is open and recomputed only
    when the set of plants changes. There is a test.
 
-3. **The ramp was silently broken in CSS, twice** — now [D14](../juniper-design/DECISIONS.md).
+3. **The ramp was silently broken in CSS, twice** — now [D14](../rayen-design/DECISIONS.md).
    First `background-color: color-mix(in oklab, …var(--dryness)…)` with a transition, then
    a tall gradient slid by `background-position`. Both resolve once at first paint and
    never again; no transition events fire at all. Watering a plant updated the store, the
@@ -297,7 +297,7 @@ and the post-onboarding red overlay was properly fixed in `c6b9419` by moving th
 gate to `Stack.Protected`. Nobody flipped the markers, so the autonomous loop refused to
 advance for eleven weeks while ~20 commits of real June work went unrecorded.
 
-**Decision record written.** [`juniper-design/DECISIONS.md`](../juniper-design/DECISIONS.md),
+**Decision record written.** [`rayen-design/DECISIONS.md`](../rayen-design/DECISIONS.md),
 D1–D9, modelled on Alchemilla's — which is the one mechanism Alchemilla had and Juniper didn't.
 Headlines: native-only, no web app; on-device AsyncStorage with Supabase deleted from the plan;
 no sync in v1 *and* no sync decision yet, because CloudKit doesn't transfer to Android; the
@@ -306,7 +306,7 @@ watering reminder is the product; Phase 3 social deleted entirely.
 **Phase 0 restructure shipped** in three commits:
 - `570d211` **One repo.** Three repos collapsed into one rooted at the wrapper folder, with
   `juniper-app`'s history preserved (87 renames detected, so `log --follow` still works).
-  `juniper-design/` and `status/` are under version control for the first time. Folded in the
+  `rayen-design/` and `status/` are under version control for the first time. Folded in the
   stranded `app.json` / `package.json` edits that had sat uncommitted since June, and removed
   the stray `hyperlocal/` spillover.
 - `bf0f3ff` **Static website.** The Next.js tracker in `juniper-website/` replaced with four
@@ -389,7 +389,7 @@ juniper-project/
 │       ├── components/         ← icons, Pressing, WaterButton, Pill, LogFeed
 │       └── app/                ← splash → (onboarding) → (tabs) + plant/[id] + add/
 ├── juniper-website/            ← four static files
-├── juniper-design/
+├── rayen-design/
 │   ├── DECISIONS.md            ← D1–D9. Read this first.
 │   └── README.md               ← the fidelity handoff
 └── status/                     ← PLAN.md · TASKS.md · STATUS.md · status.json
