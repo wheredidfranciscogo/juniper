@@ -197,6 +197,28 @@ function isoOr(v: unknown, fallback: string): string {
 }
 
 /**
+ * A photograph's uri, if it points somewhere this app would have written.
+ *
+ * ONLY `data:`. An export inlines every photograph as a data URL, so that is the only
+ * scheme a real Juniper file carries. Before this check the field took any string and
+ * handed it to an <img src> — which meant a garden file from someone else could make a
+ * plant card fetch an arbitrary URL every time it rendered, reporting the reader's IP,
+ * user agent and the time back to whoever wrote the file. Not script execution; an
+ * <img> will not run `javascript:` or `data:text/html`. A beacon, quietly, forever.
+ *
+ * `idb:` is deliberately NOT accepted either. It is a reference into THIS browser's
+ * IndexedDB, so one arriving from outside names a local blob that is either missing or,
+ * worse, somebody else's photograph.
+ */
+function photoURI(raw: unknown, plantName: string, warnings: string[]): string | undefined {
+  const uri = str(raw);
+  if (!uri) return undefined;
+  if (uri.startsWith('data:')) return uri;
+  warnings.push(`A photograph of ${plantName} pointed outside the file and was dropped.`);
+  return undefined;
+}
+
+/**
  * Parse one plant, or return null if it cannot stand on its own.
  *
  * A plant needs an id and a name; everything else has a defensible default, because
@@ -241,7 +263,7 @@ function readPlant(raw: unknown, nowISO: string, warnings: string[]): Plant | nu
       .map((x) => ({
         date: str(x.date) ?? nowISO.slice(0, 10),
         label: str(x.label),
-        uri: str(x.uri),
+        uri: photoURI(x.uri, name, warnings),
       })),
     journal: journal
       .filter((x): x is Record<string, unknown> => !!x && typeof x === 'object')
