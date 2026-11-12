@@ -14,8 +14,11 @@
 import { createRoot } from 'react-dom/client';
 
 import '../styles/deck.css';
+import { registerOffline } from '../lib/offline';
 import { StoreProvider } from '../lib/store';
 import { Deck } from './Deck';
+
+registerOffline();
 
 const host = document.getElementById('root');
 if (!host) throw new Error('#root is missing from index.html');

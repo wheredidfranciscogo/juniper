@@ -23,7 +23,7 @@ be native-only — and **demotes D7**, which called the watering reminder "the p
 ([D13](../rayen-design/DECISIONS.md)) and went live on 2026-11-11, since 2026-11-12 at
 `rayen-garden.vercel.app`, where `/` is the deck and `/grid` is the grid. The original
 `juniper-navy.vercel.app` still serves the same deployment. It installs to the home
-screen, which is also what stops iOS evicting the garden. 119 tests pass across 10
+screen, which is also what stops iOS evicting the garden. 127 tests pass across 11
 suites, tsc is clean, and `npm audit` reports nothing.
 
 **Why the pivot.** The reminder — the one feature that genuinely required a native app,
@@ -51,6 +51,37 @@ against a demo garden rather than real plants over real weeks.
 Progress against the new, much smaller scope: ~75%.
 
 ## ✅ Recently done
+
+### 2026-11-12 — Rayen opens without a network
+
+**There is a service worker now.** The manifest had already put the app on the home
+screen and kept iOS from evicting the garden, but it still needed a network to draw its
+first frame — a watering app that would not open in the garden. `offline.plugin.ts` emits
+`sw.js` at build time with the hashed bundle list baked in, because a browser only
+reinstalls a worker whose bytes changed; a new deploy is therefore a new worker, which
+downloads a complete copy of the app before replacing the old one. No dependency was
+added for it.
+
+**Three rules.** Pages are network-first, so a deploy shows up the next time the app is
+opened online, and the fresh page is deliberately *not* written back to the cache — it
+may name bundles the installed worker never fetched. Bundles are cache-first, because
+their names carry a content hash. Fonts are kept as they pass through, in a cache that
+survives deploys.
+
+**The fonts were the hard part.** They come from Google, so they cannot be in the build's
+list. Three things followed from that. A worker's own fetches answer to `connect-src`,
+so the two font hosts had to be added there. The stylesheet `<link>`s gained
+`crossorigin`, because an opaque response cannot be checked before it is kept. And on a
+first visit the page has already fetched its fonts before any worker exists, so the page
+asks for them again the moment the worker takes over — without that, "installed once,
+then opened offline" draws the whole app in fallback type.
+
+**Checked the only honest way available at a desk:** a production build served with
+`vercel.json`'s exact headers, a true first visit, then the server killed. Both pages
+opened from the cache with the garden and all four faces intact, and a rebuild replaced
+the old cache cleanly. Eight tests run the worker's real source against a fake browser
+and hold it to the rules above; breaking one fails one. Not yet checked: the phone, in
+airplane mode.
 
 ### 2026-11-12 — The deck becomes self-sufficient, the repo becomes one app, and Juniper becomes Rayen
 
@@ -349,9 +380,9 @@ Nothing is blocked on code. What is left is time and real plants.
   plants over real weeks answer.
 - **Rayen has no reminders at all.** A deliberate bet (D13) — the deck is meant to be the
   reminder — but a bet, and the only thing that settles it is whether use happens anyway.
-- **There is no service worker**, so the installed app needs the network on first paint of
-  each session. The manifest alone was enough to get it on the home screen and to earn the
-  eviction exemption; offline is a separate, unmade decision.
+- **Offline is unconfirmed on the phone.** The service worker is live and was proven at
+  a desk — a production build, the real headers, the server killed — but not yet in
+  WebKit's standalone mode with no signal, which is the only place it matters.
 - **GitHub's Dependabot count lags the repo.** It read 74 for some time after the trim,
   against two lockfiles that no longer exist. `npm audit` in `rayen-web` is the ground
   truth and reports none.

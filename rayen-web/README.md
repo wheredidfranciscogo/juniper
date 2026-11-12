@@ -39,6 +39,7 @@ src/
   styles/       tokens.css is the design system; the rest is per-component
   App.tsx       the grid, mounted by grid.html
   deck/main.tsx the deck, mounted by index.html
+offline.plugin.ts   the service worker, and the build step that writes it
 ```
 
 **Both pages are build inputs** (`vite.config.ts`). A build that takes only `index.html`
@@ -49,7 +50,7 @@ and `data/seed.ts` were **copied byte for byte from the native app**, along with
 their tests. They have no DOM and no React in them. These are now the only copies —
 there is no second one to keep in sync any more.
 
-## Five things that will bite you
+## Six things that will bite you
 
 **1. The ramp is TypeScript, not CSS, and that is deliberate.** `lib/ramp.ts` interpolates
 in OKLab and the tile sets a concrete `background-color`. Two CSS versions were written
@@ -82,11 +83,21 @@ which forces `transform-style: flat` and would collapse the 3D turn if you put i
 `.card` or `.card__flip`; and the ratios are calibrated against the card's **layout**
 width, because the fan's rotation inflates its bounding rect.
 
+**6. The service worker is a string, and its fetches answer to `connect-src`.**
+`offline.plugin.ts` writes `sw.js` at build time with the hashed bundle list baked in,
+because a browser only reinstalls a worker whose bytes changed. Nothing type-checks that
+string; `lib/__tests__/offline.test.ts` runs it against a fake browser instead. Pages are
+network-first and are never written back to the cache, so the cache only ever holds a
+page and bundles that belong together. And a worker's own `fetch()` is governed by
+`connect-src` — not `style-src` or `font-src` — which is the only reason the two Google
+font hosts appear there in `vercel.json`. Take them out and fonts break offline, quietly.
+
 ## Not done
 
 - No reminders of any kind — a deliberate bet (D13), not an oversight.
 - The log and the per-plant journal are readable but not writable; there is no way to add
   a note from the UI yet.
-- **No service worker.** The manifest ships and the app installs, but it still needs the
-  network on first paint of each session. Offline is a separate, unmade decision.
+- Offline covers the app and the fonts it has already drawn with. `/grid` asks for a
+  slightly different font stylesheet than the deck, so it falls back to system type
+  offline until it has been opened once with a network.
 - Judged against a demo garden over days, not real plants over weeks.

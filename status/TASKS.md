@@ -52,9 +52,14 @@ Do not work the old queue. Work this one.
       what exempts the origin from WebKit's seven-day eviction of script-writable storage,
       which matters more than the home-screen icon does.
 
-- [ ] **Decide on a service worker.** Not done with the manifest, and not the same
-      decision: the app still needs the network on first paint of each session. It is also
-      the precondition for ever having Web Push on iOS.
+- [x] **Decide on a service worker.** Done 2026-11-12: there is one. Hand-written, no
+      dependency, emitted by `offline.plugin.ts` with the bundle list baked in. Pages
+      network-first, bundles cache-first, fonts kept as they pass through. Checked against
+      a production build served with `vercel.json`'s headers and then with the server
+      killed: both pages open, garden and type intact. It is also the precondition for
+      ever having Web Push on iOS, which nothing here uses.
+- [ ] **Confirm offline on the phone.** Open the installed app once with a network, then
+      again in airplane mode. The desk check cannot stand in for WebKit in standalone.
 
 - [ ] **Writing, not just reading.** The per-plant journal and the log render but cannot
       be added to from the UI. The data model and the store action (`logAction`) already
