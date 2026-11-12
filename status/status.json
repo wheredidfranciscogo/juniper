@@ -33,7 +33,7 @@
       "since": "2026-11-12"
     },
     {
-      "description": "GitHub Actions billing unverified since 2026-08-30, so CI cannot be trusted green or red. The workflow itself now points at juniper-web, which it did not before 2026-11-12.",
+      "description": "GitHub Actions billing unverified since 2026-08-30, so CI cannot be trusted green or red. The workflow itself now points at rayen-web, which it did not before 2026-11-12.",
       "needs": "human",
       "since": "2026-08-30"
     }

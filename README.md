@@ -46,7 +46,7 @@ manifest is what stops a garden quietly emptying itself.
 ## Layout
 
 ```
-juniper-web/      the app — Vite · React 19 · TypeScript · plain CSS · GSAP Flip
+rayen-web/      the app — Vite · React 19 · TypeScript · plain CSS · GSAP Flip
 juniper-design/   the design handoff, and DECISIONS.md
 status/           the project's own running record
 ```
@@ -59,7 +59,7 @@ one feature that justified being native had never once fired on real hardware.
 ## Running it
 
 ```bash
-cd juniper-web
+cd rayen-web
 npm install
 npm run dev        # http://localhost:5173
 npm test           # 116 tests

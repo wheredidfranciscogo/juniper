@@ -7,7 +7,7 @@ One repo, two folders and this record:
 
 | Folder | Purpose | Stack |
 |---|---|---|
-| [`juniper-web/`](../juniper-web) | **The product** | Vite · React 19 · TypeScript · plain CSS · GSAP Flip |
+| [`rayen-web/`](../rayen-web) | **The product** | Vite · React 19 · TypeScript · plain CSS · GSAP Flip |
 | [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
 
 `juniper-app/` (the retired Expo app) and `juniper-website/` (the marketing site) were
@@ -87,7 +87,7 @@ dev dependencies, fixed by vite 6.4.6 and vitest 5.1.0.
 ### 2026-11-08 — Juniper becomes a web app, and the grid is seen for the first time
 
 **The pivot** is [D13](../juniper-design/DECISIONS.md), and the reasoning is in Current
-phase above. New [`juniper-web/`](../juniper-web); `juniper-app/` frozen
+phase above. New `juniper-web/` (renamed `rayen-web/` on 2026-11-12); `juniper-app/` frozen
 with a `FROZEN.md` saying so (both since removed — 2026-11-12; unlinked here because the
 paths are gone, though the words were true on the day). Haptics are gone, photos are a
 file input, export is a download — each *smaller* than the native module it replaced.
@@ -120,7 +120,7 @@ from tests. All of it came from looking.
    same blind spot the native app has, where Reanimated is mocked to a plain View and
    `interpolateColor` returns a constant. The grid's entire purpose is a colour, and the
    colour was the one thing nothing checked. It is now a pure OKLab function in
-   [`src/lib/ramp.ts`](../juniper-web/src/lib/ramp.ts) with 8 tests asserting it directly,
+   [`src/lib/ramp.ts`](../rayen-web/src/lib/ramp.ts) with 8 tests asserting it directly,
    including that it **saturates** past due, so ninety days late is the colour of due today.
 
 **Smaller things found by looking:** the expanded card's photo filled the viewport and
@@ -339,7 +339,7 @@ Nothing is blocked on code. What is left is time and real plants.
   2026-08-30, so CI cannot be trusted green *or* red. Settings → Billing & plans. The
   workflow itself now points at the right app, which it did not before 2026-11-12.
 - **GitHub's Dependabot count lags the repo.** It read 74 for some time after the trim,
-  against two lockfiles that no longer exist. `npm audit` in `juniper-web` is the ground
+  against two lockfiles that no longer exist. `npm audit` in `rayen-web` is the ground
   truth and reports none.
 
 ## 💬 Notes

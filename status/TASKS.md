@@ -28,7 +28,7 @@ Do not work the old queue. Work this one.
 ## Web — the only live queue
 
 - [x] **DEPLOY IT.** Done 2026-11-11. Live at `juniper-navy.vercel.app`, `/` the deck and
-      `/grid` the grid. Git pushes deploy it; the project's root directory is `juniper-web`,
+      `/grid` the grid. Git pushes deploy it; the project's root directory is `rayen-web`,
       which it was not at first — the root `vercel.json` pointed at the marketing site and
       would have replaced the app with it.
 
@@ -72,7 +72,7 @@ Do not work the old queue. Work this one.
 
 - [ ] **Fold the `--dryness` finding back into the design handoff.** `juniper-design/`
       still describes the native component set. The ramp's endpoints now live in two
-      places that must agree (`juniper-web/src/lib/ramp.ts` and `styles/tokens.css`), and
+      places that must agree (`rayen-web/src/lib/ramp.ts` and `styles/tokens.css`), and
       the handoff should say which is canonical.
 
 ## Phase 1 — Useful

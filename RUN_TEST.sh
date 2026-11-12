@@ -3,7 +3,7 @@
 #
 # Called by project-test after each work cycle. Exit 0 = pass.
 #
-# Scope: juniper-web, which is now the whole of Juniper. The native app this script
+# Scope: rayen-web, which is now the whole of Juniper. The native app this script
 # used to run is gone (frozen at DECISIONS.md D13, then removed), and with it the
 # Maestro E2E workflow and the Expo bundle check.
 #
@@ -20,7 +20,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_ROOT/juniper-web"
+cd "$PROJECT_ROOT/rayen-web"
 
 echo "==> Juniper test suite"
 echo "    cwd: $(pwd)"

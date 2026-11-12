@@ -1,4 +1,4 @@
-# juniper-web
+# rayen-web
 
 Rayen, as a web app. A quiet record of the plants in your care.
 

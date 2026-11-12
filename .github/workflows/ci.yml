@@ -1,7 +1,7 @@
 name: CI
 
 # Lives at the repository root — GitHub only reads workflows from /.github/workflows.
-# Every step runs with juniper-web as its working directory, which is the only thing
+# Every step runs with rayen-web as its working directory, which is the only thing
 # left that builds: the native app was frozen when Juniper became a web app
 # (DECISIONS.md D13) and then removed, and the e2e workflow went with it, being
 # Maestro against an Android binary that is no longer produced.
@@ -14,7 +14,7 @@ on:
 
 defaults:
   run:
-    working-directory: juniper-web
+    working-directory: rayen-web
 
 jobs:
   test:
@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: juniper-web/package-lock.json
+          cache-dependency-path: rayen-web/package-lock.json
 
       - name: Install dependencies
         run: npm ci
