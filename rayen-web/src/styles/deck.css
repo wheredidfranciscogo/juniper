@@ -47,6 +47,28 @@
   padding: max(18px, env(safe-area-inset-top)) 22px 0;
 }
 
+/*
+ * INSTALLED ON AN iPHONE, THE HEADER SITS 44px LOWER, and nothing in this file blurs it.
+ *
+ * Since iOS 26 the system fades and blurs whatever a web app draws beneath the status bar
+ * — the same soft edge a native scroll view gets. Because this page runs full-bleed under
+ * a translucent status bar, that strip is ours, and the header used to start exactly at
+ * its top: the wordmark and both buttons came out smeared, worst at their upper edges.
+ * Measured off a screenshot, the fade ends roughly 37px below the safe-area inset.
+ *
+ * There is no CSS that turns the effect off, so the header steps out from under it. The
+ * two conditions keep that to the one place it happens: display-mode is the home-screen
+ * app, and -webkit-touch-callout is a property only iOS WebKit has. In Safari, where the
+ * browser's own bar sits above the page, nothing changes.
+ */
+@media (display-mode: standalone) {
+  @supports (-webkit-touch-callout: none) {
+    .deck__top {
+      padding-top: calc(env(safe-area-inset-top) + 44px);
+    }
+  }
+}
+
 .deck__mark {
   font-family: var(--serif);
   font-size: 20px;
