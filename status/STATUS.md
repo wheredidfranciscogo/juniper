@@ -3,14 +3,15 @@
 Juniper is a calm plant-care **web app** that shows you, at a glance, which of your plants
 need water. In your browser, no account, no server.
 
-One repo, four folders:
+One repo, two folders and this record:
 
 | Folder | Purpose | Stack |
 |---|---|---|
-| [`juniper-web/`](../juniper-web) | **The product** | Vite · React 19 · TypeScript · plain CSS |
-| [`juniper-app/`](../juniper-app) | **Frozen** — the retired Expo app ([why](../juniper-app/FROZEN.md)) | Expo SDK 54 · expo-router v6 · Reanimated v4 |
-| [`juniper-website/`](../juniper-website) | Marketing site + privacy/terms | Static HTML on Vercel |
+| [`juniper-web/`](../juniper-web) | **The product** | Vite · React 19 · TypeScript · plain CSS · GSAP Flip |
 | [`juniper-design/`](../juniper-design) | Frozen design handoff + [`DECISIONS.md`](../juniper-design/DECISIONS.md) | Standalone React-in-browser prototype |
+
+`juniper-app/` (the retired Expo app) and `juniper-website/` (the marketing site) were
+removed on 2026-11-12 — see that day's entry below. Git still holds all of it.
 
 **Read [`DECISIONS.md`](../juniper-design/DECISIONS.md) first.** It holds the load-bearing calls
 (D1–D14) and wins over anything written here. Note that **D13 supersedes D1** — Juniper used to
@@ -18,11 +19,11 @@ be native-only — and **demotes D7**, which called the watering reminder "the p
 
 ## 📌 Current phase
 
-**Rebuilt as a web app, and not yet deployed anywhere.** Juniper moved off Expo on
-2026-11-08 ([D13](../juniper-design/DECISIONS.md)). The garden grid, watering, the
-expanding plant card, photographs, add and remove, and export/import all work;
-98 tests pass across 7 suites, tsc is clean, and the production bundle is 68 kB gzipped
-against the native app's 4.43 MB.
+**Deployed, installed on a phone, and in use.** Juniper moved off Expo on 2026-11-08
+([D13](../juniper-design/DECISIONS.md)) and went live on 2026-11-11 at
+`juniper-navy.vercel.app`, where `/` is the deck and `/grid` is the grid. It installs to
+the home screen, which is also what stops iOS evicting the garden. 116 tests pass across
+9 suites, tsc is clean, and `npm audit` reports nothing.
 
 **Why the pivot.** The reminder — the one feature that genuinely required a native app,
 and which [D7](../juniper-design/DECISIONS.md) called "the product" — has never fired on
@@ -36,20 +37,59 @@ are better as web apps."*
 DOM-free modules — `dryness`, `watering`, `stats`, `cover`, `today-utils`, the seed — were
 copied byte for byte along with 74 of their tests, and pass unmodified.
 
-**What is left is not code.** It runs on localhost and nowhere else, which makes the
-central claim of the pivot — that a link needs no install step — still untested. And
-the grid has been judged by eye, on a laptop, in one browser.
+**The claim of the pivot has now been tested and held.** A link with no install step
+reached a phone the same day it was built, and the deck has been through six rounds of
+"check it on the phone, fix what the phone showed" — a loop that cost four and a half
+minutes a turn when this was native.
 
-Progress against the new, much smaller scope: ~35%. The number went *down* from 94
-deliberately: Phase 1 was measured against a native app that no longer ships.
+**What is left is not code.** The garden still has exactly one copy until a backup is
+actually saved, and the app has been judged against a demo garden rather than real
+plants over real weeks.
+
+Progress against the new, much smaller scope: ~75%.
 
 ## ✅ Recently done
+
+### 2026-11-12 — The deck becomes self-sufficient, and the repo becomes one app
+
+**Backing up is reachable from the thing people actually use.** Export and import lived
+in the grid app's footer, which was fine while the deck was a page you reached past an
+address bar. Installed to the home screen there is no address bar, so the only route to
+the only copy of a garden was unreachable. The wordmark now opens a Backup sheet with
+save, restore and start-over. It shares rather than downloads: in standalone WKWebView
+the `download` attribute is not dependable, so a download-only button would have done
+nothing on the one platform it exists for. The file is built when the sheet opens, not
+when the button is tapped, because `navigator.share` must be called while the tap is
+still the current user activation.
+
+**The title no longer steps on the first frame of a flip.** Not an animation bug: the
+tile had its own set of sizes, and `scale: true` holds a card at its final layout size
+and scales it, so the title was drawn at the tile's 15px times a 2.08 scale against the
+30px it had a frame earlier. The face is now sized in `cqw` off the card's own width,
+which makes a tile a true miniature — name, rank, species, padding and band all measure
+a 0.0% step now, and it costs nothing per frame. Calibrated to the card's *layout* width,
+300px; the fan's rotation inflates the bounding rect to 313.3 and cost one wrong pass.
+
+**The keyboard shortcuts were eating what you typed.** Bound on the window and calling
+`preventDefault` whatever had focus, so a plant's name could contain no space, no `g` and
+no `w`; "Fig" and "Willow" came out short, Enter would not submit, and space turned the
+card behind the open sheet. Unnoticed until now because the demo garden filled those
+fields in.
+
+**The repo is one app again.** `juniper-app/` and `juniper-website/` are gone, with the
+root `vercel.json` and the Maestro e2e workflow. CI and `RUN_TEST.sh` now point at
+`juniper-web`, which had none; CI runs tsc, the tests, and a build that proves *both*
+pages are emitted — a build taking only `index.html` once shipped a deploy with no deck
+in it. This is also what cleared the dependency alerts: 38 of 43 were the native app's
+build chain, tooling for a binary nobody cuts. The other five were `juniper-web`'s own
+dev dependencies, fixed by vite 6.4.6 and vitest 5.1.0.
 
 ### 2026-11-08 — Juniper becomes a web app, and the grid is seen for the first time
 
 **The pivot** is [D13](../juniper-design/DECISIONS.md), and the reasoning is in Current
-phase above. New [`juniper-web/`](../juniper-web); [`juniper-app/`](../juniper-app) frozen
-with a [FROZEN.md](../juniper-app/FROZEN.md) saying so. Haptics are gone, photos are a
+phase above. New [`juniper-web/`](../juniper-web); `juniper-app/` frozen
+with a `FROZEN.md` saying so (both since removed — 2026-11-12; unlinked here because the
+paths are gone, though the words were true on the day). Haptics are gone, photos are a
 file input, export is a download — each *smaller* than the native module it replaced.
 
 **Then the grid was put on a screen, which changed it three times.** None of this came
@@ -280,24 +320,27 @@ reads workflows from the repository root, so the collapse disabled it. Moved to 
 
 ## 🚧 Blocked / needs attention
 
-Nothing is blocked on code. Everything is blocked on a phone.
+Nothing is blocked on code. What is left is time and real plants.
 
-- **There is no installable copy of Juniper.** The last preview build expired 2026-09-23 and
-  nothing has been cut since, so the grid exists only in this repository. This is the gate on
-  every item below: `eas build --platform ios --profile preview` from `juniper-app`.
-- **The grid is unvalidated by use.** Whether the drift reads at a glance, whether the mat is
-  the right weight, and whether watering from a square is satisfying enough to do daily are
-  questions only a real garden on a real phone can answer. They cannot be reasoned out.
-- **The watering reminder has never fired on real hardware.** Everything around it is tested;
-  delivery itself is not.
-- **The Maestro suite has still never executed a single assertion.** All five flows were found
-  dead and rewritten on 2026-11-07, which fixes the fiction but proves nothing:
-  `brew install maestro && maestro test juniper-app/.maestro/`. Expect failures.
-- **Export the data once real plants are in.** Storage is on-device and nowhere else (D2).
+- **The garden still has exactly one copy.** Backup and restore are now reachable from the
+  installed app and the home-screen install exempts the origin from WebKit's seven-day
+  eviction, but neither is worth anything until a backup is actually saved somewhere that
+  is not the phone. The sheet shows "last backup · …" precisely so this is visible.
+- **Juniper is unvalidated by real use.** The deck has been exercised hard, but against a
+  demo garden over two days. Whether a fanned deck is the right way to meet eight plants
+  every morning, and whether the dryness ramp reads at a glance, are questions only real
+  plants over real weeks answer.
+- **Juniper has no reminders at all.** A deliberate bet (D13) — the deck is meant to be the
+  reminder — but a bet, and the only thing that settles it is whether use happens anyway.
+- **There is no service worker**, so the installed app needs the network on first paint of
+  each session. The manifest alone was enough to get it on the home screen and to earn the
+  eviction exemption; offline is a separate, unmade decision.
 - **GitHub Actions was last seen failing on billing, not code** — not re-verified since
-  2026-08-30, so CI cannot be trusted green *or* red. Settings → Billing & plans.
-- **Website placeholders**: support address, legal entity and jurisdiction are flagged in-page
-  and must be resolved before public release.
+  2026-08-30, so CI cannot be trusted green *or* red. Settings → Billing & plans. The
+  workflow itself now points at the right app, which it did not before 2026-11-12.
+- **GitHub's Dependabot count lags the repo.** It read 74 for some time after the trim,
+  against two lockfiles that no longer exist. `npm audit` in `juniper-web` is the ground
+  truth and reports none.
 
 ## 💬 Notes
 

@@ -14,53 +14,61 @@ If an item here contradicts the code, trust the code and fix this file.
 If an item here contradicts DECISIONS.md, DECISIONS.md wins.
 -->
 
-## ⚠️ Everything below "Phase 1 — Useful" is about the retired native app
+## ⚠️ Everything below "Phase 1 — Useful" is about an app that no longer exists
 
-Juniper became a web app on 2026-11-08 ([D13](../juniper-design/DECISIONS.md)).
-`juniper-app/` is frozen; nothing new ships from it. The native queue below is **kept, not
-current** — it records what was done and what was still outstanding when the app was
-retired, and several of its items (EAS builds, TestFlight, Play internal, the Maestro
-suite, the notification work) are now about something that is no longer the product.
+Juniper became a web app on 2026-11-08 ([D13](../juniper-design/DECISIONS.md)), and
+`juniper-app/` was **deleted** on 2026-11-12. The native queue below is **kept as a
+record, not as work** — it says what was done and what was outstanding when the app was
+retired. Its items (EAS builds, TestFlight, Play internal, the Maestro suite, the
+notification work) refer to a directory that is no longer in the tree; git history holds
+all of it if you need to read something.
 
 Do not work the old queue. Work this one.
 
 ## Web — the only live queue
 
-- [!] **DEPLOY IT.** The web app runs on localhost and nowhere else, which leaves the
-      entire argument for the pivot untested: a link has no install step, and there is no
-      link. `npm run build` in `juniper-web/` emits a static `dist/`. Vercel already hosts
-      `juniper-website`, so this is one project and one domain away.
-      **Needs a human** — it is an account and a domain decision, not a code one.
+- [x] **DEPLOY IT.** Done 2026-11-11. Live at `juniper-navy.vercel.app`, `/` the deck and
+      `/grid` the grid. Git pushes deploy it; the project's root directory is `juniper-web`,
+      which it was not at first — the root `vercel.json` pointed at the marketing site and
+      would have replaced the app with it.
 
-- [!] **Use it on a phone, with real plants and real photographs.** The ramp's midtones,
-      the weight of the pour, the size of the drop target and whether a drifting square
-      reads from across a room have all been judged by eye, on a laptop, in one browser.
-      That is better than the native grid ever got — it was never rendered at all — but
-      it is not use. **Needs a human.**
+- [x] **Use it on a phone.** Done, repeatedly, from 2026-11-11 — six rounds of fixes that
+      only a phone surfaced: the fan colliding with the header, an invisible edit button,
+      a swipe dead on the card face, cards intersecting in 3D, and keyboard shortcuts
+      eating typed text. Still outstanding with *real plants over real weeks*, which is
+      the line below.
 
-- [!] **Export, the moment there are real plants in it.** The garden is localStorage plus
-      IndexedDB for photographs, in one browser, on one machine. "Clear site data"
-      destroys it and nothing else holds a copy. The export button is the entire safety
-      net and has never been run against real data. **Needs a human.**
+- [!] **Live with it, with real plants and real photographs.** Everything structural is
+      done. Whether a fanned deck is the right way to meet your plants each morning, and
+      whether the ramp reads at a glance, cannot be answered by building. **Needs a human.**
 
-- [ ] **Decide on a PWA manifest + service worker.** This is what would let Juniper sit
-      on a home screen and open offline, and it is also the precondition for ever having
-      notifications again (iOS requires an installed PWA for Web Push). Small, and it
-      makes the phone case much stronger.
+- [!] **Save a backup, the moment there are real plants in it.** The garden is localStorage
+      plus IndexedDB for photographs, in one browser, on one machine. Backup and restore
+      are now two taps from the deck (the wordmark), and the sheet shows "last backup · …"
+      so the gap is visible — but it has still never been run against real data.
+      **Needs a human.**
+
+- [x] **PWA manifest.** Done 2026-11-11. Standalone, portrait, with icons. This is also
+      what exempts the origin from WebKit's seven-day eviction of script-writable storage,
+      which matters more than the home-screen icon does.
+
+- [ ] **Decide on a service worker.** Not done with the manifest, and not the same
+      decision: the app still needs the network on first paint of each session. It is also
+      the precondition for ever having Web Push on iOS.
 
 - [ ] **Writing, not just reading.** The per-plant journal and the log render but cannot
       be added to from the UI. The data model and the store action (`logAction`) already
       support it; only the input is missing.
 
-- [ ] **Decide what happens to `juniper-app/`.** Frozen is a decision and deleting it is a
-      decision; leaving it ambiguous is the only bad option. Note that `src/lib/dryness.ts`,
-      `watering.ts`, `stats.ts`, `cover.ts` and `today-utils.ts` now exist in two places,
-      and a fix applied to one will not reach the other.
+- [x] **Decide what happens to `juniper-app/`.** Deleted 2026-11-12. It never shipped
+      again, and what was left of it in practice was a build toolchain generating 38
+      dependency alerts for a binary nobody cuts. The duplicated `lib/` modules are now
+      single copies. Git history holds the app.
 
-- [ ] **Point CI at the web app, or turn it off.** The GitHub Actions workflow still runs
-      the native app's suite, and the Maestro flows — rewritten 2026-11-07, still never
-      once executed — now assert against a product that no longer ships. Billing has also
-      been unverified since 2026-08-30, so CI cannot be trusted green or red.
+- [x] **Point CI at the web app, or turn it off.** Done 2026-11-12. `ci.yml` and
+      `RUN_TEST.sh` now run `juniper-web`'s tsc, tests and build; the Maestro workflow is
+      deleted. Billing is still unverified since 2026-08-30, so CI still cannot be trusted
+      green or red — that part is now tracked in STATUS.md's blocked list alone.
 
 - [ ] **Fold the `--dryness` finding back into the design handoff.** `juniper-design/`
       still describes the native component set. The ramp's endpoints now live in two
