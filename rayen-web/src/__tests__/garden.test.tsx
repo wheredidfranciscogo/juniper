@@ -48,7 +48,7 @@ const plant = (over: Partial<Plant> = {}): Plant => ({
  */
 function seed(plants: Plant[], userName = 'June') {
   window.localStorage.setItem(
-    '@juniper/store',
+    '@rayen/store',
     JSON.stringify({
       version: 2,
       state: { onboarded: true, userName, plants, log: [] },

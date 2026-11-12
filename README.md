@@ -2,13 +2,15 @@
 
 A quiet record of the plants in your care.
 
-**[juniper-navy.vercel.app](https://juniper-navy.vercel.app)** — no account, no server,
+**[rayen-garden.vercel.app](https://rayen-garden.vercel.app)** — no account, no server,
 nothing to install unless you want to.
 
 *Rayen* is Mapudungun for **flower**. The project was called Juniper until 2026-11-12,
-which is why the directories, the storage keys and the backup file format still carry
-that name — those are addresses, not labels, and renaming them would orphan a garden
-rather than move it.
+which is why `juniper-design/` and the old `juniper-navy.vercel.app` address still carry
+that name. The storage keys moved too, but only because the app changed domain the same
+day: browser storage is per-origin, so the new address started empty and gardens crossed
+over in a backup file. A backup written before the move still opens, and always will —
+that compatibility is the one thing in here that can never be cleaned up.
 
 Your garden is a deck of cards. The card in front is the plant that needs you most;
 scroll or swipe through the rest, turn one over for its record, water it from its back.

@@ -13,13 +13,18 @@
  */
 
 /*
- * THE NAME IN THESE IDENTIFIERS IS DELIBERATELY STILL "juniper". The app was renamed to
- * Rayen on 2026-11-12; these were not, and must not be. They are not labels, they are
- * the address of somebody's garden — a localStorage key, an IndexedDB database, and the
- * magic string every backup file ever written carries. Rename one and the garden is not
- * migrated, it is orphaned: still on disk, under a key nothing reads any more.
+ * THIS IDENTIFIER IS AN ADDRESS, NOT A LABEL. It is where somebody's garden lives: a
+ * localStorage key, an IndexedDB database name, or the magic string every backup file
+ * carries. Renaming one does not migrate a garden, it orphans it — still on disk, under
+ * a key nothing reads any more.
+ *
+ * They were renamed from "juniper" to "rayen" on 2026-11-12, and that was only safe
+ * because the app moved to a new domain the same day. Browser storage is per-origin, so
+ * the new origin was empty: there was nothing to migrate, and gardens came across in a
+ * backup file instead. That is also why readGardenFile still accepts the old format
+ * string, and always must. Do not rename these again without writing a real migration.
  */
-const DB_NAME = 'juniper';
+const DB_NAME = 'rayen';
 const DB_VERSION = 1;
 const STORE = 'photos';
 

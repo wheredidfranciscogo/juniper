@@ -19,11 +19,12 @@ be native-only — and **demotes D7**, which called the watering reminder "the p
 
 ## 📌 Current phase
 
-**Deployed, installed on a phone, and in use.** Juniper moved off Expo on 2026-11-08
-([D13](../juniper-design/DECISIONS.md)) and went live on 2026-11-11 at
-`juniper-navy.vercel.app`, where `/` is the deck and `/grid` is the grid. It installs to
-the home screen, which is also what stops iOS evicting the garden. 116 tests pass across
-9 suites, tsc is clean, and `npm audit` reports nothing.
+**Deployed, installed on a phone, and in use.** Rayen moved off Expo on 2026-11-08
+([D13](../juniper-design/DECISIONS.md)) and went live on 2026-11-11, since 2026-11-12 at
+`rayen-garden.vercel.app`, where `/` is the deck and `/grid` is the grid. The original
+`juniper-navy.vercel.app` still serves the same deployment. It installs to the home
+screen, which is also what stops iOS evicting the garden. 119 tests pass across 10
+suites, tsc is clean, and `npm audit` reports nothing.
 
 **Why the pivot.** The reminder — the one feature that genuinely required a native app,
 and which [D7](../juniper-design/DECISIONS.md) called "the product" — has never fired on
@@ -85,9 +86,19 @@ so renaming them would orphan a garden rather than move it. `juniper-web/` becam
 `rayen-web/` and the GitHub repo became `…/rayen`; the deployed URL did not change,
 because storage is per-origin and moving it would strand the garden on the old domain.
 
+**Both of those held for about four hours.** The app moved to `rayen-garden.vercel.app`
+the same afternoon and the storage identifiers went with it. The stranding risk turned
+out not to exist: Vercel keeps an attached `.vercel.app` domain through a project rename
+instead of releasing it, so `juniper-navy.vercel.app` still serves the same deployment
+and the move was additive rather than a cutover. That is also what made the keys free —
+storage being per-origin cuts both ways, and an empty new origin needs no migration, only
+a reader that accepts `juniper.garden` forever. `LEGACY_FORMAT` and
+`src/lib/__tests__/backup.test.ts` are that promise and its test. The reasoning in the
+paragraph above was sound; the fact it rested on was not checked until it mattered.
+
 **The repo is one app again.** `juniper-app/` and `juniper-website/` are gone, with the
 root `vercel.json` and the Maestro e2e workflow. CI and `RUN_TEST.sh` now point at
-`juniper-web`, which had none; CI runs tsc, the tests, and a build that proves *both*
+`rayen-web`, which had none; CI runs tsc, the tests, and a build that proves *both*
 pages are emitted — a build taking only `index.html` once shipped a deploy with no deck
 in it. This is also what cleared the dependency alerts: 38 of 43 were the native app's
 build chain, tooling for a binary nobody cuts. The other five were `juniper-web`'s own

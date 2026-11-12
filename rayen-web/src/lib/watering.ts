@@ -153,7 +153,7 @@ export function buildReminderQueue(plants: Plant[], opts: QueueOptions): Reminde
       plantId: plant.id,
       plantName: plant.name,
       fireAt,
-      title: 'Juniper',
+      title: 'Rayen',
       body: COPY[i % COPY.length](plant.name),
     });
   });

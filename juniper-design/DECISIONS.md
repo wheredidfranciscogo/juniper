@@ -454,3 +454,10 @@ build and no users, so this is free right now and expensive in a month.
 
 **Caveat.** The AsyncStorage key `@juniper/store` is already correct and must not change —
 it is the one name that is user-data-bearing.
+
+**Superseded 2026-11-12.** The native app is gone (D13) and the web app's key is now
+`@rayen/store`. The caveat's reasoning still stands and is the reason the rename waited:
+it only became free when the app changed origin the same day, so the new storage started
+empty and there was nothing to orphan. The part that is permanent is the backup file
+format — `readGardenFile` accepts `juniper.garden` as well as `rayen.garden`, and must
+forever, because that string is in every file a user already holds.

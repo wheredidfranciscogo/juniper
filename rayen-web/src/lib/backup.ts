@@ -20,13 +20,20 @@ import type { JournalEntry, LogEntry, LogKind, Plant, PlantPhoto } from '../data
 import { fromDataURL, isStoredPhoto, loadPhoto, savePhoto, toDataURL } from './photos';
 
 /*
- * THE NAME IN THESE IDENTIFIERS IS DELIBERATELY STILL "juniper". The app was renamed to
- * Rayen on 2026-11-12; these were not, and must not be. They are not labels, they are
- * the address of somebody's garden — a localStorage key, an IndexedDB database, and the
- * magic string every backup file ever written carries. Rename one and the garden is not
- * migrated, it is orphaned: still on disk, under a key nothing reads any more.
+ * THIS IDENTIFIER IS AN ADDRESS, NOT A LABEL. It is where somebody's garden lives: a
+ * localStorage key, an IndexedDB database name, or the magic string every backup file
+ * carries. Renaming one does not migrate a garden, it orphans it — still on disk, under
+ * a key nothing reads any more.
+ *
+ * They were renamed from "juniper" to "rayen" on 2026-11-12, and that was only safe
+ * because the app moved to a new domain the same day. Browser storage is per-origin, so
+ * the new origin was empty: there was nothing to migrate, and gardens came across in a
+ * backup file instead. That is also why readGardenFile still accepts the old format
+ * string, and always must. Do not rename these again without writing a real migration.
  */
-const FORMAT = 'juniper.garden';
+const FORMAT = 'rayen.garden';
+/** Written by every export before the 2026-11-12 rename. Readable forever. */
+const LEGACY_FORMAT = 'juniper.garden';
 const FORMAT_VERSION = 1;
 
 export interface GardenFile {
@@ -142,7 +149,7 @@ export function canShareGarden(payload: File): boolean {
 /**
  * Save a built garden file by whichever route this browser actually honours.
  *
- * WHY THIS IS NOT SIMPLY A DOWNLOAD. Added to the home screen Juniper runs standalone
+ * WHY THIS IS NOT SIMPLY A DOWNLOAD. Added to the home screen Rayen runs standalone
  * in WKWebView, and there the `download` attribute is not dependable: WebKit has
  * carried a bug for `download` on blob: URLs for years, and in standalone mode the
  * attribute is reported to be ignored outright. Standalone is the exact case this
@@ -207,7 +214,7 @@ function isoOr(v: unknown, fallback: string): string {
  * A photograph's uri, if it points somewhere this app would have written.
  *
  * ONLY `data:`. An export inlines every photograph as a data URL, so that is the only
- * scheme a real Juniper file carries. Before this check the field took any string and
+ * scheme a real Rayen file carries. Before this check the field took any string and
  * handed it to an <img src> — which meant a garden file from someone else could make a
  * plant card fetch an arbitrary URL every time it rendered, reporting the reader's IP,
  * user agent and the time back to whoever wrote the file. Not script execution; an
@@ -295,12 +302,12 @@ export async function readGardenFile(raw: unknown, now = new Date()): Promise<Im
     throw new Error('That file is not a Rayen garden.');
   }
   const file = raw as Record<string, unknown>;
-  if (file.format !== FORMAT) {
+  if (file.format !== FORMAT && file.format !== LEGACY_FORMAT) {
     throw new Error('That file is not a Rayen garden export.');
   }
   if (Number(file.version) > FORMAT_VERSION) {
     throw new Error(
-      'That export came from a newer version of Juniper than this one. Update first.',
+      'That export came from a newer version of Rayen than this one. Update first.',
     );
   }
 

@@ -3,7 +3,7 @@
  *
  * Not six demo plants and not an empty screen. One plant, deliberately lived-in — a
  * year of photographs, a few journal notes, already a day past due — so a new install
- * shows what Juniper looks like once you have actually been using it, without leaving
+ * shows what Rayen looks like once you have actually been using it, without leaving
  * a fake garden to delete before you can start your own.
  *
  * Marcel is watered-relative-to-now rather than fixed, because the whole app derives

@@ -1,5 +1,5 @@
 /**
- * Juniper line-art botanical icons.
+ * Rayen line-art botanical icons.
  * One-weight stroke, no fills, hand-drawn feel.
  *
  * Path data is identical to the native app's components/icons/index.tsx, which took it

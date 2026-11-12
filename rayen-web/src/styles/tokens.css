@@ -1,5 +1,5 @@
 /*
- * Juniper — herbarium design tokens.
+ * Rayen — herbarium design tokens.
  * Source of truth: juniper-design/styles.css + README.md, same as the native app's
  * theme/tokens.ts. Ported to custom properties so the stylesheet, and not JavaScript,
  * owns colour. No ad-hoc colours anywhere else.
