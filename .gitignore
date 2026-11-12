@@ -48,5 +48,7 @@ juniper-app/coverage/
 # Local archive of pre-collapse artefacts (see DECISIONS.md D4)
 .archive/
 
-# Claude Code scratch worktrees — never part of the project.
-.claude/worktrees/
+# Claude Code's own directory — editor/tool config, not part of the project.
+# launch.json stays on disk so the local dev-server preview keeps working; it just
+# has no business in a public repository.
+.claude/
