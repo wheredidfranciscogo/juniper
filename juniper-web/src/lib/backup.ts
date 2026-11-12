@@ -19,6 +19,13 @@
 import type { JournalEntry, LogEntry, LogKind, Plant, PlantPhoto } from '../data/types';
 import { fromDataURL, isStoredPhoto, loadPhoto, savePhoto, toDataURL } from './photos';
 
+/*
+ * THE NAME IN THESE IDENTIFIERS IS DELIBERATELY STILL "juniper". The app was renamed to
+ * Rayen on 2026-11-12; these were not, and must not be. They are not labels, they are
+ * the address of somebody's garden — a localStorage key, an IndexedDB database, and the
+ * magic string every backup file ever written carries. Rename one and the garden is not
+ * migrated, it is orphaned: still on disk, under a key nothing reads any more.
+ */
 const FORMAT = 'juniper.garden';
 const FORMAT_VERSION = 1;
 
@@ -71,7 +78,7 @@ async function inlinePhoto(photo: PlantPhoto): Promise<PlantPhoto> {
 /** A filename that sorts chronologically and says what it is. */
 export function exportFilename(now = new Date()): string {
   const d = now.toISOString().slice(0, 10);
-  return `juniper-garden-${d}.json`;
+  return `rayen-garden-${d}.json`;
 }
 
 /** The one place that decides how a garden is written out. */
@@ -150,7 +157,7 @@ export function canShareGarden(payload: File): boolean {
 export function saveGardenFile(payload: File): Promise<SaveOutcome> {
   if (canShareGarden(payload)) {
     return navigator
-      .share({ files: [payload], title: 'Juniper garden' })
+      .share({ files: [payload], title: 'Rayen garden' })
       .then<SaveOutcome, SaveOutcome>(
         () => 'shared',
         (err: unknown) => {
@@ -280,16 +287,16 @@ function readPlant(raw: unknown, nowISO: string, warnings: string[]): Plant | nu
 /**
  * Validate a parsed file and move its photographs into IndexedDB.
  *
- * Throws only for a file that is not a Juniper garden at all, or one with nothing left
+ * Throws only for a file that is not a Rayen garden at all, or one with nothing left
  * to restore. Everything survivable comes back in `warnings`.
  */
 export async function readGardenFile(raw: unknown, now = new Date()): Promise<ImportResult> {
   if (!raw || typeof raw !== 'object') {
-    throw new Error('That file is not a Juniper garden.');
+    throw new Error('That file is not a Rayen garden.');
   }
   const file = raw as Record<string, unknown>;
   if (file.format !== FORMAT) {
-    throw new Error('That file is not a Juniper garden export.');
+    throw new Error('That file is not a Rayen garden export.');
   }
   if (Number(file.version) > FORMAT_VERSION) {
     throw new Error(

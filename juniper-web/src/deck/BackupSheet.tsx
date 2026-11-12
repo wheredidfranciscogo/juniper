@@ -34,6 +34,13 @@ import { useStore } from '../lib/store';
  * should not claim you backed up in March. Storage can be blocked outright, so every
  * access is guarded and a failure just means the line is not shown.
  */
+/*
+ * THE NAME IN THESE IDENTIFIERS IS DELIBERATELY STILL "juniper". The app was renamed to
+ * Rayen on 2026-11-12; these were not, and must not be. They are not labels, they are
+ * the address of somebody's garden — a localStorage key, an IndexedDB database, and the
+ * magic string every backup file ever written carries. Rename one and the garden is not
+ * migrated, it is orphaned: still on disk, under a key nothing reads any more.
+ */
 const SAVED_KEY = 'juniper.lastBackupISO';
 
 function readLastSaved(): string | null {

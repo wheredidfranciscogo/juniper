@@ -1,5 +1,5 @@
 /**
- * Juniper, on the web.
+ * Rayen, on the web.
  *
  * One screen: the garden as a grid. Every plant is a square whose field drifts from moss
  * to dried as it goes from watered to due, the drop in a square's corner waters it
@@ -207,7 +207,7 @@ function Garden() {
         </button>
         <ImportButton onFile={importGarden} />
         <p>
-          Juniper keeps your garden in this browser only. Nothing is uploaded, and nothing
+          Rayen keeps your garden in this browser only. Nothing is uploaded, and nothing
           is backed up — so export it somewhere safe now and again.
         </p>
       </footer>
@@ -282,7 +282,7 @@ function ImportButton({ onFile }: { onFile: (file: File) => void }) {
  * First run. A name, and a choice between one example plant and an empty garden.
  *
  * The example plant is Marcel, who arrives with a year of photographs and already a day
- * past due — so a new garden shows what Juniper looks like in use rather than what it
+ * past due — so a new garden shows what Rayen looks like in use rather than what it
  * looks like empty. He is one plant, not six, and removing him takes two clicks.
  */
 function Welcome({
@@ -298,7 +298,7 @@ function Welcome({
 
   return (
     <main className="shell welcome">
-      <h1 className="welcome__title">Juniper</h1>
+      <h1 className="welcome__title">Rayen</h1>
       <p className="welcome__blurb">A quiet record of the plants in your care.</p>
 
       {notice && (

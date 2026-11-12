@@ -12,6 +12,13 @@
  * illustration is the designed fallback and takes over on its own.
  */
 
+/*
+ * THE NAME IN THESE IDENTIFIERS IS DELIBERATELY STILL "juniper". The app was renamed to
+ * Rayen on 2026-11-12; these were not, and must not be. They are not labels, they are
+ * the address of somebody's garden — a localStorage key, an IndexedDB database, and the
+ * magic string every backup file ever written carries. Rename one and the garden is not
+ * migrated, it is orphaned: still on disk, under a key nothing reads any more.
+ */
 const DB_NAME = 'juniper';
 const DB_VERSION = 1;
 const STORE = 'photos';

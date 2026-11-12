@@ -1,9 +1,14 @@
-# Juniper
+# Rayen
 
 A quiet record of the plants in your care.
 
 **[juniper-navy.vercel.app](https://juniper-navy.vercel.app)** — no account, no server,
 nothing to install unless you want to.
+
+*Rayen* is Mapudungun for **flower**. The project was called Juniper until 2026-11-12,
+which is why the directories, the storage keys and the backup file format still carry
+that name — those are addresses, not labels, and renaming them would orphan a garden
+rather than move it.
 
 Your garden is a deck of cards. The card in front is the plant that needs you most;
 scroll or swipe through the rest, turn one over for its record, water it from its back.

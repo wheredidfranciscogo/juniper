@@ -1,6 +1,6 @@
 # juniper-web
 
-Juniper, as a web app. A quiet record of the plants in your care.
+Rayen, as a web app. A quiet record of the plants in your care.
 
 **Two pages, one garden.** `/` is the deck — the plants as cards, the thirstiest in front,
 turned over for their record and watered from the back. `/grid` is the same cards as

@@ -1,5 +1,5 @@
 /**
- * Juniper as a deck instead of a grid.
+ * Rayen as a deck instead of a grid.
  *
  * The grid asks you to scan and decide. A deck hands you one plant and asks one
  * question, and when you have answered it for every card the deck is empty — which is
@@ -944,7 +944,7 @@ export function Deck() {
           onClick={() => setBacking(true)}
           title="Back up or restore your garden"
         >
-          Juniper
+          Rayen
         </button>
         <div className="deck__top-right">
           {/*
