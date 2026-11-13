@@ -58,8 +58,11 @@ Do not work the old queue. Work this one.
       a production build served with `vercel.json`'s headers and then with the server
       killed: both pages open, garden and type intact. It is also the precondition for
       ever having Web Push on iOS, which nothing here uses.
-- [ ] **Confirm offline on the phone.** Open the installed app once with a network, then
-      again in airplane mode. The desk check cannot stand in for WebKit in standalone.
+- [x] **Confirm offline on the phone.** Done 2026-11-13: the installed app opens in
+      airplane mode with the garden and its type intact.
+- [x] **Header blurred in the installed app.** Done 2026-11-13. iOS 26 blurs what a web
+      app draws under the status bar; the header now sits 44px lower in standalone on iOS
+      only. Confirmed on the phone.
 
 - [ ] **Writing, not just reading.** The per-plant journal and the log render but cannot
       be added to from the UI. The data model and the store action (`logAction`) already

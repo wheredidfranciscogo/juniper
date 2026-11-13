@@ -80,8 +80,21 @@ then opened offline" draws the whole app in fallback type.
 `vercel.json`'s exact headers, a true first visit, then the server killed. Both pages
 opened from the cache with the garden and all four faces intact, and a rebuild replaced
 the old cache cleanly. Eight tests run the worker's real source against a fake browser
-and hold it to the rules above; breaking one fails one. Not yet checked: the phone, in
-airplane mode.
+and hold it to the rules above; breaking one fails one.
+
+**Confirmed on the phone on 2026-11-13:** the installed app opens in airplane mode, garden
+and type intact.
+
+**The header steps out from under iOS's status-bar blur.** The first true standalone
+install showed the wordmark and both header buttons smeared, worst at their upper edges.
+Nothing in the app blurs them: since iOS 26 the system fades and blurs whatever a web app
+draws beneath the status bar, and this page runs full-bleed under a translucent one, so
+the header began exactly at the top of that strip. No CSS turns the effect off, so in the
+installed app the header sits 44px lower — the fade measured about 37px off a screenshot.
+The rule is scoped to `display-mode: standalone` and `@supports (-webkit-touch-callout:
+none)`, so Safari and desktop browsers are untouched. Earlier phone screenshots had a
+browser bar above the page, which is why this never showed before. Confirmed on the
+phone the same day.
 
 ### 2026-11-12 — The deck becomes self-sufficient, the repo becomes one app, and Juniper becomes Rayen
 
@@ -380,9 +393,6 @@ Nothing is blocked on code. What is left is time and real plants.
   plants over real weeks answer.
 - **Rayen has no reminders at all.** A deliberate bet (D13) — the deck is meant to be the
   reminder — but a bet, and the only thing that settles it is whether use happens anyway.
-- **Offline is unconfirmed on the phone.** The service worker is live and was proven at
-  a desk — a production build, the real headers, the server killed — but not yet in
-  WebKit's standalone mode with no signal, which is the only place it matters.
 - **GitHub's Dependabot count lags the repo.** It read 74 for some time after the trim,
   against two lockfiles that no longer exist. `npm audit` in `rayen-web` is the ground
   truth and reports none.
