@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Why Rayen is a web app, and what I threw away to make it one</title>
+    <meta name="description" content="Rayen began as a finished iPhone app. I stopped building it in a day and rebuilt it for the browser. Here is what the native version never did, and what the web one cost." />
+    <link rel="canonical" href="https://rayen-garden.vercel.app/guides/why-rayen-is-a-web-app" />
+    <meta name="theme-color" content="#11150F" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Rayen" />
+    <meta property="og:title" content="Why Rayen is a web app, and what I threw away to make it one" />
+    <meta property="og:description" content="Rayen began as a finished iPhone app. I stopped building it in a day and rebuilt it for the browser. Here is what the native version never did, and what the web one cost." />
+    <meta property="og:url" content="https://rayen-garden.vercel.app/guides/why-rayen-is-a-web-app" />
+    <meta property="og:image" content="https://rayen-garden.vercel.app/img/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Public+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" crossorigin />
+    <link rel="stylesheet" href="/site.css" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Why Rayen is a web app, and what I threw away to make it one", "description": "Rayen began as a finished iPhone app. I stopped building it in a day and rebuilt it for the browser. Here is what the native version never did, and what the web one cost.", "datePublished": "2026-11-13", "dateModified": "2026-11-13", "author": {"@type": "Person", "name": "Francisco Arrieta", "url": "https://github.com/wheredidfranciscogo"}, "image": "https://rayen-garden.vercel.app/img/og.png", "mainEntityOfPage": "https://rayen-garden.vercel.app/guides/why-rayen-is-a-web-app", "publisher": {"@type": "Organization", "name": "Rayen", "url": "https://rayen-garden.vercel.app/"}}</script>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/about">Rayen</a>
+        <nav class="nav" aria-label="Main">
+          <a href="/guides">Guides</a>
+          <a href="/privacy">Privacy</a>
+          <a href="https://github.com/wheredidfranciscogo/rayen">Source</a>
+          <a class="btn btn--fill" href="/">Open Rayen</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <article class="article">
+        <div class="read">
+          <p class="eyebrow"><a href="/guides" style="text-decoration:none">Guides</a></p>
+          <h1>Why Rayen is a web app, and what I threw away to make it one</h1>
+          <p class="meta">By Francisco Arrieta · 13 November 2026 · 3 min read</p>
+          <p class="lede">Rayen began as an iPhone app. It was built, it looked the way I wanted, and I stopped working on it in a day. This is why.</p>
+
+          <h2>The app I built first</h2>
+          <p>The first version of Rayen, called Juniper then, was a native iPhone app built with React Native and Expo. Its main feature was a daily watering reminder. I had written in the project’s decision log that the reminder was the product.</p>
+
+          <h2>The reminder that never fired</h2>
+          <p>In the whole life of that app, the reminder never once went off on a real phone. Meanwhile the app itself sat unopened for two months, and its test build expired after fourteen days, as test builds do, without being used. Every change took four and a half minutes between editing a colour and seeing it on a device.</p>
+          <p>Going native had bought me a notification nobody ever received, at the price of an install step, an expiring certificate and a slow loop.</p>
+
+          <h2>What changed my mind</h2>
+          <p>The grid view, where every plant is a square that drifts between two colours, turned out to suit a browser better than a phone’s native toolkit. One line of CSS replaced most of the arithmetic the native version needed to size its tiles, and working out where something is on screen is instant on the web instead of a round trip.</p>
+          <p>So I said out loud what I had been circling: these ideas made more sense as web apps. I stopped building the native version on 8 November 2026. Three days later the web version was live.</p>
+
+          <h2>What carried over</h2>
+          <p>Less was thrown away than you would expect. The logic that works out when a plant is thirsty, how dry it looks and what the dates say had no phone-specific code in it, so 581 lines moved across unchanged, along with 74 of their tests. What I deleted was mostly packaging.</p>
+
+          <h2>What it cost</h2>
+          <p>A web app gave things up, and the project’s own notes say so plainly.</p>
+          <p><strong>There are no reminders.</strong> A browser cannot schedule a notification on your phone without a server that remembers your device, and I did not want a server holding anyone’s plants. The bet is that the deck is its own reminder: you come back because looking at it is pleasant, not because it nagged. Whether that is true only real use can answer, and I am still finding out.</p>
+          <p><strong>Your garden lives in one browser on one device.</strong> Clear your site data and it is gone; it does not follow you to a laptop. The backup file is the only copy there is, which is why the app says so, and why saving one is a single tap.</p>
+
+          <h2>Why I am telling you</h2>
+          <p>If you are choosing between a native app and a web app for something small and personal, the question I would ask is which of its features really needs to be native. For me the answer was one, and it never worked. Everything else, the colours, the cards and the offline support, a browser already did.</p>
+          <p>Rayen is open source. The decision log is in <a href="https://github.com/wheredidfranciscogo/rayen/blob/main/rayen-design/DECISIONS.md">the repository</a>, including the entry where I reverse my own earlier call.</p>
+          <aside class="callout">
+            <h2>Try Rayen</h2>
+            <p>A free plant watering tracker that runs in your browser. No account, nothing to install, and your garden stays on your device. There is a demo garden if you want to look around first.</p>
+            <p><a class="btn btn--fill" href="/">Open Rayen</a></p>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="foot">
+      <div class="wrap">
+        <p>Rayen is free and open source under the MIT licence. Made by Francisco Arrieta.</p>
+        <nav aria-label="Footer">
+          <a href="/about">About</a>
+          <a href="/guides">Guides</a>
+          <a href="/privacy">Privacy</a>
+          <a href="https://github.com/wheredidfranciscogo/rayen">Source</a>
+          <a href="/">Open Rayen</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

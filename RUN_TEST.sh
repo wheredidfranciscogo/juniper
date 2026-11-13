@@ -10,7 +10,9 @@
 # What's checked:
 #   [1] tsc --noEmit  — the canonical "still clean?" gate
 #   [2] vitest        — unit, lib and component suites
-#   [3] vite build    — catches broken imports, and that BOTH pages are built; a build
+#   [3] check:site    — the static pages in public/: every link lands, every page has its
+#                       title, description and canonical, the sitemap matches the pages
+#   [4] vite build    — catches broken imports, and that BOTH pages are built; a build
 #                       taking only index.html once shipped a deploy with no deck in it
 #
 # Deliberately NOT checked here:
@@ -31,17 +33,22 @@ if [ ! -d "node_modules" ]; then
   npm install --silent --no-audit --no-fund
 fi
 
-echo "[1/3] tsc --noEmit..."
+echo "[1/4] tsc --noEmit..."
 npx --no-install tsc --noEmit
 echo "      OK"
 echo ""
 
-echo "[2/3] vitest..."
+echo "[2/4] vitest..."
 npm test --silent
 echo "      OK"
 echo ""
 
-echo "[3/3] vite build..."
+echo "[3/4] site pages (links, meta tags, sitemap)..."
+npm run check:site --silent
+echo "      OK"
+echo ""
+
+echo "[4/4] vite build..."
 npm run build --silent >/dev/null
 echo "      OK"
 echo ""

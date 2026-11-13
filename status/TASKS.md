@@ -64,6 +64,14 @@ Do not work the old queue. Work this one.
       app draws under the status bar; the header now sits 44px lower in standalone on iOS
       only. Confirmed on the phone.
 
+- [ ] **Publish the marketing site.** Built and verified locally on 2026-11-13, not pushed:
+      it is public writing in Francisco's name and needs his read first. Pages: `/about`,
+      `/guides` and three guides, `/privacy`. The story guide does not mention how the app was
+      built (with Claude Code); that is his call.
+- [ ] **Keyword Planner.** Retry the Google branding check (after the 24-hour wait from
+      2026-11-13), apply for Basic access, then run `generateKeywordHistoricalMetrics` for the
+      phrases in `status/SEO-SURVEY.md`. Without ad spend the numbers may be broad ranges.
+- [ ] **Decide the real domain** before posting listings; the drafts link to the vercel.app address.
 - [ ] **Writing, not just reading.** The per-plant journal and the log render but cannot
       be added to from the UI. The data model and the store action (`logAction`) already
       support it; only the input is missing.

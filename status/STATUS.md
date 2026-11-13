@@ -52,6 +52,39 @@ Progress against the new, much smaller scope: ~75%.
 
 ## ✅ Recently done
 
+### 2026-11-13 — Rayen gets a site, and the app links to it
+
+**There is a marketing site, and it is small.** `/about` is the landing page, `/guides` holds
+three pieces, `/privacy` is the policy. It follows Alchemilla's technique — plain static HTML
+and one shared `site.css`, no script, no build — and lives inside `rayen-web/public/`, so it
+shares the app's address and moves with it. It reuses the app's own palette and type rather
+than a new look. The three guides are the survey's findings turned into pages: how to keep
+track of when you water your plants (the informational search that small blogs win), the
+install-and-back-up guide, and the story of why Rayen is a web app, written from D13. Nothing
+on the site claims a feature the app lacks; it says plainly that there are no reminders.
+
+**The app links to it now.** `SiteLinks` (About · Privacy · Source) sits in the Backup sheet and
+takes the hint's row on the empty-garden screen, which is the first thing a visitor from a
+search sees. In the installed home-screen app the links navigate in place with no back button,
+which is why every site page carries an "Open Rayen" link home. Left alone on purpose: the
+service worker. Online, the pages are network-first like everything else; offline, a tap on
+About falls back to the deck, which is a known and accepted gap.
+
+**`npm run check:site` is the new gate**, run by `RUN_TEST.sh` and CI: every link lands, every
+page has its title, description, canonical and `og:url`, every image has alt text and
+dimensions, no page carries a script (the privacy policy promises none), and the sitemap
+matches the pages that exist. It caught a description one character too long the first time
+it ran, and was confirmed to fail on a deliberately broken link.
+
+**Same day, outside the repo.** A first survey of who ranks for plant-app searches
+(`status/SEO-SURVEY.md`), listing drafts for Product Hunt and AlternativeTo, and screenshots in
+`marketing-assets/`. gum is installed and signed in to Search Console and Google Ads. The Ads
+account exists with no campaign. **Keyword Planner is blocked on Google, not on us:** the
+branding check must pass (it asked for a 24-hour wait after ownership was proved) and Basic
+access must then be granted. A call today reaches Google and is refused with "not allowed for
+explorer access". gum also demands a developer token Google retired in September; any
+placeholder value passes through.
+
 ### 2026-11-12 — Rayen opens without a network
 
 **There is a service worker now.** The manifest had already put the app on the home

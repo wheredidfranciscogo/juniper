@@ -1,102 +1,145 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#11150F" />
-    <meta
-      name="description"
-      content="Rayen is a small, free web app for keeping track of your plants and when you last watered them. No account, no download, and nothing leaves your device."
-    />
-    <title>Rayen — a quiet record of the plants in your care</title>
-    <link rel="icon" href="/icon-192.png" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rayen: a free plant watering tracker. No account, no download</title>
+    <meta name="description" content="A free plant watering tracker that runs in your browser. No account, no download, nothing collected, and it works offline once added to your home screen." />
     <link rel="canonical" href="https://rayen-garden.vercel.app/about" />
+    <meta name="theme-color" content="#11150F" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Rayen" />
+    <meta property="og:title" content="Rayen: a free plant watering tracker. No account, no download" />
+    <meta property="og:description" content="A free plant watering tracker that runs in your browser. No account, no download, nothing collected, and it works offline once added to your home screen." />
+    <meta property="og:url" content="https://rayen-garden.vercel.app/about" />
+    <meta property="og:image" content="https://rayen-garden.vercel.app/img/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Public+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-      crossorigin
-    />
-    <!--
-      A STATIC PAGE, ON PURPOSE. It lives in public/ so it is copied as-is: no script, no
-      bundle, nothing the app's build or its service worker has to know about. It exists
-      so there is a plain page that says what Rayen is — for a person arriving cold, for a
-      search engine, and for Google's brand verification, which wants a home page and a
-      privacy policy on an address the project can prove it owns.
-      The colours and type are the deck's own, written out here because this page shares
-      no stylesheet with the app.
-    -->
-    <style>
-      :root { --ground: #11150f; --lit: #f3f1e8; --dim: rgba(243, 241, 232, 0.62); --faint: rgba(243, 241, 232, 0.22); }
-      * { box-sizing: border-box; }
-      html, body { margin: 0; background: var(--ground); }
-      body {
-        min-height: 100vh;
-        color: var(--lit);
-        font-family: 'Public Sans', system-ui, sans-serif;
-        font-weight: 300;
-        line-height: 1.6;
-        background: radial-gradient(120% 80% at 50% 8%, #222a20 0%, var(--ground) 62%), var(--ground);
-        -webkit-font-smoothing: antialiased;
-      }
-      main { max-width: 34rem; margin: 0 auto; padding: max(3.5rem, env(safe-area-inset-top)) 1.5rem 3rem; }
-      .mark { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.25rem; letter-spacing: 0.01em; margin: 0 0 3.5rem; }
-      h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: clamp(2rem, 7vw, 2.75rem); line-height: 1.15; margin: 0 0 1.25rem; }
-      h1 em { font-style: italic; }
-      p { margin: 0 0 1.1rem; color: var(--dim); }
-      p.lede { color: var(--lit); font-size: 1.1rem; }
-      ul { list-style: none; padding: 0; margin: 2.25rem 0; border-top: 1px solid var(--faint); }
-      li { padding: 0.9rem 0; border-bottom: 1px solid var(--faint); color: var(--dim); }
-      li strong { display: block; color: var(--lit); font-weight: 400; }
-      .open {
-        display: inline-block; margin: 0.5rem 0 3rem; padding: 0.85rem 1.6rem;
-        border: 1px solid var(--lit); border-radius: 999px;
-        font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.75rem;
-        letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; color: var(--lit);
-      }
-      .open:hover { background: var(--lit); color: var(--ground); }
-      footer { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--dim); }
-      footer a { color: inherit; text-underline-offset: 4px; }
-      a { color: var(--lit); }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Public+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" crossorigin />
+    <link rel="stylesheet" href="/site.css" />
+    <script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Rayen", "url": "https://rayen-garden.vercel.app/", "description": "A free plant watering tracker that runs in your browser. No account, no download, nothing collected, and it works offline once added to your home screen.", "applicationCategory": "LifestyleApplication", "operatingSystem": "Any web browser", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "license": "https://opensource.org/licenses/MIT", "author": {"@type": "Person", "name": "Francisco Arrieta", "url": "https://github.com/wheredidfranciscogo"}, "image": "https://rayen-garden.vercel.app/img/og.png"}</script>
   </head>
   <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="/about">Rayen</a>
+        <nav class="nav" aria-label="Main">
+          <a href="/guides">Guides</a>
+          <a href="/privacy">Privacy</a>
+          <a href="https://github.com/wheredidfranciscogo/rayen">Source</a>
+          <a class="btn btn--fill" href="/">Open Rayen</a>
+        </nav>
+      </div>
+    </header>
     <main>
-      <p class="mark">Rayen</p>
+      <section class="hero">
+        <div class="wrap">
+          <p class="eyebrow">A free plant watering tracker</p>
+          <h1>A quiet record of the plants <em>in your care</em>.</h1>
+          <p class="lede">Rayen keeps track of when you last watered each plant and which one needs you next. It runs in your browser: no account, no download, nothing sent anywhere.</p>
+          <div class="cta">
+            <a class="btn btn--fill" href="/">Open Rayen</a>
+            <a class="btn" href="#how">How it works</a>
+          </div>
+          <p class="micro">Free · Open source · No ads</p>
+          <figure class="hero-shot">
+            <img src="/img/rayen-screens.png" width="1270" height="760" alt="Three phone screens from Rayen: a deck of plant cards with the thirstiest plant in front, the back of a card with a Water button, and a grid showing every plant at once." />
+          </figure>
+        </div>
+      </section>
 
-      <h1>A quiet record of the plants <em>in your care</em>.</h1>
+      <section class="band" id="how">
+        <div class="wrap">
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li><strong>Add the plants you have.</strong>A name, the species if you know it, how many days between waterings, and how much light it gets. Add a photo if you like.</li>
+            <li><strong>The card in front is the one that needs you.</strong>Rayen keeps the deck in order of thirst. The number in the corner is how many days until that plant wants water, and its colour drifts toward dry as the day gets closer.</li>
+            <li><strong>Turn it over to water it.</strong>Tap the card, press Water, and Rayen writes down the date. The plant goes to the back of the deck until it is thirsty again.</li>
+            <li><strong>Or look at everything at once.</strong>The grid shows every plant as a tile, so one glance tells you which are fine and which are thirsty.</li>
+          </ol>
+        </div>
+      </section>
 
-      <p class="lede">
-        Rayen is a small, free web app for keeping track of your plants and when you last
-        watered them. Nothing else.
-      </p>
-      <p>
-        Your garden is a deck of cards. The card in front is the plant that needs you most.
-        Turn one over for its record, water it from its back, and it steps aside until it is
-        thirsty again.
-      </p>
+      <section class="band">
+        <div class="wrap">
+          <h2>Small on purpose</h2>
+          <p>Rayen does one job. These are the choices that keep it that way.</p>
+          <div class="cols">
+            <div>
+              <h3>What it gives you</h3>
+              <ul>
+                <li><strong>No account.</strong>Nothing to sign up for and no password to lose.</li>
+                <li><strong>Nothing to install.</strong>It opens in your browser. Add it to your home screen and it behaves like any other app.</li>
+                <li><strong>Works offline.</strong>Once it has opened, it keeps working without a signal.</li>
+                <li><strong>Your data stays with you.</strong>Your garden lives on your own device and is never sent to a server.</li>
+              </ul>
+            </div>
+            <div>
+              <h3>What it leaves out</h3>
+              <ul>
+                <li><strong>Reminders.</strong>There are no notifications. The deck is the reminder: open it and the plant that needs you is in front. If you want a nudge, a calendar does that better.</li>
+                <li><strong>Plant identification.</strong>It records the plants you tell it about. It does not guess from photos.</li>
+                <li><strong>Syncing between devices.</strong>A garden lives on one device. A backup file is how it moves to another.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <ul>
-        <li><strong>No account.</strong> There is nothing to sign up for and no password to lose.</li>
-        <li><strong>No download.</strong> It runs in your browser. Add it to your home screen and it opens like any other app.</li>
-        <li><strong>No data collected.</strong> Your garden is stored on your own device and never sent anywhere.</li>
-        <li><strong>Works without a signal.</strong> Once opened, it keeps working offline.</li>
-        <li><strong>Yours to keep.</strong> Save your garden to a file whenever you like, and restore it anywhere.</li>
-        <li><strong>Free and open source.</strong> The whole thing is on GitHub under the MIT licence.</li>
-      </ul>
+      <section class="band">
+        <div class="wrap">
+          <h2>Your garden stays yours</h2>
+          <p>Rayen has no server holding your plants, so there is nothing to leak, sell or shut down. The other side of that is worth knowing: if you clear your browser's site data, or move to a new phone, your garden goes with it. A backup is one tap, it is a file you keep wherever you like, and you can restore it on any device. <a href="/guides/install-rayen-and-back-up-your-garden">Here is how</a>.</p>
+          <p>The whole app is open source, and the privacy policy is short enough to read: <a href="/privacy">what Rayen does and does not collect</a>.</p>
+        </div>
+      </section>
 
-      <a class="open" href="/">Open Rayen</a>
+      <section class="band">
+        <div class="wrap">
+          <h2>Questions</h2>
+          <div class="faq">
+            <h3>Do I need an account?</h3>
+            <p>No. There is no sign-up and no sign-in.</p>
+            <h3>Is it really free?</h3>
+            <p>Yes. There is no subscription, no in-app purchase and no advertising.</p>
+            <h3>Will it remind me to water?</h3>
+            <p>No, and on purpose. Notifications on a phone need a server that knows your device, and Rayen has none. The bet is that you will open it because looking at it is pleasant, and the thirstiest plant will be in front.</p>
+            <h3>Where is my garden stored?</h3>
+            <p>In your browser, on the device you are using. Photos are stored there too. Nothing is uploaded.</p>
+            <h3>What happens if I lose my phone or clear my browser data?</h3>
+            <p>Your garden is gone unless you saved a backup. Tap the Rayen name at the top of the deck to save one, and keep the file somewhere safe.</p>
+            <h3>Does it work on Android and on a computer?</h3>
+            <p>It is a standard web app and runs in any modern browser. It was built and tested on an iPhone, so that is where it is best, and your feedback on the rest is welcome.</p>
+            <h3>Who makes it?</h3>
+            <p>One person, Francisco Arrieta. <a href="/guides/why-rayen-is-a-web-app">This is the story of why it is a web app</a>.</p>
+          </div>
+        </div>
+      </section>
 
-      <p>
-        <em>Rayen</em> is Mapudungun for <em>flower</em>.
-      </p>
-
-      <footer>
-        <a href="/privacy">Privacy</a> &nbsp;·&nbsp;
-        <a href="https://github.com/wheredidfranciscogo/rayen">Source</a> &nbsp;·&nbsp;
-        Made by Francisco Arrieta
-      </footer>
+      <section class="cta-band">
+        <div class="wrap">
+          <h2>See how it feels.</h2>
+          <p>Try the demo garden first, or add your own plants straight away.</p>
+          <div class="cta">
+            <a class="btn btn--fill" href="/">Open Rayen</a>
+            <a class="btn" href="/guides">Read the guides</a>
+          </div>
+        </div>
+      </section>
     </main>
+    <footer class="foot">
+      <div class="wrap">
+        <p>Rayen is free and open source under the MIT licence. Made by Francisco Arrieta.</p>
+        <nav aria-label="Footer">
+          <a href="/about">About</a>
+          <a href="/guides">Guides</a>
+          <a href="/privacy">Privacy</a>
+          <a href="https://github.com/wheredidfranciscogo/rayen">Source</a>
+          <a href="/">Open Rayen</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

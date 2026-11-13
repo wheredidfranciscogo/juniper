@@ -40,6 +40,9 @@ src/
   App.tsx       the grid, mounted by grid.html
   deck/main.tsx the deck, mounted by index.html
 offline.plugin.ts   the service worker, and the build step that writes it
+public/       the marketing site: /about, /guides/*, /privacy. Plain HTML and one
+              site.css, no script and no build, in the manner of Alchemilla's site
+scripts/      check-site.mjs: every link, meta tag and sitemap entry in public/
 ```
 
 **Both pages are build inputs** (`vite.config.ts`). A build that takes only `index.html`
@@ -49,6 +52,11 @@ has happened, and it shipped a production deploy with no deck in it.
 and `data/seed.ts` were **copied byte for byte from the native app**, along with 74 of
 their tests. They have no DOM and no React in them. These are now the only copies —
 there is no second one to keep in sync any more.
+
+The site's address appears in every page's canonical and social tags, its JSON-LD and the
+sitemap. To move domains, find-and-replace that one string across `public/` and let
+`npm run check:site` confirm nothing was missed. The app's own storage is per-origin, so a
+new domain also means a backup and restore (see D4 and the 2026-11-12 notes).
 
 ## Six things that will bite you
 

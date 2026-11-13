@@ -38,6 +38,11 @@ jobs:
       - name: Unit & component tests
         run: npm test
 
+      - name: Check the static site
+        # /about, /guides and /privacy are plain HTML. This is what stops a dead link or a
+        # page missing from the sitemap from shipping unnoticed.
+        run: npm run check:site
+
       - name: Verify both pages build
         # The deck is index.html and the grid is grid.html, and a build that takes only
         # one of them has happened before — it shipped a production deploy with no deck

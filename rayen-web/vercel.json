@@ -3,7 +3,9 @@
   "rewrites": [
     { "source": "/grid", "destination": "/grid.html" },
     { "source": "/about", "destination": "/about.html" },
-    { "source": "/privacy", "destination": "/privacy.html" }
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/guides", "destination": "/guides/index.html" },
+    { "source": "/guides/:slug", "destination": "/guides/:slug.html" }
   ],
   "headers": [
     {
