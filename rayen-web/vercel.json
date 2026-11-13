@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/grid", "destination": "/grid.html" }],
+  "rewrites": [
+    { "source": "/grid", "destination": "/grid.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/privacy", "destination": "/privacy.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

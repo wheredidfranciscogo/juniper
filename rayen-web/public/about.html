@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#11150F" />
+    <meta
+      name="description"
+      content="Rayen is a small, free web app for keeping track of your plants and when you last watered them. No account, no download, and nothing leaves your device."
+    />
+    <title>Rayen — a quiet record of the plants in your care</title>
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="canonical" href="https://rayen-garden.vercel.app/about" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Public+Sans:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+      crossorigin
+    />
+    <!--
+      A STATIC PAGE, ON PURPOSE. It lives in public/ so it is copied as-is: no script, no
+      bundle, nothing the app's build or its service worker has to know about. It exists
+      so there is a plain page that says what Rayen is — for a person arriving cold, for a
+      search engine, and for Google's brand verification, which wants a home page and a
+      privacy policy on an address the project can prove it owns.
+      The colours and type are the deck's own, written out here because this page shares
+      no stylesheet with the app.
+    -->
+    <style>
+      :root { --ground: #11150f; --lit: #f3f1e8; --dim: rgba(243, 241, 232, 0.62); --faint: rgba(243, 241, 232, 0.22); }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: var(--ground); }
+      body {
+        min-height: 100vh;
+        color: var(--lit);
+        font-family: 'Public Sans', system-ui, sans-serif;
+        font-weight: 300;
+        line-height: 1.6;
+        background: radial-gradient(120% 80% at 50% 8%, #222a20 0%, var(--ground) 62%), var(--ground);
+        -webkit-font-smoothing: antialiased;
+      }
+      main { max-width: 34rem; margin: 0 auto; padding: max(3.5rem, env(safe-area-inset-top)) 1.5rem 3rem; }
+      .mark { font-family: 'Source Serif 4', Georgia, serif; font-size: 1.25rem; letter-spacing: 0.01em; margin: 0 0 3.5rem; }
+      h1 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 400; font-size: clamp(2rem, 7vw, 2.75rem); line-height: 1.15; margin: 0 0 1.25rem; }
+      h1 em { font-style: italic; }
+      p { margin: 0 0 1.1rem; color: var(--dim); }
+      p.lede { color: var(--lit); font-size: 1.1rem; }
+      ul { list-style: none; padding: 0; margin: 2.25rem 0; border-top: 1px solid var(--faint); }
+      li { padding: 0.9rem 0; border-bottom: 1px solid var(--faint); color: var(--dim); }
+      li strong { display: block; color: var(--lit); font-weight: 400; }
+      .open {
+        display: inline-block; margin: 0.5rem 0 3rem; padding: 0.85rem 1.6rem;
+        border: 1px solid var(--lit); border-radius: 999px;
+        font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.75rem;
+        letter-spacing: 0.16em; text-transform: uppercase; text-decoration: none; color: var(--lit);
+      }
+      .open:hover { background: var(--lit); color: var(--ground); }
+      footer { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.7rem; letter-spacing: 0.08em; color: var(--dim); }
+      footer a { color: inherit; text-underline-offset: 4px; }
+      a { color: var(--lit); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="mark">Rayen</p>
+
+      <h1>A quiet record of the plants <em>in your care</em>.</h1>
+
+      <p class="lede">
+        Rayen is a small, free web app for keeping track of your plants and when you last
+        watered them. Nothing else.
+      </p>
+      <p>
+        Your garden is a deck of cards. The card in front is the plant that needs you most.
+        Turn one over for its record, water it from its back, and it steps aside until it is
+        thirsty again.
+      </p>
+
+      <ul>
+        <li><strong>No account.</strong> There is nothing to sign up for and no password to lose.</li>
+        <li><strong>No download.</strong> It runs in your browser. Add it to your home screen and it opens like any other app.</li>
+        <li><strong>No data collected.</strong> Your garden is stored on your own device and never sent anywhere.</li>
+        <li><strong>Works without a signal.</strong> Once opened, it keeps working offline.</li>
+        <li><strong>Yours to keep.</strong> Save your garden to a file whenever you like, and restore it anywhere.</li>
+        <li><strong>Free and open source.</strong> The whole thing is on GitHub under the MIT licence.</li>
+      </ul>
+
+      <a class="open" href="/">Open Rayen</a>
+
+      <p>
+        <em>Rayen</em> is Mapudungun for <em>flower</em>.
+      </p>
+
+      <footer>
+        <a href="/privacy">Privacy</a> &nbsp;·&nbsp;
+        <a href="https://github.com/wheredidfranciscogo/rayen">Source</a> &nbsp;·&nbsp;
+        Made by Francisco Arrieta
+      </footer>
+    </main>
+  </body>
+</html>
