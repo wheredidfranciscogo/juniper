@@ -169,6 +169,37 @@
   color: var(--faint);
 }
 
+/*
+ * The way out to /about, /privacy and the source. It lives in the Backup sheet and takes
+ * the hint's row when the garden is empty (see SiteLinks.tsx). Quiet on purpose: a
+ * footer, not a call to action, so it reads at --dim and underlines only its hairline.
+ * The padding makes each link a 44px target without moving the type.
+ */
+.sitelinks {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sitelinks a {
+  padding: 15px 4px;
+  color: var(--dim);
+  text-decoration: underline;
+  text-decoration-color: var(--faint);
+  text-underline-offset: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sitelinks a:hover { color: var(--lit); text-decoration-color: var(--dim); }
+
+/* In the empty garden it takes the hint's place, so it keeps the hint's bottom inset. */
+.deck__links { padding: 0 0 max(2px, env(safe-area-inset-bottom)); }
+
 /* ---- stage -------------------------------------------------------------- */
 
 .deck__stage {

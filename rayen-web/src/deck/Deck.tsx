@@ -39,6 +39,7 @@ import type { Plant, PlantIconName } from '../data/types';
 import { BackupSheet } from './BackupSheet';
 import { DeckCard, restingStyle } from './DeckCard';
 import { PlantForm } from './PlantForm';
+import { SiteLinks } from './SiteLinks';
 import { demoPlants } from './demo';
 
 gsap.registerPlugin(Flip);
@@ -1110,16 +1111,22 @@ export function Deck() {
         </p>
       )}
 
-      <p className="deck__hint">
-        {/* An empty garden has no gesture to teach. */}
-        {empty
-          ? ''
-          : view === 'grid'
+      {/*
+        An empty garden has no gesture to teach, so this row says where to read about the
+        app instead. It is the same grid row either way: a nav in place of the hint, not
+        an extra child, so the stage above never moves.
+      */}
+      {empty ? (
+        <SiteLinks className="deck__links" />
+      ) : (
+        <p className="deck__hint">
+          {view === 'grid'
             ? 'tap a plant to deal it to the front'
             : isTurned
               ? 'tap the card to turn it back'
               : 'scroll or swipe through the deck'}
-      </p>
+        </p>
+      )}
 
       {backing && <BackupSheet onClose={() => setBacking(false)} />}
 

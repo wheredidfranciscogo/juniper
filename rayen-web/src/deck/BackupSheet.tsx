@@ -25,6 +25,7 @@ import {
 } from '../lib/backup';
 import { deletePhotos } from '../lib/photos';
 import { useStore } from '../lib/store';
+import { SiteLinks } from './SiteLinks';
 
 /**
  * When a backup was last taken, so the sheet can say it out loud.
@@ -304,6 +305,8 @@ export function BackupSheet({ onClose }: BackupSheetProps) {
         )}
 
         {note && <p className={note.bad ? 'backup__bad' : 'backup__said'}>{note.text}</p>}
+
+        <SiteLinks />
 
         <input
           ref={picker}
